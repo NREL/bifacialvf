@@ -32,11 +32,11 @@ from vf import getSkyConfigurationFactors, trackingBFvaluescalculator, rowSpacin
 from sun import hrSolarPos, perezComp, solarPos, sunIncident
 
 
-
+@profile
 def simulate(TMYtoread, writefiletitle,  beta, sazm, C = 1, D = 0.5,
              rowType = 'interior', transFactor = 0.01, cellRows = 6, 
              PVfrontSurface = 'glass', PVbackSurface = 'glass',  albedo = 0.62,  
-             tracking = False, backtrack = False, r2r = 1.5, Cv= 0.05, offset = 0):
+             tracking = False, backtrack = True, r2r = 1.5, Cv= 0.05, offset = 0):
 
     
         ## Read TMY3 data and start loop ~  
@@ -326,7 +326,7 @@ if __name__ == "__main__":
     
     # Tracking instructions
     tracking=False
-    backtrackingOpt=False
+    backtrack=True
     r2r = 1.5                   # meters. This input is not used (D is used instead) except for in tracking
     Cv = 0.05                  # GroundClearance when panel is in vertical position (panel slope lengths)
 
@@ -334,6 +334,7 @@ if __name__ == "__main__":
     writefiletitle="data/Output/TEST.csv"
     
     simulate(TMYtoread, writefiletitle, beta, sazm, 
-                C, D, rowType, transFactor, cellRows, PVfrontSurface,
-                PVbackSurface,  albedo, dataInterval, 
-                 tracking, backtrackingOpt, r2r, Cv)
+                C, D, rowType= rowType, transFactor= transFactor, cellRows= cellRows, 
+                PVfrontSurface= PVfrontSurface, PVbackSurface= PVbackSurface,   
+                albedo= albedo, tracking= tracking, backtrack= backtrack, r2r= r2r, Cv= Cv)
+    

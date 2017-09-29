@@ -32,7 +32,7 @@ from vf import getSkyConfigurationFactors, trackingBFvaluescalculator, rowSpacin
 from sun import hrSolarPos, perezComp, solarPos, sunIncident
 
 
-@profile
+
 def simulate(TMYtoread, writefiletitle,  beta, sazm, C = 1, D = 0.5,
              rowType = 'interior', transFactor = 0.01, cellRows = 6, 
              PVfrontSurface = 'glass', PVbackSurface = 'glass',  albedo = 0.62,  

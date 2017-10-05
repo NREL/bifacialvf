@@ -38,7 +38,8 @@ def simulate(TMYtoread, writefiletitle,  beta, sazm, C = 1, D = 0.5,
              PVfrontSurface = 'glass', PVbackSurface = 'glass',  albedo = 0.62,  
              tracking = False, backtrack = True, r2r = 1.5, Cv= 0.05, offset = 0):
 
-    
+        if tracking == True:
+            beta = 0  # algorithm only allows for zero north-south tilt with SAT
         ## Read TMY3 data and start loop ~  
         (myTMY3,meta)=pvlib.tmy.readtmy3(TMYtoread)
         #myAxisTitles=myTMY3.axes
@@ -321,13 +322,13 @@ if __name__ == "__main__":
     PVfrontSurface = "glass"    #PVfrontSurface(glass or AR glass)
     PVbackSurface = "glass"     # PVbackSurface(glass or AR glass)
     albedo = 0.62               # albedo
-    dataInterval = 60           # DataInterval(minutes)
+    #dataInterval = 60           # DataInterval(minutes)
     
     
     # Tracking instructions
     tracking=False
     backtrack=True
-    r2r = 1.5                   # meters. This input is not used (D is used instead) except for in tracking
+    r2r = 1.5                   # normalized panel lengths. This input is not used (D is used instead) except for in tracking
     Cv = 0.05                  # GroundClearance when panel is in vertical position (panel slope lengths)
 
     TMYtoread="data/724010TYA.csv"   # VA Richmond
@@ -338,3 +339,15 @@ if __name__ == "__main__":
                 PVfrontSurface= PVfrontSurface, PVbackSurface= PVbackSurface,   
                 albedo= albedo, tracking= tracking, backtrack= backtrack, r2r= r2r, Cv= Cv)
     
+    #Load the results from the resultfile
+    from loadVFresults import loadVFresults
+    (data, metadata) = loadVFresults(writefiletitle)
+    #print data.keys()
+    # calculate average front and back global tilted irradiance across the module chord
+    data['GTIFrontavg'] = data[['No_1_RowFrontGTI', 'No_2_RowFrontGTI','No_3_RowFrontGTI','No_4_RowFrontGTI','No_5_RowFrontGTI','No_6_RowFrontGTI']].mean(axis=1)
+    data['GTIBackavg'] = data[['No_1_RowBackGTI', 'No_2_RowBackGTI','No_3_RowBackGTI','No_4_RowBackGTI','No_5_RowBackGTI','No_6_RowBackGTI']].mean(axis=1)
+    
+    # Print the annual bifacial ratio. 16.3% for fixed, 25.6% for SAT default case
+    frontIrrSum = data['GTIFrontavg'].sum()
+    backIrrSum = data['GTIBackavg'].sum()
+    print('The bifacial ratio for ground clearance {} and row gap {} is: {:.1f}%'.format(C,D,backIrrSum/frontIrrSum*100))

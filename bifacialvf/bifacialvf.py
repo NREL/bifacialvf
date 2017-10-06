@@ -190,8 +190,8 @@ def simulate(TMYtoread, writefiletitle,  beta, sazm, C = 1, D = 0.5,
                         gcr=1/r2r  
                         trackingdata = pvlib.tracking.singleaxis(azen, aazi, axis_tilt, axis_azimuth, max_angle, backtrack, gcr)
                                  ## Sky configuration factors are not the same for all times, since the geometry is changing with the tracking.
-                        beta=trackingdata.iloc[0][3] # Trackingdata tracker_theta
-                        sazm = trackingdata.iloc[0][2]
+                        beta=trackingdata['surface_tilt'][0] # Trackingdata tracker_theta
+                        sazm = trackingdata['surface_azimuth'][0]
                         if math.isnan(beta):
                             beta=90
     

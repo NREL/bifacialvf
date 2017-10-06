@@ -294,23 +294,23 @@ if __name__ == "__main__":
 
 
     beta = 10                   # PV tilt (deg)
-    sazm = 180                  # PV Azimuth(deg)
+    sazm = 180                  # PV Azimuth(deg) or tracker axis direction
     C = 1                      # GroundClearance(panel slope lengths)
     D = 0.51519                 # DistanceBetweenRows(panel slope lengths)
     rowType = "interior"        # RowType(first interior last single)
     transFactor = 0.013         # TransmissionFactor(open area fraction)
-    cellRows = 6                # CellRows(# hor rows in panel)   <--> THIS IS FOR LANDSCAPE, YINLI MODEL
-    PVfrontSurface = "glass"    #PVfrontSurface(glass or AR glass)
+    cellRows = 6                # CellRows(# hor rows in panel)   <--> THIS ASSUMES LANDSCAPE ORIENTATION 
+    PVfrontSurface = "glass"    # PVfrontSurface(glass or AR glass)
     PVbackSurface = "glass"     # PVbackSurface(glass or AR glass)
-    albedo = 0.2               # albedo
-    #dataInterval = 60           # DataInterval(minutes)
+    albedo = 0.62               # ground albedo
+
     
     
     # Tracking instructions
-    tracking=True
+    tracking=False
     backtrack=True
-    r2r = 1.5                   # normalized panel lengths. This input is not used (D is used instead) except for in tracking
-    Cv = 0.05                  # GroundClearance when panel is in vertical position (panel slope lengths)
+    r2r = 1.5                   # row to row spacing in normalized panel lengths. This input is not used (D is used instead) except for in tracking
+    Cv = 0.05                  # GroundClearance when panel is in vertical position (panel slope lengths). 
 
     TMYtoread="data/724010TYA.csv"   # VA Richmond
     writefiletitle="data/Output/TEST.csv"
@@ -328,7 +328,7 @@ if __name__ == "__main__":
     data['GTIFrontavg'] = data[['No_1_RowFrontGTI', 'No_2_RowFrontGTI','No_3_RowFrontGTI','No_4_RowFrontGTI','No_5_RowFrontGTI','No_6_RowFrontGTI']].mean(axis=1)
     data['GTIBackavg'] = data[['No_1_RowBackGTI', 'No_2_RowBackGTI','No_3_RowBackGTI','No_4_RowBackGTI','No_5_RowBackGTI','No_6_RowBackGTI']].mean(axis=1)
     
-    # Print the annual bifacial ratio. 16.3% for fixed, 25.6% for SAT default case
+    # Print the annual bifacial ratio.
     frontIrrSum = data['GTIFrontavg'].sum()
     backIrrSum = data['GTIBackavg'].sum()
     print('The bifacial ratio for ground clearance {} and row gap {} is: {:.1f}%'.format(C,D,backIrrSum/frontIrrSum*100))

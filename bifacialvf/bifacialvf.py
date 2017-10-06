@@ -25,29 +25,29 @@ import math
 import csv
 import pvlib
 import os
-#import sys 
-#sys.path.insert(0, '../BF_BifacialIrradiances')
+
 from vf import getBackSurfaceIrradiances, getFrontSurfaceIrradiances, getGroundShadeFactors
 from vf import getSkyConfigurationFactors, trackingBFvaluescalculator, rowSpacing
 from sun import hrSolarPos, perezComp, solarPos, sunIncident
 import pandas as pd
 
 
-def simulate(TMYtoread, writefiletitle,  beta, sazm, C = 1, D = None,
+def simulate(TMYtoread, writefiletitle,  beta = 0, sazm = 180, C = 0.5, D = None,
              rowType = 'interior', transFactor = 0.01, cellRows = 6, 
-             PVfrontSurface = 'glass', PVbackSurface = 'glass',  albedo = 0.62,  
-             tracking = False, backtrack = True, rtr = None, Cv= 0.05, offset = 0):
+             PVfrontSurface = 'glass', PVbackSurface = 'glass',  albedo = 0.2,  
+             tracking = False, backtrack = True, rtr = None, Cv = None, offset = 0):
 
         if tracking == True:
             axis_tilt = 0  # algorithm only allows for zero north-south tilt with SAT
             max_angle=90  # maximum tracker rotation 
             axis_azimuth=sazm    # axis_azimuth is degrees east of North
-            beta = 0
+            beta = 0            # start with tracker tilt = 0
+            hub_height = C      # Ground clearance at tilt = 0.  C >= 0.5
         
         if (D == None) & (rtr != None):
-            D = rtr - math.cos(beta)
+            D = rtr - math.cos(beta / 180.0 * math.pi)
         elif (rtr == None) & (D != None):
-            rtr = D + math.cos(beta)
+            rtr = D + math.cos(beta / 180.0 * math.pi)
         elif (D == None) & (rtr == None):
             raise Exception('No row distance specified in either D or rtr') 
         else:
@@ -69,7 +69,7 @@ def simulate(TMYtoread, writefiletitle,  beta, sazm, C = 1, D = None,
         print "Running Simulation for TMY3: ", TMYtoread
         print "Location:  ", name
         print "Lat: ", lat, " Long: ", lng, " Tz ", tz
-        print "Parameters: beta: ", beta, "  Sazm: ", sazm, "  Height: ", C, "  D separation: ", D, "  Row type: ", rowType, "  Albedo: ", albedo
+        print "Parameters: beta: ", beta, "  Sazm: ", sazm, "  Height: ", C, "  rtr separation: ", rtr, "  Row type: ", rowType, "  Albedo: ", albedo
         print "Saving into", writefiletitle
         print " "
         print " "
@@ -94,23 +94,12 @@ def simulate(TMYtoread, writefiletitle,  beta, sazm, C = 1, D = None,
             sw = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
             # Write Simulation Parameters (from setup file)
             
-            if tracking==True:
-                Ctype='Vertical GroundClearance(panel slope lengths) Cv'
-                Dtype='Row-to-Row-Distance rtr'
-                Ctypevar=Cv
-                Dtypevar=rtr
-            else:
-                Ctype='GroundClearance(panel slope lengths)'
-                Dtype='DistanceBetweenRows(panel slope lengths)'
-                Ctypevar=C
-                Dtypevar=D
-
             outputheader=['Latitude(deg)','Longitude(deg)', 'Time Zone','Tilt(deg)', 
-                         'PV Azimuth(deg)',Ctype, Dtype, 'RowType(first interior last single)',
+                         'PV Azimuth(deg)','GroundClearance(panel slope lengths)', 'Row-to-Row-Distance rtr', 'RowType(first interior last single)',
                          'TransmissionFactor(open area fraction)','CellRows(# hor rows in panel)', 
                          'PVfrontSurface(glass or AR glass)', 'PVbackSurface(glass or AR glass)',
                          'CellOffsetFromBack(panel slope lengths)','Albedo',  'Tracking']
-            outputheadervars=[lat, lng, tz, beta, sazm, Ctypevar, Dtypevar, rowType, transFactor, cellRows, PVfrontSurface,
+            outputheadervars=[lat, lng, tz, beta, sazm, C, rtr, rowType, transFactor, cellRows, PVfrontSurface,
                              PVbackSurface, offset, albedo, tracking]
             
             
@@ -139,6 +128,7 @@ def simulate(TMYtoread, writefiletitle,  beta, sazm, C = 1, D = None,
                 print " ***** IMPORTANT --> THIS SIMULATION Has Tracking Activated"
                 print "Backtracking Option is set to: ", backtrack
                 outputtitles+=['beta']
+                outputtitles+=['sazm']
                 outputtitles+=['height']
                 outputtitles+=['D']
                     
@@ -187,8 +177,8 @@ def simulate(TMYtoread, writefiletitle,  beta, sazm, C = 1, D = None,
                         #solpos = pvlib.solarposition.get_solarposition(myTimestamp, lat, lng)
                         #aazi= solpos['azimuth']
                         #azen= solpos['zenith']
-                        aazi = pd.Series([azm*180/math.pi], index =[myTimestamp])                        
-                        azen = pd.Series([zen*180/math.pi], index =[myTimestamp])
+                        aazi = pd.Series([azm*180.0/math.pi], index =[myTimestamp])                        
+                        azen = pd.Series([zen*180.0/math.pi], index =[myTimestamp])
 
 
                         
@@ -205,7 +195,7 @@ def simulate(TMYtoread, writefiletitle,  beta, sazm, C = 1, D = None,
                             #sazm = sazm+180    # Rotate detectors
                             beta = -beta;
                             
-                        [C, D] = trackingBFvaluescalculator(beta, Cv, rtr)
+                        [C, D] = trackingBFvaluescalculator(beta, hub_height, rtr)
                         [rearSkyConfigFactors, frontSkyConfigFactors, ffConfigFactors] = getSkyConfigurationFactors(rowType, beta, C, D);       ## Sky configuration factors are the same for all times, only based on geometry and row type
     
     
@@ -278,6 +268,7 @@ def simulate(TMYtoread, writefiletitle,  beta, sazm, C = 1, D = None,
                     
                     if tracking==True:
                         outputvalues.append(beta)
+                        outputvalues.append(sazm)
                         outputvalues.append(C)
                         outputvalues.append(D)
                                     
@@ -294,8 +285,8 @@ def simulate(TMYtoread, writefiletitle,  beta, sazm, C = 1, D = None,
         return;
         
 if __name__ == "__main__":    
-    import time
-    start_time = time.time()
+    #import time
+    #start_time = time.time()
 
 
     beta = 10                   # PV tilt (deg)
@@ -314,16 +305,15 @@ if __name__ == "__main__":
     # Tracking instructions
     tracking=False
     backtrack=True
-    rtr = 1.5                   # row to row spacing in normalized panel lengths. This input is not used (D is used instead) except for in tracking
-    Cv = 0.05                  # GroundClearance when panel is in vertical position (panel slope lengths). 
+    rtr = 1.5                   # row to row spacing in normalized panel lengths. 
 
     TMYtoread="data/724010TYA.csv"   # VA Richmond
     writefiletitle="data/Output/TEST.csv"
     
-    simulate(TMYtoread, writefiletitle, beta, sazm, 
-                C, D, rowType= rowType, transFactor= transFactor, cellRows= cellRows, 
+    simulate(TMYtoread, writefiletitle, beta, sazm, C, rtr= rtr, 
+                rowType= rowType, transFactor= transFactor, cellRows= cellRows, 
                 PVfrontSurface= PVfrontSurface, PVbackSurface= PVbackSurface,   
-                albedo= albedo, tracking= tracking, backtrack= backtrack, rtr= rtr, Cv= Cv)
+                albedo= albedo, tracking= tracking, backtrack= backtrack)
     
     #Load the results from the resultfile
     from loadVFresults import loadVFresults
@@ -336,5 +326,5 @@ if __name__ == "__main__":
     # Print the annual bifacial ratio.
     frontIrrSum = data['GTIFrontavg'].sum()
     backIrrSum = data['GTIBackavg'].sum()
-    print('The bifacial ratio for ground clearance {} and row gap {} is: {:.1f}%'.format(C,D,backIrrSum/frontIrrSum*100))
-    print("--- %s seconds ---" % (time.time() - start_time))
+    print('The bifacial ratio for ground clearance {} and rtr spacing {} is: {:.1f}%'.format(C,rtr,backIrrSum/frontIrrSum*100))
+    #print("--- %s seconds ---" % (time.time() - start_time))

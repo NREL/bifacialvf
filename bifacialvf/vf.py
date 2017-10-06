@@ -1396,9 +1396,9 @@ def rowSpacing(beta, sazm, lat, lng, tz, hour, minute):
     return D;
 # End of RowSpacing  
     
-def trackingBFvaluescalculator(beta, Cv, r2r):
+def trackingBFvaluescalculator(beta, hub_height, r2r):
     '''
-    C, D = trackingBFvaluescalculator(beta, Cv, r2r)
+    C, D = trackingBFvaluescalculator(beta, hub_height, r2r)
     
     1-axis tracking helper file to calculate C = ground clearance of PV panel and D = row-to-row distance
     (each in PV panel slope lengths)
@@ -1413,7 +1413,7 @@ def trackingBFvaluescalculator(beta, Cv, r2r):
     #rtr = D + x1;                # Row-to-row distance (in PV panel slope lengths)
     D = r2r - x1;                # Calculates D DistanceBetweenRows(panel slope lengths)
     hm = 0.5*math.sin(beta);        # vertical distance from bottom of panel to top of panel (in PV panel slope lengths)
-    C = 0.5+Cv-hm               # Ground clearance of PV panel (in PV panel slope lengths). 
-                                #Adding a 0.5 for half a panel slope length, since it is assumed the panel is rotating around its middle axis 
+    #C = 0.5+Cv-hm               # Ground clearance of PV panel (in PV panel slope lengths). 
+    C = hub_height - hm          #Adding a 0.5 for half a panel slope length, since it is assumed the panel is rotating around its middle axis 
 
     return C, D;

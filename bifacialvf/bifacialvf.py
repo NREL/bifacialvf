@@ -30,16 +30,21 @@ import os
 from vf import getBackSurfaceIrradiances, getFrontSurfaceIrradiances, getGroundShadeFactors
 from vf import getSkyConfigurationFactors, trackingBFvaluescalculator, rowSpacing
 from sun import hrSolarPos, perezComp, solarPos, sunIncident
+import pandas as pd
 
-
+def rtr2D(rtr,beta):
+    D = rtr - math.cos(beta)
+    return D
 
 def simulate(TMYtoread, writefiletitle,  beta, sazm, C = 1, D = 0.5,
              rowType = 'interior', transFactor = 0.01, cellRows = 6, 
              PVfrontSurface = 'glass', PVbackSurface = 'glass',  albedo = 0.62,  
-             tracking = False, backtrack = True, r2r = 1.5, Cv= 0.05, offset = 0):
+             tracking = False, backtrack = True, r2r = 1.515, Cv= 0.05, offset = 0):
 
         if tracking == True:
-            beta = 0  # algorithm only allows for zero north-south tilt with SAT
+            axis_tilt = 0  # algorithm only allows for zero north-south tilt with SAT
+            max_angle=90  # maximum tracker rotation 
+            axis_azimuth=sazm    # axis_azimuth is degrees east of North
         ## Read TMY3 data and start loop ~  
         (myTMY3,meta)=pvlib.tmy.readtmy3(TMYtoread)
         #myAxisTitles=myTMY3.axes
@@ -157,7 +162,7 @@ def simulate(TMYtoread, writefiletitle,  beta, sazm, C = 1, D = 0.5,
                     azm, zen, elv, dec, sunrise, sunset, Eo, tst, suntime = hrSolarPos(year, month, day, hour, lat, lng, tz)
                     
                 elif (dataInterval == 1 or dataInterval == 5 or dataInterval == 15):
-                    azm, zen, elv, dec, sunrise, sunset, Eo, tst = solarPos(year, month, day, hour, minute - 0.5 * dataInterval, lat, lng, tz)
+                    azm, zen, elv, dec, sunrise, sunset, Eo, tst = solarPos(year, month, day, hour, minute - 0.5 * dataInterval, lat, lng, tz) 
                 else :  
                     print("ERROR: data interval not 1, 5, 15, or 60 minutes.");
             
@@ -173,55 +178,28 @@ def simulate(TMYtoread, writefiletitle,  beta, sazm, C = 1, D = 0.5,
                     
                     # TRACKING ROUTINE CALULATING GETSKYCONFIGURATION FACTORS
                     if tracking == True:        
-                    
-                        daystr=str(day)
-                        if day<10:
-                            daystr="0"+str(day)
-                            
-                        monthstr=str(month)
-                        if month<10:
-                            monthstr="0"+str(month)
-                            
-                        hourstr = str(hour)
-                        if hour<10:
-                            hourstr="0"+str(hour)
-                            
-                        minutestr=str(minute)
-                        if minute<10:
-                            minutestr="0"+str(minute)
                         
-                        if tz >= 0 and tz < 10:
-                            tzstr="+0"+str(int(tz))
-                        if tz >= 10:
-                            tzstr="+"+str(tz)
-                        if tz <0 and tz>-10:
-                            tzstr="-0"+str(abs(int(tz)))
-                        if tz<=-10:
-                            tzstr=str(int(tz))
-                            
-                        times_loc=str(year)+"-"+monthstr+"-"+daystr+" "+hourstr+":"+minutestr+":00"+tzstr+":00"
-        
-                        solpos = pvlib.solarposition.get_solarposition(times_loc, lat, lng)
-                        aazi= solpos['azimuth']
-                        azen= solpos['apparent_zenith']
-                        axis_tilt = 0
-                        axis_azimuth=sazm   # 180 axis N-S
-                        max_angle=180
+                        #solpos = pvlib.solarposition.get_solarposition(myTimestamp, lat, lng)
+                        #aazi= solpos['azimuth']
+                        #azen= solpos['zenith']
+                        aazi = pd.Series([azm*180/math.pi], index =[myTimestamp])                        
+                        azen = pd.Series([zen*180/math.pi], index =[myTimestamp])
+
+
                         
-                        gcr=0.2857142857142857  # A value denoting the ground coverage ratio of a tracker system which utilizes backtracking; i.e. the ratio between the PV array surface area to total ground area. A tracker system with modules 2 meters wide, centered on the tracking axis, with 6 meters between the tracking axes has a gcr of 2/6=0.333. If gcr is not provided, a gcr of 2/7 is default. gcr must be <=1.
+                        gcr=1/r2r  
                         trackingdata = pvlib.tracking.singleaxis(azen, aazi, axis_tilt, axis_azimuth, max_angle, backtrack, gcr)
                                  ## Sky configuration factors are not the same for all times, since the geometry is changing with the tracking.
                         beta=trackingdata.iloc[0][3] # Trackingdata tracker_theta
-                        
+                        sazm = trackingdata.iloc[0][2]
                         if math.isnan(beta):
                             beta=90
-                        #print beta
     
                         # Rotate system if past sun's zenith ~ #123 Check if system breaks withot doing this.
                         if beta<0:
-                            sazm = sazm+180    # Rotate detectors
+                            #sazm = sazm+180    # Rotate detectors
                             beta = -beta;
-                            rotatedetectors = True                  
+                            
                         [C, D] = trackingBFvaluescalculator(beta, Cv, r2r)
                         [rearSkyConfigFactors, frontSkyConfigFactors, ffConfigFactors] = getSkyConfigurationFactors(rowType, beta, C, D);       ## Sky configuration factors are the same for all times, only based on geometry and row type
     
@@ -311,6 +289,9 @@ def simulate(TMYtoread, writefiletitle,  beta, sazm, C = 1, D = 0.5,
         return;
         
 if __name__ == "__main__":    
+    import time
+    start_time = time.time()
+
 
     beta = 10                   # PV tilt (deg)
     sazm = 180                  # PV Azimuth(deg)
@@ -321,12 +302,12 @@ if __name__ == "__main__":
     cellRows = 6                # CellRows(# hor rows in panel)   <--> THIS IS FOR LANDSCAPE, YINLI MODEL
     PVfrontSurface = "glass"    #PVfrontSurface(glass or AR glass)
     PVbackSurface = "glass"     # PVbackSurface(glass or AR glass)
-    albedo = 0.62               # albedo
+    albedo = 0.2               # albedo
     #dataInterval = 60           # DataInterval(minutes)
     
     
     # Tracking instructions
-    tracking=False
+    tracking=True
     backtrack=True
     r2r = 1.5                   # normalized panel lengths. This input is not used (D is used instead) except for in tracking
     Cv = 0.05                  # GroundClearance when panel is in vertical position (panel slope lengths)
@@ -351,3 +332,4 @@ if __name__ == "__main__":
     frontIrrSum = data['GTIFrontavg'].sum()
     backIrrSum = data['GTIBackavg'].sum()
     print('The bifacial ratio for ground clearance {} and row gap {} is: {:.1f}%'.format(C,D,backIrrSum/frontIrrSum*100))
+    print("--- %s seconds ---" % (time.time() - start_time))

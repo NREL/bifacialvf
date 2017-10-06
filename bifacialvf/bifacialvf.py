@@ -32,19 +32,27 @@ from vf import getSkyConfigurationFactors, trackingBFvaluescalculator, rowSpacin
 from sun import hrSolarPos, perezComp, solarPos, sunIncident
 import pandas as pd
 
-def rtr2D(rtr,beta):
-    D = rtr - math.cos(beta)
-    return D
 
-def simulate(TMYtoread, writefiletitle,  beta, sazm, C = 1, D = 0.5,
+def simulate(TMYtoread, writefiletitle,  beta, sazm, C = 1, D = None,
              rowType = 'interior', transFactor = 0.01, cellRows = 6, 
              PVfrontSurface = 'glass', PVbackSurface = 'glass',  albedo = 0.62,  
-             tracking = False, backtrack = True, r2r = 1.515, Cv= 0.05, offset = 0):
+             tracking = False, backtrack = True, rtr = None, Cv= 0.05, offset = 0):
 
         if tracking == True:
             axis_tilt = 0  # algorithm only allows for zero north-south tilt with SAT
             max_angle=90  # maximum tracker rotation 
             axis_azimuth=sazm    # axis_azimuth is degrees east of North
+            beta = 0
+        
+        if (D == None) & (rtr != None):
+            D = rtr - math.cos(beta)
+        elif (rtr == None) & (D != None):
+            rtr = D + math.cos(beta)
+        elif (D == None) & (rtr == None):
+            raise Exception('No row distance specified in either D or rtr') 
+        else:
+            print('Warning: Gap D and rtr passed in. Using ' + ('rtr' if tracking else 'D') )
+        
         ## Read TMY3 data and start loop ~  
         (myTMY3,meta)=pvlib.tmy.readtmy3(TMYtoread)
         #myAxisTitles=myTMY3.axes
@@ -90,7 +98,7 @@ def simulate(TMYtoread, writefiletitle,  beta, sazm, C = 1, D = 0.5,
                 Ctype='Vertical GroundClearance(panel slope lengths) Cv'
                 Dtype='Row-to-Row-Distance rtr'
                 Ctypevar=Cv
-                Dtypevar=r2r
+                Dtypevar=rtr
             else:
                 Ctype='GroundClearance(panel slope lengths)'
                 Dtype='DistanceBetweenRows(panel slope lengths)'
@@ -140,10 +148,7 @@ def simulate(TMYtoread, writefiletitle,  beta, sazm, C = 1, D = 0.5,
             rl = 0
             
             while (rl < noRows):
-            #while (rl < 8):   # Test while
-            #    rl = 8   # Test value
-            
-
+          
                 myTimestamp=myTMY3.index[rl]
                 year = myTimestamp.year
                 month = myTimestamp.month
@@ -187,7 +192,7 @@ def simulate(TMYtoread, writefiletitle,  beta, sazm, C = 1, D = 0.5,
 
 
                         
-                        gcr=1/r2r  
+                        gcr=1/rtr  
                         trackingdata = pvlib.tracking.singleaxis(azen, aazi, axis_tilt, axis_azimuth, max_angle, backtrack, gcr)
                                  ## Sky configuration factors are not the same for all times, since the geometry is changing with the tracking.
                         beta=trackingdata['surface_tilt'][0] # Trackingdata tracker_theta
@@ -200,7 +205,7 @@ def simulate(TMYtoread, writefiletitle,  beta, sazm, C = 1, D = 0.5,
                             #sazm = sazm+180    # Rotate detectors
                             beta = -beta;
                             
-                        [C, D] = trackingBFvaluescalculator(beta, Cv, r2r)
+                        [C, D] = trackingBFvaluescalculator(beta, Cv, rtr)
                         [rearSkyConfigFactors, frontSkyConfigFactors, ffConfigFactors] = getSkyConfigurationFactors(rowType, beta, C, D);       ## Sky configuration factors are the same for all times, only based on geometry and row type
     
     
@@ -309,7 +314,7 @@ if __name__ == "__main__":
     # Tracking instructions
     tracking=False
     backtrack=True
-    r2r = 1.5                   # row to row spacing in normalized panel lengths. This input is not used (D is used instead) except for in tracking
+    rtr = 1.5                   # row to row spacing in normalized panel lengths. This input is not used (D is used instead) except for in tracking
     Cv = 0.05                  # GroundClearance when panel is in vertical position (panel slope lengths). 
 
     TMYtoread="data/724010TYA.csv"   # VA Richmond
@@ -318,7 +323,7 @@ if __name__ == "__main__":
     simulate(TMYtoread, writefiletitle, beta, sazm, 
                 C, D, rowType= rowType, transFactor= transFactor, cellRows= cellRows, 
                 PVfrontSurface= PVfrontSurface, PVbackSurface= PVbackSurface,   
-                albedo= albedo, tracking= tracking, backtrack= backtrack, r2r= r2r, Cv= Cv)
+                albedo= albedo, tracking= tracking, backtrack= backtrack, rtr= rtr, Cv= Cv)
     
     #Load the results from the resultfile
     from loadVFresults import loadVFresults

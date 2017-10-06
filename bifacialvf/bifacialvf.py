@@ -39,10 +39,12 @@ def simulate(TMYtoread, writefiletitle,  beta = 0, sazm = 180, C = 0.5, D = None
 
         if tracking == True:
             axis_tilt = 0  # algorithm only allows for zero north-south tilt with SAT
-            max_angle=90  # maximum tracker rotation 
+            max_angle = 90  # maximum tracker rotation 
             axis_azimuth=sazm    # axis_azimuth is degrees east of North
             beta = 0            # start with tracker tilt = 0
             hub_height = C      # Ground clearance at tilt = 0.  C >= 0.5
+            if hub_height < 0.5:
+                print('Warning: tracker hub height C < 0.5 may result in ground clearance errors')
         
         if (D == None) & (rtr != None):
             D = rtr - math.cos(beta / 180.0 * math.pi)
@@ -291,7 +293,7 @@ if __name__ == "__main__":
 
     beta = 10                   # PV tilt (deg)
     sazm = 180                  # PV Azimuth(deg) or tracker axis direction
-    C = 1                      # GroundClearance(panel slope lengths)
+    C = 1                      # GroundClearance(panel slope lengths). For tracking this is tilt = 0 hub height 
     D = 0.51519                 # DistanceBetweenRows(panel slope lengths)
     rowType = "interior"        # RowType(first interior last single)
     transFactor = 0.013         # TransmissionFactor(open area fraction)

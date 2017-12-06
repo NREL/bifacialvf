@@ -35,11 +35,11 @@ import pandas as pd
 def simulate(TMYtoread, writefiletitle,  beta = 0, sazm = 180, C = 0.5, D = None,
              rowType = 'interior', transFactor = 0.01, cellRows = 6, 
              PVfrontSurface = 'glass', PVbackSurface = 'glass',  albedo = 0.2,  
-             tracking = False, backtrack = True, rtr = None, Cv = None, offset = 0):
+             tracking = False, backtrack = True, rtr = None, Cv = None, offset = 0, max_angle = 45):
 
         if tracking == True:
             axis_tilt = 0  # algorithm only allows for zero north-south tilt with SAT
-            max_angle = 90  # maximum tracker rotation 
+            #max_angle = 45  # maximum tracker rotation 
             axis_azimuth=sazm    # axis_azimuth is degrees east of North
             beta = 0            # start with tracker tilt = 0
             hub_height = C      # Ground clearance at tilt = 0.  C >= 0.5

@@ -1065,10 +1065,10 @@ def simulatepvDAQ(pvDAQ, writefiletitle,  beta = 0, sazm = 180, C = 0.5, D = Non
     
 def readOTFMeasuredFile(OTF_Filetitle, decimate= True, decimatestyle = "Mean" , decimatevalue = 5 ):      
     
-    OTF_Filetitle= "data\COMPLETE_OTF_Roof_Irrad.csv"
-    decimate= False
-    decimatestyle = "Mean"
-    decimatevalue = 5
+#    OTF_Filetitle= "data\COMPLETE_OTF_Roof_Irrad.csv"
+#    decimate= False
+#    decimatestyle = "Mean"
+#    decimatevalue = 5
     
     # decimatestyle = "Mean" or "Skip"
     day_all = []; month_all = []; year_all = []; hour_all = []; minute_all= []
@@ -1172,3 +1172,113 @@ def readOTFMeasuredFile(OTF_Filetitle, decimate= True, decimatestyle = "Mean" , 
 
     return OTF;                 
 
+
+def readSetupResult(SetupResult_Filetitle, decimate= False, decimatestyle = "Mean" , decimatevalue = 5 ):      
+
+    
+    # decimatestyle = "Mean" or "Skip"
+    day_all = []; month_all = []; year_all = []; hour_all = []; minute_all= []
+    myTimestamp_all = [];
+    IMT1_all = []; IMT2_all = []; IMT3_all = []; IMT4_all = []; IMT5_all = []; IMT6_all = []
+    GTIFrontavg_all=[]; GTIBackavg_all=[]
+    
+    headeracquired= 0
+    headererror = 0
+    
+    Yearloc = 1
+    Monthloc = 2
+    Dayloc = 3
+    Hourloc = 4
+    Minuteloc = 5
+    DNIloc = 6
+    DHIloc = 7
+    ghiloc = 9
+    IMT1loc = 22
+    IMT2loc = 23
+    IMT3loc = 24
+    IMT4loc = 25
+    IMT5loc = 26
+    IMT6loc = 27
+    GTIFrontavgloc = 28
+    GTIBackavgloc = 29
+        
+    with open(SetupResult_Filetitle, "r") as filestream:
+    
+        print "Reading OTF File: ", SetupResult_Filetitle
+        print "Decimation options: ", decimate
+        if decimate == True:
+            print "Decimate Style: ", decimatestyle, " to interval ", decimatevalue, " minutes."
+            
+        for line in filestream:
+            if headeracquired == 0:
+                header = line.split(",")
+                        
+                if header[Yearloc] != 'Year': print "Issue reading" + header [Yearloc] ; headererror = 1
+                if header[IMT1loc] != 'IMT1': print "Issue reading" + header [IMT1loc] ; headererror = 1
+    
+                headeracquired = 1
+                
+                if headererror == 1:
+                    print "STOPPING File Read because of headers issue"
+                    continue
+                
+            else:
+                
+                if headererror == 1:
+                    continue
+            
+                currentline=line.split(",")                
+                
+                year = int(currentline[Yearloc])
+                month = int(currentline[Monthloc])
+                day = int(currentline[Dayloc])
+                hour = int(currentline[Hourloc])
+                minute = int(currentline[Minuteloc])
+    
+                if decimate == True:
+                    if decimatestyle == "Skip":
+                        if minute%decimatevalue != 0:
+                              continue
+                
+                IMT1_all.append(float(currentline[IMT1loc]))
+                IMT2_all.append(float(currentline[IMT2loc]))
+                IMT3_all.append(float(currentline[IMT3loc]))
+                IMT4_all.append(float(currentline[IMT4loc]))
+                IMT5_all.append(float(currentline[IMT5loc]))
+                IMT6_all.append(float(currentline[IMT6loc]))
+                GTIFrontavg_all.append(float(currentline[GTIFrontavgloc]))
+                GTIBackavg_all.append(float(currentline[GTIBackavgloc]))
+                day_all.append(day)
+                month_all.append(month)
+                year_all.append(year)
+                hour_all.append(hour)
+                minute_all.append(minute)
+                myTimestamp=datetime.datetime(year, month, day, hour, minute, 0, 0)                
+                myTimestamp_all.append(myTimestamp)
+                
+    SetupResults = ({'Month_M': month_all, 'Day_M': day_all, 'Year_M': year_all, 'Hour_M': hour_all, 'Minute_M': minute_all,
+                 'IMT1_M': IMT1_all, 'IMT2_M': IMT2_all, 'IMT3_M': IMT3_all, 'IMT4_M': IMT4_all, 'IMT5_M': IMT5_all, 'IMT6_M': IMT6_all,
+                 'GTIFrontavg_M': GTIFrontavg_all, 'GTIBackavg_M': GTIBackavg_all})
+    
+    SetupResults = pd.DataFrame.from_records(SetupResults, index=myTimestamp_all)
+    
+    
+    if decimate == True:
+        if decimatestyle == "Mean":
+            if decimatevalue == 5:
+                    SetupResults=SetupResults.resample('5Min', base=0).mean()
+                    print "Data decimated to 5 min Interval by Average"
+    
+            if decimatevalue == 10:
+                    SetupResults=SetupResults.resample('10Min').mean()
+                    print "Data decimated to 10 min Interval by Average"
+    
+            if decimatevalue == 15:
+                    SetupResults=SetupResults.resample('15Min').mean()
+                    print "Data decimated to 15 min Interval by Average"
+    
+            if decimatevalue == 60:
+                    SetupResults=SetupResults.resample('60Min').mean()
+                    print "Data decimated to 1 Hr Interval by Average"
+
+    return SetupResults;   

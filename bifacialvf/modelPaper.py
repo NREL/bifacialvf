@@ -1204,7 +1204,7 @@ def readSetupResult(SetupResult_Filetitle, decimate= False, decimatestyle = "Mea
         
     with open(SetupResult_Filetitle, "r") as filestream:
     
-        print "Reading OTF File: ", SetupResult_Filetitle
+        print "Reading VF Setup Result File: ", SetupResult_Filetitle
         print "Decimation options: ", decimate
         if decimate == True:
             print "Decimate Style: ", decimatestyle, " to interval ", decimatevalue, " minutes."
@@ -1259,6 +1259,111 @@ def readSetupResult(SetupResult_Filetitle, decimate= False, decimatestyle = "Mea
     SetupResults = ({'Month_M': month_all, 'Day_M': day_all, 'Year_M': year_all, 'Hour_M': hour_all, 'Minute_M': minute_all,
                  'IMT1_M': IMT1_all, 'IMT2_M': IMT2_all, 'IMT3_M': IMT3_all, 'IMT4_M': IMT4_all, 'IMT5_M': IMT5_all, 'IMT6_M': IMT6_all,
                  'GTIFrontavg_M': GTIFrontavg_all, 'GTIBackavg_M': GTIBackavg_all})
+    
+    SetupResults = pd.DataFrame.from_records(SetupResults, index=myTimestamp_all)
+    
+    
+    if decimate == True:
+        if decimatestyle == "Mean":
+            if decimatevalue == 5:
+                    SetupResults=SetupResults.resample('5Min', base=0).mean()
+                    print "Data decimated to 5 min Interval by Average"
+    
+            if decimatevalue == 10:
+                    SetupResults=SetupResults.resample('10Min').mean()
+                    print "Data decimated to 10 min Interval by Average"
+    
+            if decimatevalue == 15:
+                    SetupResults=SetupResults.resample('15Min').mean()
+                    print "Data decimated to 15 min Interval by Average"
+    
+            if decimatevalue == 60:
+                    SetupResults=SetupResults.resample('60Min').mean()
+                    print "Data decimated to 1 Hr Interval by Average"
+
+    return SetupResults;   
+
+def readRadSetupResult(RadSetupResult_Filetitle, decimate= False, decimatestyle = "Mean" , decimatevalue = 5 ):      
+
+    
+    # decimatestyle = "Mean" or "Skip"
+    day_all = []; month_all = []; year_all = []; hour_all = []; minute_all= []
+    myTimestamp_all = [];
+    IMT1_all = []; IMT2_all = []; IMT3_all = []; IMT4_all = []; IMT5_all = []; IMT6_all = []
+   
+    headeracquired= 0
+    headererror = 0
+    
+    Yearloc = 0
+    Monthloc = 1
+    Dayloc = 2
+    Hourloc = 3
+    Minuteloc = 4
+    DNIloc = 5
+    DHIloc = 6
+    Tambloc= 7
+    VWindloc= 8
+    IMT1loc = 9
+    IMT2loc = 10
+    IMT3loc = 11
+    IMT4loc = 12
+    IMT5loc = 13
+    IMT6loc = 14
+        
+    with open(RadSetupResult_Filetitle, "r") as filestream:
+    
+        print "Reading Rad Setup Result File: ", RadSetupResult_Filetitle
+        print "Decimation options: ", decimate
+        if decimate == True:
+            print "Decimate Style: ", decimatestyle, " to interval ", decimatevalue, " minutes."
+            
+        for line in filestream:
+            if headeracquired == 0:
+                header = line.split(",")
+                        
+                if header[Yearloc] != 'Year': print "Issue reading" + header [Yearloc] ; headererror = 1
+                if header[IMT1loc] != 'IMT1_Rad': print "Issue reading" + header [IMT1loc] ; headererror = 1
+    
+                headeracquired = 1
+                
+                if headererror == 1:
+                    print "STOPPING File Read because of headers issue"
+                    continue
+                
+            else:
+                
+                if headererror == 1:
+                    continue
+            
+                currentline=line.split(",")                
+                
+                year = int(currentline[Yearloc])
+                month = int(currentline[Monthloc])
+                day = int(currentline[Dayloc])
+                hour = int(currentline[Hourloc])
+                minute = int(currentline[Minuteloc])-2
+    
+                if decimate == True:
+                    if decimatestyle == "Skip":
+                        if minute%decimatevalue != 0:
+                              continue
+                
+                IMT1_all.append(float(currentline[IMT1loc]))
+                IMT2_all.append(float(currentline[IMT2loc]))
+                IMT3_all.append(float(currentline[IMT3loc]))
+                IMT4_all.append(float(currentline[IMT4loc]))
+                IMT5_all.append(float(currentline[IMT5loc]))
+                IMT6_all.append(float(currentline[IMT6loc]))
+                day_all.append(day)
+                month_all.append(month)
+                year_all.append(year)
+                hour_all.append(hour)
+                minute_all.append(minute)
+                myTimestamp=datetime.datetime(year, month, day, hour, minute, 0, 0)                
+                myTimestamp_all.append(myTimestamp)
+                
+    SetupResults = ({'Month_R': month_all, 'Day_R': day_all, 'Year_R': year_all, 'Hour_R': hour_all, 'Minute_R': minute_all,
+                 'IMT1_Rad': IMT1_all, 'IMT2_Rad': IMT2_all, 'IMT3_Rad': IMT3_all, 'IMT4_Rad': IMT4_all, 'IMT5_Rad': IMT5_all, 'IMT6_Rad': IMT6_all})
     
     SetupResults = pd.DataFrame.from_records(SetupResults, index=myTimestamp_all)
     

@@ -1364,7 +1364,7 @@ def getSkyConfigurationFactors(rowType, beta, C, D):
 def rowSpacing(beta, sazm, lat, lng, tz, hour, minute):
     # {double beta, double sazm, double lat, double lng, double tz, int hour, double minute)
     #            // This method determines the horizontal distance D between rows of PV panels (in PV module/panel slope lengths)
-    #            // for no shading on December 21 for a module tilt angle beta and surface azimuth sazm, and a given latitude,
+    #            // for no shading on December 21 (north hemisphere) June 21 (south hemisphere) for a module tilt angle beta and surface azimuth sazm, and a given latitude,
     #            // longitude, and time zone and for the time passed to the method (typically 9 am).
     #            // (REf: the row-to-row spacing is then D + cos(beta) )
     #            // 8/21/2015
@@ -1383,13 +1383,18 @@ def rowSpacing(beta, sazm, lat, lng, tz, hour, minute):
             
     beta = beta * math.pi / 180.0;     #// Tilt from horizontal of the PV modules/panels, in radians
     sazm = sazm * math.pi / 180.0;     #// Surface azimuth of PV module/pamels, in radians
-   
-    [azm, zen, elv, dec, sunrise, sunset, Eo, tst] = solarPos (2014, 12, 21, hour, minute, lat, lng, tz)
-    
+    if lat >= 0:
+        [azm, zen, elv, dec, sunrise, sunset, Eo, tst] = solarPos (2014, 12, 21, hour, minute, lat, lng, tz)
+    else:
+        [azm, zen, elv, dec, sunrise, sunset, Eo, tst] = solarPos (2014, 6, 20, hour, minute, lat, lng, tz)
     tst = 8.877  ##DLL Forced value
     minute -= 60.0 * (tst - hour);      # Adjust minute so sun position is calculated for a tst equal to the
       # time passed to the function
-    [azm, zen, elv, dec, sunrise, sunset, Eo, tst] = solarPos(2014, 12, 21, hour, minute, lat, lng, tz)
+
+    if lat >= 0:
+        [azm, zen, elv, dec, sunrise, sunset, Eo, tst] = solarPos(2014, 12, 21, hour, minute, lat, lng, tz)
+    else:
+        [azm, zen, elv, dec, sunrise, sunset, Eo, tst] = solarPos(2014, 6, 20, hour, minute, lat, lng, tz)
       
     # Console.WriteLine("tst = {0} azm = {1} elv = {2}", tst, azm * 180.0 / Math.PI, elv * 180.0 / Math.PI);
     D = math.cos(sazm - azm) * math.sin(beta) / math.tan(elv);

@@ -1386,7 +1386,7 @@ def rowSpacing(beta, sazm, lat, lng, tz, hour, minute):
     if lat >= 0:
         [azm, zen, elv, dec, sunrise, sunset, Eo, tst] = solarPos (2014, 12, 21, hour, minute, lat, lng, tz)
     else:
-        [azm, zen, elv, dec, sunrise, sunset, Eo, tst] = solarPos (2014, 6, 20, hour, minute, lat, lng, tz)
+        [azm, zen, elv, dec, sunrise, sunset, Eo, tst] = solarPos (2014, 6, 21, hour, minute, lat, lng, tz)
     tst = 8.877  ##DLL Forced value
     minute -= 60.0 * (tst - hour);      # Adjust minute so sun position is calculated for a tst equal to the
       # time passed to the function
@@ -1394,7 +1394,7 @@ def rowSpacing(beta, sazm, lat, lng, tz, hour, minute):
     if lat >= 0:
         [azm, zen, elv, dec, sunrise, sunset, Eo, tst] = solarPos(2014, 12, 21, hour, minute, lat, lng, tz)
     else:
-        [azm, zen, elv, dec, sunrise, sunset, Eo, tst] = solarPos(2014, 6, 20, hour, minute, lat, lng, tz)
+        [azm, zen, elv, dec, sunrise, sunset, Eo, tst] = solarPos(2014, 6, 21, hour, minute, lat, lng, tz)
       
     # Console.WriteLine("tst = {0} azm = {1} elv = {2}", tst, azm * 180.0 / Math.PI, elv * 180.0 / Math.PI);
     D = math.cos(sazm - azm) * math.sin(beta) / math.tan(elv);

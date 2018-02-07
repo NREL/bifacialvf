@@ -18,6 +18,8 @@ Single-axis tracking is supported, and hourly output files based on TMY inputs
 are saved.  Spatial nonuniformity is reported, with multiple rear-facing irradiances collected
 on the back of each module row.
 
+## Pre-requisites
+This software is written for Anaconda Python 2.7 which can be downloaded here: https://www.anaconda.com/download/
 
 ## Install using pip
 

@@ -24,7 +24,7 @@ This software is written for Anaconda Python 2.7 which can be downloaded here: h
 ## Install using pip
 
 1. Clone or download the bifacialvf repository.
-2. Navigate to repository: `cd bifacialvf`
+2. Navigate to the repository directory where setup.py is located: `cd bifacialvf-master`
 3. Install via pip: `pip install .`
 4. Alternate installation development mode: `pip install -e .`
 

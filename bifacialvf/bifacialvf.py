@@ -25,14 +25,14 @@ from __future__ import division, print_function  # ensure python3 compatible div
 import math
 import csv
 import pvlib
-import os, sys
+import os
 
 from vf import getBackSurfaceIrradiances, getFrontSurfaceIrradiances, getGroundShadeFactors
 from vf import getSkyConfigurationFactors, trackingBFvaluescalculator, rowSpacing
 from sun import hrSolarPos, perezComp, solarPos, sunIncident
 import pandas as pd
 
-#from builtins import str, range
+
 
 def simulate(TMYtoread, writefiletitle,  beta = 0, sazm = 180, C = 0.5, D = None,
              rowType = 'interior', transFactor = 0.01, cellRows = 6, 

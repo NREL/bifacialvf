@@ -20,17 +20,19 @@
         #          c. Calculate irradiance on back of PV module
              
 
+from __future__ import division, print_function  # ensure python3 compatible division and printing
  
 import math
 import csv
 import pvlib
-import os
+import os, sys
 
 from vf import getBackSurfaceIrradiances, getFrontSurfaceIrradiances, getGroundShadeFactors
 from vf import getSkyConfigurationFactors, trackingBFvaluescalculator, rowSpacing
 from sun import hrSolarPos, perezComp, solarPos, sunIncident
 import pandas as pd
 
+#from builtins import str, range
 
 def simulate(TMYtoread, writefiletitle,  beta = 0, sazm = 180, C = 0.5, D = None,
              rowType = 'interior', transFactor = 0.01, cellRows = 6, 
@@ -66,20 +68,20 @@ def simulate(TMYtoread, writefiletitle,  beta = 0, sazm = 180, C = 0.5, D = None
         dataInterval = (myTMY3.index[1]-myTMY3.index[0]).total_seconds()/60
     
         ## Distance between rows for no shading on Dec 21 at 9 am
-        print " "
-        print "********* "
-        print "Running Simulation for TMY3: ", TMYtoread
-        print "Location:  ", name
-        print "Lat: ", lat, " Long: ", lng, " Tz ", tz
-        print "Parameters: beta: ", beta, "  Sazm: ", sazm, "  Height: ", C, "  rtr separation: ", rtr, "  Row type: ", rowType, "  Albedo: ", albedo
-        print "Saving into", writefiletitle
-        print " "
-        print " "
+        print( " ")
+        print( "********* ")
+        print( "Running Simulation for TMY3: ", TMYtoread)
+        print( "Location:  ", name)
+        print( "Lat: ", lat, " Long: ", lng, " Tz ", tz)
+        print( "Parameters: beta: ", beta, "  Sazm: ", sazm, "  Height: ", C, "  rtr separation: ", rtr, "  Row type: ", rowType, "  Albedo: ", albedo)
+        print( "Saving into", writefiletitle)
+        print( " ")
+        print( " ")
         
         DD = rowSpacing(beta, sazm, lat, lng, tz, 9, 0.0);          ## Distance between rows for no shading on Dec 21 at 9 am
-        print "Distance between rows for no shading on Dec 21 at 9 am solar time = ", DD
-        print "Actual distance between rows = ", D  
-        print " "
+        print( "Distance between rows for no shading on Dec 21 at 9 am solar time = ", DD)
+        print( "Actual distance between rows = ", D  )
+        print( " ")
     
         if tracking==False:        
             ## Sky configuration factors are the same for all times, only based on geometry and row type
@@ -92,8 +94,8 @@ def simulate(TMYtoread, writefiletitle,  beta = 0, sazm = 180, C = 0.5, D = None
         if not os.path.exists(os.path.dirname(writefiletitle)):
             os.makedirs(os.path.dirname(writefiletitle))
         
-        with open (writefiletitle,'wb') as csvfile:
-            sw = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+        with open (writefiletitle,'w') as csvfile:
+            sw = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
             # Write Simulation Parameters (from setup file)
             
             outputheader=['Latitude(deg)','Longitude(deg)', 'Time Zone','Tilt(deg)', 
@@ -127,8 +129,8 @@ def simulate(TMYtoread, writefiletitle,  beta = 0, sazm = 180, C = 0.5, D = None
             outputtitles+=allrowfronts
             outputtitles+=allrowbacks
             if tracking == True:
-                print " ***** IMPORTANT --> THIS SIMULATION Has Tracking Activated"
-                print "Backtracking Option is set to: ", backtrack
+                print( " ***** IMPORTANT --> THIS SIMULATION Has Tracking Activated")
+                print( "Backtracking Option is set to: ", backtrack)
                 outputtitles+=['beta']
                 outputtitles+=['sazm']
                 outputtitles+=['height']
@@ -282,7 +284,7 @@ def simulate(TMYtoread, writefiletitle,  beta = 0, sazm = 180, C = 0.5, D = None
        # End of while strLine != null loop
        
      
-        print "Finished"
+        print( "Finished")
         
         return;
         

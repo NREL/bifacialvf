@@ -1,3 +1,5 @@
+# No longer updated:  visit github.com/NREL/bifacialvf for up-to-date versions
+
 # bifacialvf - Bifacial PV View Factor model
 python, configuration factor model
 

@@ -8,7 +8,7 @@ Sun module - solar helper files for bifacial-viewfactor
 
 """
 
-
+from __future__ import division, print_function # ensure python3 compatible division and printing
 import math
 
 
@@ -101,20 +101,20 @@ def hrSolarPos( year, month, day, hour, lat, lng, tz ):
       # Nighttime hour, sun never rises
    	suntime = 0.0;       # Fraction of hour with sunup
    	minute = 30.0;       # For determining solar position at midpoint of sunup period
-  	azm, zen, elv, dec, sunrise, sunset, Eo, tst = solarPos( year, month, day, hour-1, minute, lat, lng, tz )
+   	azm, zen, elv, dec, sunrise, sunset, Eo, tst = solarPos( year, month, day, hour-1, minute, lat, lng, tz )
   	
    elif( hour == int(pSunrise + 1.0) and int(sunset+50) - int(sunrise+50) == 24 ):
       # Apply offset to deal with negative numbers in if statement
    	# Sun sets and rises same hour, summer 
    	suntime = pSunset + 1.0 - pSunrise;
    	minute = 60.0*( 1.0 - 0.5*( float(hour) - pSunrise ) );
-  	azm, zen, elv, dec, sunrise, sunset, Eo, tst = solarPos( year, month, day, hour-1, minute, lat, lng, tz )
+   	azm, zen, elv, dec, sunrise, sunset, Eo, tst = solarPos( year, month, day, hour-1, minute, lat, lng, tz )
    	tmp = zen;
    	if( azm/DTOR < 180.0 ):
    		azm += 360.0*DTOR;
    	tmp2 = azm;
    	minute = 60.0*0.5*( pSunset - float(hour) + 1.0 );
-  	azm, zen, elv, dec, sunrise, sunset, Eo, tst = solarPos( year, month, day, hour-1, minute, lat, lng, tz )
+   	azm, zen, elv, dec, sunrise, sunset, Eo, tst = solarPos( year, month, day, hour-1, minute, lat, lng, tz )
    	tmp += zen;
    	tmp2 += azm;
    	zen = tmp/2.0;    # Zenith angle 
@@ -127,7 +127,7 @@ def hrSolarPos( year, month, day, hour, lat, lng, tz ):
    	# For zenith at mid-height
    	suntime = sunset - sunrise;
    	minute = 60.0*( pSunrise + 0.25*suntime - float(hour) + 1.0 );
-  	azm, zen, elv, dec, sunrise, sunset, Eo, tst = solarPos( year, month, day, hour-1, minute, lat, lng, tz )
+   	azm, zen, elv, dec, sunrise, sunset, Eo, tst = solarPos( year, month, day, hour-1, minute, lat, lng, tz )
    	tmp = zen;        # Save zenith
    	# For azimuth at midpoint
    	minute = 60.0*( pSunrise + 0.5*suntime - float(hour) + 1.0 );

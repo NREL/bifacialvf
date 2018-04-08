@@ -8,7 +8,7 @@ ViewFactor module - VF calculation helper files for bifacial-viewfactor
 """
 
 
-
+from __future__ import division, print_function # ensure python3 compatible division and printing
 import math
 import numpy
 from sun import solarPos, sunIncident, perezComp, aOIcorrection
@@ -515,11 +515,11 @@ def getFrontSurfaceIrradiances(rowType, maxShadow, PVfrontSurface, beta, sazm, d
             #    Console.WriteLine("ElvDown = 0", elvDOWN / dtor);
 
             if math.isnan(beta):
-                print "Beta is Nan"
+                print( "Beta is Nan")
             if math.isnan(elvUP):
-                print "elvUP is Nan"
+                print( "elvUP is Nan")
             if math.isnan((math.pi - beta - elvUP) / dtor):
-                print "division is Nan"
+                print( "division is Nan")
             
             
             iStopIso = int(round(numpy.float64((math.pi - beta - elvUP)) / dtor)) # Last whole degree in arc range that sees sky, first is 0
@@ -1094,12 +1094,12 @@ def getSkyConfigurationFactors(rowType, beta, C, D):
 
                 # Sanity check                
                 if ff3 < 0 :
-                    print "Ff3 less 0 in i", i
+                    print( "Ff3 less 0 in i", i)
                 if ff2 < 0 :
-                    print "Ff2 less 0 in i", i
+                    print( "Ff2 less 0 in i", i)
                
                 if ff1 < 0 :
-                    print "Ff1 less 0 in i", i
+                    print( "Ff1 less 0 in i", i)
 
                 ffpanel = ff1 + ff2 + ff3;
                 ffConfigFactors.append(ffpanel)

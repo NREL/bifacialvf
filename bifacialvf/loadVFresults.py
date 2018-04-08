@@ -5,7 +5,7 @@ Created on Thu Jun 15 14:18:48 2017
 
 
 """
-
+from __future__ import division, print_function # ensure python3 compatible division and printing
 import io
 try:
     from urllib2 import urlopen
@@ -56,7 +56,7 @@ def loadVFresults(filename=None):
 
     
     try:
-        csvdata = open(filename, 'rb')
+        csvdata = open(filename, 'r')
     except IOError:
         response = urlopen(filename)
         csvdata = io.StringIO(response.read().decode(errors='ignore'))

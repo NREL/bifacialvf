@@ -131,9 +131,10 @@ def simulate(TMYtoread=None, writefiletitle=None,  beta = 0, sazm = 180, C = 0.5
      
         ## Create WriteFile and write labels at this time
         
-        #check that the save directory exists
-        if not os.path.exists(os.path.dirname(writefiletitle)):
-            os.makedirs(os.path.dirname(writefiletitle))
+        #check that the save directory exists, unless it's in root
+        savedirectory = os.path.dirname(writefiletitle)
+        if ( (not os.path.exists()) and (savedirectory is not '')):
+            os.makedirs(savedirectory)
         
         with open (writefiletitle,'w') as csvfile:
             sw = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL, lineterminator='\n')

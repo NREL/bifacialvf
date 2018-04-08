@@ -133,7 +133,7 @@ def simulate(TMYtoread=None, writefiletitle=None,  beta = 0, sazm = 180, C = 0.5
     
         if tracking==False:        
             ## Sky configuration factors are the same for all times, only based on geometry and row type
-            [rearSkyConfigFactors, frontSkyConfigFactors, ffConfigFactors] = getSkyConfigurationFactors(rowType, beta, C, D);       ## Sky configuration factors are the same for all times, only based on geometry and row type
+            [rearSkyConfigFactors, frontSkyConfigFactors] = getSkyConfigurationFactors(rowType, beta, C, D);       ## Sky configuration factors are the same for all times, only based on geometry and row type
     
      
         ## Create WriteFile and write labels at this time
@@ -247,7 +247,7 @@ def simulate(TMYtoread=None, writefiletitle=None,  beta = 0, sazm = 180, C = 0.5
                             beta = -beta;
                             
                         [C, D] = trackingBFvaluescalculator(beta, hub_height, rtr)
-                        [rearSkyConfigFactors, frontSkyConfigFactors, ffConfigFactors] = getSkyConfigurationFactors(rowType, beta, C, D);       ## Sky configuration factors are the same for all times, only based on geometry and row type
+                        [rearSkyConfigFactors, frontSkyConfigFactors] = getSkyConfigurationFactors(rowType, beta, C, D);       ## Sky configuration factors are the same for all times, only based on geometry and row type
     
     
     

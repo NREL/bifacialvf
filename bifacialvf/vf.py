@@ -1017,7 +1017,7 @@ def getSkyConfigurationFactors(rowType, beta, C, D):
         # Returned Variables
         # rearSkyConfigFactors[100]    Sky configuration factors to rear of leading PVmodule edge (decimal fraction)
         # frontSkyConfigFactors[100]    Sky configuration factors to rear of leading PVmodule edge (decimal fraction)
-        # ffConfigFactors[100]        Form factor for each of the ground segments (decimal fraction)
+
 
         rearSkyConfigFactors = []
         frontSkyConfigFactors = []
@@ -1031,7 +1031,7 @@ def getSkyConfigurationFactors(rowType, beta, C, D):
             C=0.0000000001  # Forced fix for case of C = 0. , which for some reason the Config Factors go from 1 to 2 and not 0 to 1. Todo: investigate why this is happening in the code.
             
         if C < 0:
-            print("ERROR: Height is below grond level. Function GetSkyConfigurationFactors will continue but results might be unreliable");
+            print("ERROR: Height is below ground level. Function GetSkyConfigurationFactors will continue but results might be unreliable");
 
             
         # Divide the row-to-row spacing into 100 intervals and calculate configuration factors
@@ -1040,8 +1040,7 @@ def getSkyConfigurationFactors(rowType, beta, C, D):
         if (rowType == "interior"):
             x = -delta / 2.0;    # Initialize horizontal dimension x to provide midpoint of intervals
 
-            beta6all=[]
-            ffConfigFactors=[]
+            #beta6all=[]
             for i in range(0,100):
             # (int i = 0; i <= 99; i++):
             
@@ -1053,7 +1052,7 @@ def getSkyConfigurationFactors(rowType, beta, C, D):
                 if (angB < 0.0):
                     angB += math.pi;
                 beta1 = max(angA, angB);
-                minibeta=min(angA,angB);
+                #minibeta=min(angA,angB);
 
                 angA = math.atan((h + C) / (rtr + x1 - x));
                 if (angA < 0.0):
@@ -1076,7 +1075,7 @@ def getSkyConfigurationFactors(rowType, beta, C, D):
                 beta6 = math.atan((h + C) / (-D - x));
                 if (beta6 < 0.0):
                     beta6 += math.pi;
-                beta6all.append(beta6*180/math.pi)
+                #beta6all.append(beta6*180/math.pi)
                 sky1 =0; sky2 =0; sky3 =0;
                 if (beta2 > beta1):
                     sky1 = 0.5 * (math.cos(beta1) - math.cos(beta2));
@@ -1086,7 +1085,8 @@ def getSkyConfigurationFactors(rowType, beta, C, D):
                     sky3 = 0.5 * (math.cos(beta5) - math.cos(beta6));
                 skyAll = sky1 + sky2 + sky3;
                 
-                # Calculating Form Factors for PVSyst Comparison
+                # Calculating Form Factors for PVSyst Comparison - deprecated
+                '''
                 ff1 = 0; ff2 = 0; ff3 = 0
                 ff1 = 0.5 * (math.cos(beta4) - math.cos(beta5));
                 ff2 = (0.5 * (math.cos(beta2) - math.cos(beta3)));
@@ -1105,6 +1105,7 @@ def getSkyConfigurationFactors(rowType, beta, C, D):
                 ffConfigFactors.append(ffpanel)
                 #import matplotlib.pyplot as plt
                 #plt.plot(ffall); plt.ylim([0,1])
+                '''
                 
                 rearSkyConfigFactors.append(skyAll);    # Save as arrays of values, same for both to the rear and front
                 frontSkyConfigFactors.append(skyAll);
@@ -1289,8 +1290,7 @@ def getSkyConfigurationFactors(rowType, beta, C, D):
 
         elif (rowType == "single"):
         
-            ffConfigFactors=0 # Haven't implemented it for this yet
-            
+                       
             #  RearSkyConfigFactors don't have a row to the rear ir front, combine sky1 into sky 2, set beta 3 = 0.0,
             #  for sky3, beta6 = 180.0.
             x = -delta / 2.0;    # Initialize horizontal dimension x to provide midpoint of intervals
@@ -1363,7 +1363,7 @@ def getSkyConfigurationFactors(rowType, beta, C, D):
         else:
             print("ERROR: Incorrect row type not passed to function GetSkyConfigurationFactors ");
     
-        return rearSkyConfigFactors, frontSkyConfigFactors, ffConfigFactors;
+        return rearSkyConfigFactors, frontSkyConfigFactors;
 # End of GetSkyConfigurationFactors
 
 def rowSpacing(beta, sazm, lat, lng, tz, hour, minute):

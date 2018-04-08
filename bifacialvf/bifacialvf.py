@@ -30,7 +30,7 @@ from vf import getBackSurfaceIrradiances, getFrontSurfaceIrradiances, getGroundS
 from vf import getSkyConfigurationFactors, trackingBFvaluescalculator, rowSpacing
 from sun import hrSolarPos, perezComp, solarPos, sunIncident
 import pandas as pd
-
+from readepw import readepw
 
 def simulate(TMYtoread=None, writefiletitle=None,  beta = 0, sazm = 180, C = 0.5, D = None,
              rowType = 'interior', transFactor = 0.01, cellRows = 6, 
@@ -92,11 +92,7 @@ def simulate(TMYtoread=None, writefiletitle=None,  beta = 0, sazm = 180, C = 0.5
         elif TMYtoread.endswith('.csv') :  
             (myTMY3,meta)=pvlib.tmy.readtmy3(TMYtoread)
         elif TMYtoread.endswith('.epw') : 
-            try:
-                import readepw
-            except:
-                print('Error importing readepw.py')
-            (myTMY3,meta) = readepw.readepw(TMYtoread)
+            (myTMY3,meta) = readepw(TMYtoread)
             # rename different field parameters to match DNI, DHI, DryBulb, Wspd
             myTMY3.rename(columns={'Direct normal radiation in Wh/m2':'DNI','Diffuse horizontal radiation in Wh/m2':'DHI','Dry bulb temperature in C':'DryBulb','Wind speed in m/s':'Wspd'}, inplace=True)
         else:

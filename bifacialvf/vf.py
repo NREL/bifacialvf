@@ -127,7 +127,9 @@ def getBackSurfaceIrradiances(rowType, maxShadow, PVbackSurface, beta, sazm, dni
         
             index = 1;          # Index to use with 1-degree hemispherical segment AOI correction factor array
             n2 = 1.300;         # Index of refraction for ARglass
-        
+        else:
+            raise Exception("Incorrect text input for PVbackSurface. Must be glass or ARglass.")
+            
         Ro = math.pow((n2 - 1.0) / (n2 + 1.0), 2.0);     # Reflectance at normal incidence, Duffie and Beckman p217
 
         aveGroundGHI = 0.0;          # Average GHI on ground under PV array for cases when x projection exceed 2*rtr
@@ -470,6 +472,9 @@ def getFrontSurfaceIrradiances(rowType, maxShadow, PVfrontSurface, beta, sazm, d
         
             index = 1;          # Index to use with 1-degree hemispherical segment AOI correction factor array
             n2 = 1.300;         # Index of refraction for ARglass
+        
+        else:
+            raise Exception("Incorrect text input for PVfrontSurface. Must be glass or ARglass.")
         
         Ro = math.pow((n2 - 1.0) / (n2 + 1.0), 2.0);     # Reflectance at normal incidence, Duffie and Beckman p217
 

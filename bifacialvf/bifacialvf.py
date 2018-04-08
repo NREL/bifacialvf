@@ -32,11 +32,46 @@ from sun import hrSolarPos, perezComp, solarPos, sunIncident
 import pandas as pd
 
 
-def simulate(TMYtoread, writefiletitle,  beta = 0, sazm = 180, C = 0.5, D = None,
+def simulate(TMYtoread=None, writefiletitle=None,  beta = 0, sazm = 180, C = 0.5, D = None,
              rowType = 'interior', transFactor = 0.01, cellRows = 6, 
              PVfrontSurface = 'glass', PVbackSurface = 'glass',  albedo = 0.2,  
              tracking = False, backtrack = True, rtr = None, Cv = None, offset = 0, max_angle = 45):
-
+        '''
+        simulate(TMYtoread=None, writefiletitle=None,  beta = 0, sazm = 180, C = 0.5, D = None,
+                 rowType = 'interior', transFactor = 0.01, cellRows = 6, 
+                 PVfrontSurface = 'glass', PVbackSurface = 'glass',  albedo = 0.2,  
+                 tracking = False, backtrack = True, rtr = None, Cv = None, offset = 0, max_angle = 45)
+        
+    
+        Description
+        -----------
+        Main function to run the bifacialvf routines 
+    
+        Parameters
+        ----------
+        TMYtoread: TMY3 .csv weather file, which can be downloaded at http://rredc.nrel.gov/solar/old_data/nsrdb/1991-2005/tmy3/by_state_and_city.html
+                   Also .epw weather files, which can be downloaded here: https://energyplus.net/weather and here: http://re.jrc.ec.europa.eu/pvg_tools/en/tools.html#TMY
+                 
+        writefiletitle:  name of output file
+        beta:    tilt angle in degrees.  Not used for tracking
+        sazm:    surface azimuth orientation in degrees east of north. For tracking this is the tracker axis orientation
+        C:       normalized ground clearance.  For trackers, this is the module height at zero tilt
+        D:       normalized gap between PV module rows.  For trackers use rtr
+        rtr:     row-to-row normalized distance.  = 1/GCR
+        transFactor:   PV module transmission fraction.  Default 1% (0.01)
+        cellRows:      Number of points along the module chord to return irradiance values.  Default 6 (1-up landscape module)
+        max_angle:     1-axis tracking maximum limits of rotation
+        tracking, backtrack:  boolean to enable 1-axis tracking and pvlib backtracking algorithm, respectively
+        Cv, offset:  deprecated.  Tracker instantaneous ground clearance and distance offset from module plane to return irradiance value.
+        
+        
+        Returns
+        -------
+        none
+        '''    
+            
+            
+        
         if tracking == True:
             axis_tilt = 0  # algorithm only allows for zero north-south tilt with SAT
             #max_angle = 45  # maximum tracker rotation 
@@ -54,9 +89,25 @@ def simulate(TMYtoread, writefiletitle,  beta = 0, sazm = 180, C = 0.5, D = None
             raise Exception('No row distance specified in either D or rtr') 
         else:
             print('Warning: Gap D and rtr passed in. Using ' + ('rtr' if tracking else 'D') )
+        if writefiletitle == None:
+            writefiletitle = "data/Output/TEST.csv"
         
         ## Read TMY3 data and start loop ~  
-        (myTMY3,meta)=pvlib.tmy.readtmy3(TMYtoread)
+        if TMYtoread is None: # if no file passed in, the readtmy3 graphical file picker will open.
+            (myTMY3,meta)=pvlib.tmy.readtmy3(TMYtoread)        
+        elif TMYtoread.endswith('.csv') :  
+            (myTMY3,meta)=pvlib.tmy.readtmy3(TMYtoread)
+        elif TMYtoread.endswith('.epw') : 
+            try:
+                import readepw
+            except:
+                print('Error importing readepw.py')
+            (myTMY3,meta) = readepw.readepw(TMYtoread)
+            # rename different field parameters to match DNI, DHI, DryBulb, Wspd
+            myTMY3.rename(columns={'Direct normal radiation in Wh/m2':'DNI','Diffuse horizontal radiation in Wh/m2':'DHI','Dry bulb temperature in C':'DryBulb','Wind speed in m/s':'Wspd'}, inplace=True)
+        else:
+            raise Exception('Incorrect extension for TMYtoread. Either .csv (TMY3) .epw or None')
+            
         #myAxisTitles=myTMY3.axes
         noRows, noCols = myTMY3.shape
         lat = meta['latitude']; lng = meta['longitude']; tz = meta['TZ']
@@ -99,7 +150,7 @@ def simulate(TMYtoread, writefiletitle,  beta = 0, sazm = 180, C = 0.5, D = None
             outputheader=['Latitude(deg)','Longitude(deg)', 'Time Zone','Tilt(deg)', 
                          'PV Azimuth(deg)','GroundClearance(panel slope lengths)', 'Row-to-Row-Distance rtr', 'RowType(first interior last single)',
                          'TransmissionFactor(open area fraction)','CellRows(# hor rows in panel)', 
-                         'PVfrontSurface(glass or AR glass)', 'PVbackSurface(glass or AR glass)',
+                         'PVfrontSurface(glass or ARglass)', 'PVbackSurface(glass or ARglass)',
                          'CellOffsetFromBack(panel slope lengths)','Albedo',  'Tracking']
             outputheadervars=[lat, lng, tz, beta, sazm, C, rtr, rowType, transFactor, cellRows, PVfrontSurface,
                              PVbackSurface, offset, albedo, tracking]
@@ -136,7 +187,7 @@ def simulate(TMYtoread, writefiletitle,  beta = 0, sazm = 180, C = 0.5, D = None
                     
             sw.writerow(outputtitles)
             
-            ## Loop through file
+            ## Loop through file.  TODO: replace this with for loop.
             rl = 0
             
             while (rl < noRows):
@@ -181,7 +232,6 @@ def simulate(TMYtoread, writefiletitle,  beta = 0, sazm = 180, C = 0.5, D = None
                         #azen= solpos['zenith']
                         aazi = pd.Series([azm*180.0/math.pi], index =[myTimestamp])                        
                         azen = pd.Series([zen*180.0/math.pi], index =[myTimestamp])
-
 
                         
                         gcr=1/rtr  
@@ -298,8 +348,8 @@ if __name__ == "__main__":
     rowType = "interior"        # RowType(first interior last single)
     transFactor = 0.013         # TransmissionFactor(open area fraction)
     cellRows = 6                # CellRows(# hor rows in panel)   <--> THIS ASSUMES LANDSCAPE ORIENTATION 
-    PVfrontSurface = "glass"    # PVfrontSurface(glass or AR glass)
-    PVbackSurface = "glass"     # PVbackSurface(glass or AR glass)
+    PVfrontSurface = "glass"    # PVfrontSurface(glass or ARglass)
+    PVbackSurface = "glass"     # PVbackSurface(glass or ARglass)
     albedo = 0.62               # ground albedo
 
     

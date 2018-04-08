@@ -35,12 +35,12 @@ import pandas as pd
 def simulate(TMYtoread=None, writefiletitle=None,  beta = 0, sazm = 180, C = 0.5, D = None,
              rowType = 'interior', transFactor = 0.01, cellRows = 6, 
              PVfrontSurface = 'glass', PVbackSurface = 'glass',  albedo = 0.2,  
-             tracking = False, backtrack = True, rtr = None, Cv = None, offset = 0, max_angle = 45):
+             tracking = False, backtrack = True, rtr = None,  max_angle = 45):
         '''
         simulate(TMYtoread=None, writefiletitle=None,  beta = 0, sazm = 180, C = 0.5, D = None,
                  rowType = 'interior', transFactor = 0.01, cellRows = 6, 
                  PVfrontSurface = 'glass', PVbackSurface = 'glass',  albedo = 0.2,  
-                 tracking = False, backtrack = True, rtr = None, Cv = None, offset = 0, max_angle = 45)
+                 tracking = False, backtrack = True, rtr = None,  max_angle = 45)
         
     
         Description
@@ -62,7 +62,6 @@ def simulate(TMYtoread=None, writefiletitle=None,  beta = 0, sazm = 180, C = 0.5
         cellRows:      Number of points along the module chord to return irradiance values.  Default 6 (1-up landscape module)
         max_angle:     1-axis tracking maximum limits of rotation
         tracking, backtrack:  boolean to enable 1-axis tracking and pvlib backtracking algorithm, respectively
-        Cv, offset:  deprecated.  Tracker instantaneous ground clearance and distance offset from module plane to return irradiance value.
         
         
         Returns
@@ -151,9 +150,9 @@ def simulate(TMYtoread=None, writefiletitle=None,  beta = 0, sazm = 180, C = 0.5
                          'PV Azimuth(deg)','GroundClearance(panel slope lengths)', 'Row-to-Row-Distance rtr', 'RowType(first interior last single)',
                          'TransmissionFactor(open area fraction)','CellRows(# hor rows in panel)', 
                          'PVfrontSurface(glass or ARglass)', 'PVbackSurface(glass or ARglass)',
-                         'CellOffsetFromBack(panel slope lengths)','Albedo',  'Tracking']
+                         'Albedo',  'Tracking']
             outputheadervars=[lat, lng, tz, beta, sazm, C, rtr, rowType, transFactor, cellRows, PVfrontSurface,
-                             PVbackSurface, offset, albedo, tracking]
+                             PVbackSurface, albedo, tracking]
             
             
             if tracking==True:
@@ -293,7 +292,7 @@ def simulate(TMYtoread=None, writefiletitle=None,  beta = 0, sazm = 180, C = 0.5
             
                     # CALCULATE THE AOI CORRECTED IRRADIANCE ON THE BACK OF THE PV MODULE,
                     #double[] backGTI = new double[cellRows];
-                    backGTI, aveGroundGHI = getBackSurfaceIrradiances(rowType, maxShadow, PVbackSurface, beta, sazm, dni, dhi, C, D, albedo, zen, azm, cellRows, pvBackSH, rearGroundGHI, frontGroundGHI, frontReflected, offset)
+                    backGTI, aveGroundGHI = getBackSurfaceIrradiances(rowType, maxShadow, PVbackSurface, beta, sazm, dni, dhi, C, D, albedo, zen, azm, cellRows, pvBackSH, rearGroundGHI, frontGroundGHI, frontReflected, offset=0)
                
                     inc, tiltr, sazmr = sunIncident(0, 180.0-beta, sazm-180.0, 45.0, zen, azm)       # For calling PerezComp to break diffuse into components for 
                     gtiAllpc, iso_dif, circ_dif, horiz_dif, grd_dif, beam = perezComp(dni, dhi, albedo, inc, tiltr, zen)   # Call to get components for the tilt

@@ -26,7 +26,7 @@ setup(
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version='0.1.5',
+    version='0.1.6',
 
     description='Bifacial PV system evaluation using view factor method',
     long_description=long_description,
@@ -97,7 +97,8 @@ setup(
     package_data={
         'bifacialvf': ['data/722740TYA.CSV','data/723260TYA.CSV',
                        'data/723560TYA.CSV','data/724010TYA.CSV',
-                       'data/724666TYA.CSV','data/727930TYA.CSV'],
+                       'data/724666TYA.CSV','data/727930TYA.CSV',
+                       'data/USA_VA_Richmond.Intl.AP.724010_TMY.epw'],
     },
     include_package_data=True,
     # Although 'package_data' is the preferred approach, in some case you may

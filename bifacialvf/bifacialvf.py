@@ -133,7 +133,7 @@ def simulate(TMYtoread=None, writefiletitle=None,  beta = 0, sazm = 180, C = 0.5
         
         #check that the save directory exists, unless it's in root
         savedirectory = os.path.dirname(writefiletitle)
-        if ( (not os.path.exists()) and (savedirectory is not '')):
+        if ( (not os.path.exists(savedirectory)) and (savedirectory is not '')):
             os.makedirs(savedirectory)
         
         with open (writefiletitle,'w') as csvfile:

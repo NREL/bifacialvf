@@ -37,12 +37,7 @@ def simulate(TMYtoread=None, writefiletitle=None,  beta = 0, sazm = 180, C = 0.5
              PVfrontSurface = 'glass', PVbackSurface = 'glass',  albedo = 0.2,  
              tracking = False, backtrack = True, rtr = None,  max_angle = 45):
         '''
-        simulate(TMYtoread=None, writefiletitle=None,  beta = 0, sazm = 180, C = 0.5, D = None,
-                 rowType = 'interior', transFactor = 0.01, cellRows = 6, 
-                 PVfrontSurface = 'glass', PVbackSurface = 'glass',  albedo = 0.2,  
-                 tracking = False, backtrack = True, rtr = None,  max_angle = 45)
-        
-    
+      
         Description
         -----------
         Main function to run the bifacialvf routines 

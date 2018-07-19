@@ -378,7 +378,7 @@ def solarPos( year, month, day, hour, minute, lat, lng, tz ):
 			jday = julian(year,month,day);		# Get julian day of year
 			zulu = hour + minute/60.0 - tz;		# Convert local time to zulu time
 			delta = year - 1949;
-			leap = delta/4;
+			leap = (int)(delta/4);
 			jd = 32916.5 + delta*365 + leap + jday + zulu/24.0;
 			time = jd - 51545.0;	# Time in days referenced from noon 1 Jan 2000
 

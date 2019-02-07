@@ -3,27 +3,31 @@
 # bifacialvf - Bifacial PV View Factor model with Mismatch routines
 python, configuration factor model, electrical model mismatch for bifacial modules.
 
+Original bilinear interpolation code by Sara MacAlpine
+Python translation & Updates by Silvana Ayala
+
 bifacialvf
 Original code by Bill Marion
 Python translation by Silvana Ayala
 Updates by Chris Deline
 
-Original bilinear interpolation code by Sara MacAlpine
-Python translation & Updates by Silvana Ayala
-
 (Forthcoming) PVMismatch add-on
 Original code by PVMismatch
 For this version of bifacialvf_Mismach to work, PVMismatch must be installed (pip install pvmismatch)
 
-Based on the publication: "A Practical Irradiance Model for Bifacial PV Modules"
-B. Marion, S. MacAlpine, C. Deline, A. Asgharzadeh, F. Toor, D. Riley, J. Stein, C. Hansen
-2017 IEEE Photovoltaic Specialists Conference, Washington DC, 2017
-URL: https://www.nrel.gov/docs/fy17osti/67847.pdf
+Based on the publication:
+Marion, B., MacAlpine, S., Deline, C., Asgharzadeh, A., Toor, F., Riley, D., … Hansen, C. (2017). A Practical Irradiance Model for Bifacial PV Modules: Preprint. In 44th IEEE Photovoltaic Specialists Conference. Washington, DC. https://www.nrel.gov/docs/fy17osti/67847.pdf. NREL/CP-5J00-67847
 
-And:
+Bilinear Interpolation based on the publication:
+De Soto, W., Klein, S. A., & Beckman, W. A. (2006). Improvement and validation of a model for photovoltaic array performance. Solar Energy, 80(1), 78–88. https://doi.org/10.1016/j.solener.2005.06.010
+
+Marion, B., Rummel, S., & Anderberg, A. (2004). Current--voltage curve translation by bilinear interpolation. Progress in Photovoltaics: Research and Applications, 12(8), 593–607.
 
 
 ## Introduction
+
+Bilinear interpolation code add-on to bifacialvf (description below) to pre-generate IV arrays and bifacial coefficients, and to examine the energy production with back side irradiance mismatch for either a portrait or landscape module.   
+Included are IV curves and bifacial info for a Yingli (standard) module. 
 
 bifacialvf is a self-contained view factor (or configuration factor)
 model which replicates a 5-row PV system of infinite extent perpendicular to the module rows. 
@@ -32,7 +36,7 @@ are saved.  Spatial nonuniformity is reported, with multiple rear-facing irradia
 on the back of each module row.
 
 ## Pre-requisites
-This software is written for Anaconda Python 2.7 which can be downloaded here: https://www.anaconda.com/download/
+The software is written in Python 2.7. Download the Anaconda Python 2.7 environment for best compatibility.
 
 ## Install using pip
 

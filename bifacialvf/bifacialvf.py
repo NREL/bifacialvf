@@ -26,18 +26,25 @@ import math
 import csv
 import pvlib
 import os
+import sys
 
 from vf import getBackSurfaceIrradiances, getFrontSurfaceIrradiances, getGroundShadeFactors
 from vf import getSkyConfigurationFactors, trackingBFvaluescalculator, rowSpacing
 from sun import hrSolarPos, perezComp, solarPos, sunIncident
 import pandas as pd
 from readepw import readepw
+import scipy.io as sio
+sys.path.insert(0, 'BF_BifacialIrradiances')
+from PortraitSingleHour import PortraitSingleHour    # For calculateBilInterpol
+from LandscapeSingleHour import LandscapeSingleHour # For calculateBilInterpol
 
-
-def simulate(TMYtoread=None, writefiletitle=None,  beta = 0, sazm = 180, C = 0.5, D = None,
-             rowType = 'interior', transFactor = 0.01, cellRows = 6, 
-             PVfrontSurface = 'glass', PVbackSurface = 'glass',  albedo = 0.2,  
-             tracking = False, backtrack = True, rtr = None,  max_angle = 45):
+def simulate(TMYtoread=None, writefiletitle=None, beta=0, sazm=180, C=0.5, D=None,
+             rowType='interior', transFactor=0.01, cellRows=6, 
+             PVfrontSurface='glass', PVbackSurface='glass', albedo=0.2,  
+             tracking=False, backtrack=True, rtr=None, max_angle=45,
+             calculateBilInterpol=False, interpolA=0.005, IVArray=None, beta_voc_all=None,
+             m_all=None, bee_all=None, calculateDetailedMismatch=False, portraitorlandscape='landscape'):
+        
         '''
       
         Description
@@ -65,8 +72,6 @@ def simulate(TMYtoread=None, writefiletitle=None,  beta = 0, sazm = 180, C = 0.5
         -------
         none
         '''    
-            
-            
         
         if tracking == True:
             axis_tilt = 0  # algorithm only allows for zero north-south tilt with SAT
@@ -144,16 +149,18 @@ def simulate(TMYtoread=None, writefiletitle=None,  beta = 0, sazm = 180, C = 0.5
                          'PV Azimuth(deg)','GroundClearance(panel slope lengths)', 'Row-to-Row-Distance rtr', 'RowType(first interior last single)',
                          'TransmissionFactor(open area fraction)','CellRows(# hor rows in panel)', 
                          'PVfrontSurface(glass or ARglass)', 'PVbackSurface(glass or ARglass)',
-                         'Albedo',  'Tracking']
+                         'Albedo',  'Tracking', 'CalculatePVOutput (Bilinear Interpol)','CalculateDetailedPVOutput', 'Tracking']
             outputheadervars=[lat, lng, tz, beta, sazm, C, rtr, rowType, transFactor, cellRows, PVfrontSurface,
-                             PVbackSurface, albedo, tracking]
+                             PVbackSurface, albedo, tracking, calculateBilInterpol, calculateDetailedMismatch, tracking]
             
             
             if tracking==True:
                 outputheader+=['Backtracking']
                 outputheadervars.append(backtrack)
-                
-                
+
+            if calculateBilInterpol==True:
+                outputheader+=['interpolA']
+                outputheadervars.append(interpolA)                  
                 
             sw.writerow(outputheader)
             sw.writerow(outputheadervars)
@@ -178,6 +185,23 @@ def simulate(TMYtoread=None, writefiletitle=None,  beta = 0, sazm = 180, C = 0.5
                 outputtitles+=['height']
                 outputtitles+=['D']
                     
+            if calculateBilInterpol==True:
+                outputtitles+=['FRONT & BACK DETAILED PmaxIdeal [W]']
+                outputtitles+=['FRONT & BACK DETAILED PmaxUnmatched [W]']
+                outputtitles+=['FRONT & BACK DETAILED PmaxAvg [W]']
+
+                if calculateDetailedMismatch==True:
+                    outputtitles+=['FRONT ONLY PmaxIdeal [W]']
+                    outputtitles+=['FRONT ONLY PmaxUnmatched [W]']
+                    outputtitles+=['FRONT ONLY PmaxAvg [W]']
+                    outputtitles+=['BACK ONLY PmaxIdeal [W]']
+                    outputtitles+=['BACK ONLY PmaxUnmatched [W]']
+                    outputtitles+=['BACK ONLY PmaxAvg [W]']
+                    outputtitles+=['FRONT AVERAGE + BACK DETAILED PmaxIdeal [W]']
+                    outputtitles+=['FRONT AVERAGE + BACK DETAILED PmaxUnmatched [W]']
+                    outputtitles+=['FRONT AVERAGE + BACK DETAILED PmaxAvg [W]']    
+                
+                
             sw.writerow(outputtitles)
             
             ## Loop through file.  TODO: replace this with for loop.
@@ -316,6 +340,48 @@ def simulate(TMYtoread=None, writefiletitle=None,  beta = 0, sazm = 180, C = 0.5
                         outputvalues.append(sazm)
                         outputvalues.append(C)
                         outputvalues.append(D)
+
+                    if calculateBilInterpol==True:
+                        
+                        if portraitorlandscape=='portrait':
+                            if cellRows==9:
+                                [PmaxIdeal, PmaxUnmatched, PmaxAvg] = PortraitSingleHour(frontGTIrow, backGTIrow, Tamb, Vwind, cellRows, interpolA,IVArray,beta_voc_all,m_all,bee_all)
+                                outputvalues.append(PmaxIdeal)
+                                outputvalues.append(PmaxUnmatched)
+                                outputvalues.append(PmaxAvg)
+                            else:
+                                print ("CellRows doesn't match Panel Orientation of PORTRAIT. Run with different number of sensors or implement Irradiance Interpolation")
+                                outputvalues.append(0)
+                                outputvalues.append(0)
+                                outputvalues.append(0)
+                                
+                        
+                        if portraitorlandscape=='landscape':
+                            if cellRows==6:
+                                [PmaxIdeal, PmaxUnmatched, PmaxAvg] = LandscapeSingleHour(frontGTIrow, backGTIrow, Tamb, Vwind, cellRows, interpolA,IVArray,beta_voc_all,m_all,bee_all)
+                                outputvalues.append(PmaxIdeal)
+                                outputvalues.append(PmaxUnmatched)
+                                outputvalues.append(PmaxAvg)
+                                if calculateDetailedMismatch==True:
+                                    [PmaxIdeal, PmaxUnmatched, PmaxAvg] = LandscapeSingleHour(frontGTIrow, [0,0,0,0,0,0], Tamb, Vwind, cellRows, interpolA,IVArray,beta_voc_all,m_all,bee_all)    
+                                    outputvalues.append(PmaxIdeal)
+                                    outputvalues.append(PmaxUnmatched)
+                                    outputvalues.append(PmaxAvg)
+                                    [PmaxIdeal, PmaxUnmatched, PmaxAvg] = LandscapeSingleHour([0,0,0,0,0,0], backGTIrow, Tamb, Vwind, cellRows, interpolA,IVArray,beta_voc_all,m_all,bee_all)    
+                                    outputvalues.append(PmaxIdeal)
+                                    outputvalues.append(PmaxUnmatched)
+                                    outputvalues.append(PmaxAvg)
+                                    frontGTIAvg=sum(frontGTIrow)/float(len(frontGTIrow))
+                                    avgGTIlist=[frontGTIAvg for x in zip(frontGTIrow)]
+                                    [PmaxIdeal, PmaxUnmatched, PmaxAvg] = LandscapeSingleHour(frontGTIrow, backGTIrow, Tamb, Vwind, cellRows, interpolA,IVArray,beta_voc_all,m_all,bee_all)    
+                                    outputvalues.append(PmaxIdeal)
+                                    outputvalues.append(PmaxUnmatched)
+                                    outputvalues.append(PmaxAvg)
+                            else:
+                                print ("CellRows doesn't match Panel Orientation of LANDSCAPE. Run with different number of sensors or implement Irradiance Interpolation")
+                                outputvalues.append(0)
+                                outputvalues.append(0)
+                                outputvalues.append(0)
                                     
                     sw.writerow(outputvalues)
     
@@ -345,7 +411,17 @@ if __name__ == "__main__":
     PVbackSurface = "glass"     # PVbackSurface(glass or ARglass)
     albedo = 0.62               # ground albedo
 
-    
+     #BILINEAR INTERPOLATION VALUES    
+    calculateBilInterpol = True
+    calculateDetailedMismatch = True
+    mat_contents = sio.loadmat('BilinearInterpParams\IVArrayYingli.mat')
+    IVArray=mat_contents['IVArray']        
+    mat_contents = sio.loadmat('BilinearInterpParams\newBilinearParamsYingLi.mat')
+    beta_voc_all=mat_contents['beta_voc_all']        
+    m_all=mat_contents['m_all']
+    bee_all=mat_contents['bee_all']
+    interpolA = 0.005  # More accurate interpolation. Do 0.01 as an option.
+    portraitorlandscape='landscape'
     
     # Tracking instructions
     tracking=False
@@ -354,12 +430,14 @@ if __name__ == "__main__":
 
     TMYtoread="data/724010TYA.csv"   # VA Richmond
     writefiletitle="data/Output/TEST.csv"
-    
-    simulate(TMYtoread, writefiletitle, beta, sazm, C, rtr= rtr, 
-                rowType= rowType, transFactor= transFactor, cellRows= cellRows, 
-                PVfrontSurface= PVfrontSurface, PVbackSurface= PVbackSurface,   
-                albedo= albedo, tracking= tracking, backtrack= backtrack)
-    
+   
+     simulate(TMYtoread, writefiletitle, beta, sazm, C, D, 
+                     rowType, transFactor, cellRows, 
+                     PVfrontSurface, PVbackSurface, albedo, 
+                     tracking, backtrack, rtr, max_angle,
+                     calculateBilInterpol, interpolA, IVArray, beta_voc_all,
+                     m_all, bee_all, calculateDetailedMismatch, portraitorlandscape)
+                
     #Load the results from the resultfile
     from loadVFresults import loadVFresults
     (data, metadata) = loadVFresults(writefiletitle)

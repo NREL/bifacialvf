@@ -1,6 +1,6 @@
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 
-# bifacialvf - Bifacial PV View Factor model with Mismatch routines
+# bifacialvf_mismatch - Bifacial PV View Factor model with Mismatch routines
 python, configuration factor model, electrical model mismatch for bifacial modules.
 
 Original bilinear interpolation code by Sara MacAlpine

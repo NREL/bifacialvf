@@ -4,6 +4,9 @@
 Created on Mon Jun 26 07:59:37 2017
 
 @author: sayala
+
+# Standalone example of how to use Bilinear Interpolation when readiong inputs from a bifacialvf csv result file
+
 Modified 07.28 by Sara MacAlpine
 Calls matlab routines from here rather than in the single hour code
 Pulls in front and rear irradiance directly rather than using ratios as I did in matlab code
@@ -107,6 +110,7 @@ for mainloop in range (0, 1):
                 #             float(row[24]), float(row[25]) , float(row[26]), float(row[27]))  # Dividing by 1 sun (1000 W/m2)
                 #RearIrrad=(float(row[28]), float(row[29]), float(row[30]), float(row[31]), 
                 #            float(row[32]), float(row[33]), float(row[34]), float(row[35]), float(row[36]))
+                
                 #For Landscape
                 FrontIrrad=(float(row[21]), float(row[22]), float(row[23]), float(row[24]), float(row[25]), 
                              float(row[26]))
@@ -117,10 +121,9 @@ for mainloop in range (0, 1):
                 interpolA = 0.005  # More accurate interpolation. Do 0.01 as an option.
                 #numsens=9 #For Portrait
                 numsens=6 #For Landscape
-                
+                                
                 [PmaxIdeal, PmaxUnmatched, PmaxAvg] = LandscapeSingleHour(FrontIrrad, RearIrrad, Tamb, Vwind, numsens, interpolA,IVArray,beta_voc_all,m_all,bee_all)
-                               
-               
+                              
                 row.append(PmaxIdeal)
                 row.append(PmaxUnmatched)
                 row.append(PmaxAvg)

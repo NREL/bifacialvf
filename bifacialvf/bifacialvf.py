@@ -169,14 +169,14 @@ def simulate(TMYtoread=None, writefiletitle=None, beta=0, sazm=180, C=0.5, D=Non
             
                 cellCenterBI=[]
                 if portraitorlandscape == 'portrait':
-                    if numsensors != 6:
+                    if cellRows != 6:
                         for i in range (0, 6):
-                            cellCenterBI.append((i*numsensors/6.0+(i+1)*numsensors/6.0)/2)
+                            cellCenterBI.append((i*cellRows/6.0+(i+1)*cellRows/6.0)/2)
                             
                 if portraitorlandscape == 'landscape':
-                    if numsensors != 6:
+                    if cellRows != 6:
                         for i in range (0, 6):
-                            cellCenterBI.append((i*numsensors/6.0+(i+1)*numsensors/6.0)/2)
+                            cellCenterBI.append((i*cellRows/6.0+(i+1)*cellRows/6.0)/2)
                             
                             
             if calculatePVMismatch == True:
@@ -199,15 +199,15 @@ def simulate(TMYtoread=None, writefiletitle=None, beta=0, sazm=180, C=0.5, D=Non
                 cellCenterPVM=[]
                 
                 if portraitorlandscape == 'portrait':
-                    if numsensors != 12:
+                    if cellRows != 12:
                         for i in range (0, 12):
-                            cellCenterPVM.append((i*numsensors/12.0+(i+1)*numsensors/12.0)/2)
+                            cellCenterPVM.append((i*cellRows/12.0+(i+1)*cellRows/12.0)/2)
                             
                 if portraitorlandscape == 'landscape':
                     stdpl = stdpl.transpose()
-                    if numsensors != 8:
+                    if cellRows != 8:
                         for i in range (0, 8):
-                            cellCenterPVM.append((i*numsensors/8.0+(i+1)*numsensors/8.0)/2)
+                            cellCenterPVM.append((i*cellRows/8.0+(i+1)*cellRows/8.0)/2)
                 
             sw.writerow(outputheader)
             sw.writerow(outputheadervars)
@@ -398,8 +398,8 @@ def simulate(TMYtoread=None, writefiletitle=None, beta=0, sazm=180, C=0.5, D=Non
                         if portraitorlandscape=='landscape':
                             
                             if cellRows != 6:                        
-                                cellCenterValFront= np.interp(cellCenterBI, list(range(0,numsensors)), frontGTIrow)
-                                cellCenterValBack= np.interp(cellCenterBI, list(range(0,numsensors)), backGTIrow)
+                                cellCenterValFront= np.interp(cellCenterBI, list(range(0,cellRows)), frontGTIrow)
+                                cellCenterValBack= np.interp(cellCenterBI, list(range(0,cellRows)), backGTIrow)
 
                             else:
                                 cellCenterValFront = frontGTIrow

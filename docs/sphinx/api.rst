@@ -28,3 +28,11 @@ Get Ground Shade Factors
 Get Sky Configuration Factors
 +++++++++++++++++++++++++++++
 .. autofunction:: getSkyConfigurationFactors
+
+Row Spacing
++++++++++++
+.. autofunction:: rowSpacing
+
+Tracking Bifacial Values Calculator
++++++++++++++++++++++++++++++++++++
+.. autofunction:: trackingBFvaluescalculator

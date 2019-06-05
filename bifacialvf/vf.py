@@ -10,8 +10,13 @@ ViewFactor module - VF calculation helper files for bifacial-viewfactor
 # ensure python3 compatible division and printing
 from __future__ import division, print_function, absolute_import
 import math
-import numpy
+import numpy as np
 from .sun import solarPos, sunIncident, perezComp, aOIcorrection
+import logging
+
+# TODO: set level or add formatters if more advanced logging required
+LOGGER = logging.getLogger(__name__)  # only used to raise errors
+DTOR = math.pi / 180.0  # Factor for converting from degrees to radians
 
 
 def getBackSurfaceIrradiances(rowType, maxShadow, PVbackSurface, beta, sazm,
@@ -133,10 +138,9 @@ def getBackSurfaceIrradiances(rowType, maxShadow, PVbackSurface, beta, sazm,
          0.826496, 0.811669, 0.795374, 0.777313, 0.757467, 0.735991, 0.712150, 0.685667, 0.657029, 0.625035, 
          0.589915, 0.551116, 0.508397, 0.460966, 0.408796, 0.351055, 0.287226, 0.216842, 0.139913, 0.062742]]
 
-    dtor = math.pi / 180.0  # Factor for converting from degrees to radians
     # Tilt from horizontal of the PV modules/panels, in radians
-    beta = beta * dtor
-    sazm = sazm * dtor  # Surface azimuth of PV module/panels, in radians
+    beta = beta * DTOR
+    sazm = sazm * DTOR  # Surface azimuth of PV module/panels, in radians
 
     # 1. Calculate and assign various paramters to be used for modeling
     #    irradiances
@@ -218,32 +222,32 @@ def getBackSurfaceIrradiances(rowType, maxShadow, PVbackSurface, beta, sazm,
             elvUP = 0.0;
             elvDOWN = 0.0;
         
-        #Console.WriteLine("ElvUp = 0", elvUP / dtor);
+        #Console.WriteLine("ElvUp = 0", elvUP / DTOR);
         #if (i == 0)
-        #    Console.WriteLine("ElvDown = 0", elvDOWN / dtor);
+        #    Console.WriteLine("ElvDown = 0", elvDOWN / DTOR);
 
         #123
-        #iStopIso = Convert.ToInt32((beta - elvUP) / dtor);        # Last whole degree in arc range that sees sky, first is 0
+        #iStopIso = Convert.ToInt32((beta - elvUP) / DTOR);        # Last whole degree in arc range that sees sky, first is 0
         #Console.WriteLine("iStopIso = 0", iStopIso);
-        #iHorBright = Convert.ToInt32(max(0.0, 6.0 - elvUP / dtor));    # Number of whole degrees for which horizon brightening occurs
-        #iStartGrd = Convert.ToInt32((beta + elvDOWN) / dtor);               # First whole degree in arc range that sees ground, last is 180
+        #iHorBright = Convert.ToInt32(max(0.0, 6.0 - elvUP / DTOR));    # Number of whole degrees for which horizon brightening occurs
+        #iStartGrd = Convert.ToInt32((beta + elvDOWN) / DTOR);               # First whole degree in arc range that sees ground, last is 180
 
-        iStopIso = int(round((beta - elvUP) / dtor));        # Last whole degree in arc range that sees sky, first is 0
+        iStopIso = int(round((beta - elvUP) / DTOR));        # Last whole degree in arc range that sees sky, first is 0
         #Console.WriteLine("iStopIso = 0", iStopIso);
-        iHorBright = int(round(max(0.0, 6.0 - elvUP / dtor)));    # Number of whole degrees for which horizon brightening occurs
-        iStartGrd = int(round((beta + elvDOWN) / dtor));               # First whole degree in arc range that sees ground, last is 180
+        iHorBright = int(round(max(0.0, 6.0 - elvUP / DTOR)));    # Number of whole degrees for which horizon brightening occurs
+        iStartGrd = int(round((beta + elvDOWN) / DTOR));               # First whole degree in arc range that sees ground, last is 180
 
         backGTI.append(0.0)                                                      # Initialtize front GTI
 
         for j in range (0, iStopIso):                                      # Add sky diffuse component and horizon brightening if present
         
-            backGTI[i] += 0.5 * (math.cos(j * dtor) - math.cos((j + 1) * dtor)) * SegAOIcor[index][j] * iso_sky_dif;                               # Sky radiation
-    #          backGTI[i] += 0.5 * (math.cos(j * dtor) - math.cos((j + 1) * dtor)) * iso_sky_dif;                               # Sky radiation
+            backGTI[i] += 0.5 * (math.cos(j * DTOR) - math.cos((j + 1) * DTOR)) * SegAOIcor[index][j] * iso_sky_dif;                               # Sky radiation
+    #          backGTI[i] += 0.5 * (math.cos(j * DTOR) - math.cos((j + 1) * DTOR)) * iso_sky_dif;                               # Sky radiation
 
             if ((iStopIso - j) <= iHorBright):                                   # Add horizon brightening term if seen
             
-                backGTI[i] += 0.5 * (math.cos(j * dtor) - math.cos((j + 1) * dtor)) * SegAOIcor[index][j] * F2DHI / 0.052264;  # 0.052246 = 0.5 * [cos(84) - cos(90)]
-            #backGTI[i] += 0.5 * (math.cos(j * dtor) - math.cos((j + 1) * dtor)) * F2DHI / 0.052264;  # 0.052246 = 0.5 * [cos(84) - cos(90)]
+                backGTI[i] += 0.5 * (math.cos(j * DTOR) - math.cos((j + 1) * DTOR)) * SegAOIcor[index][j] * F2DHI / 0.052264;  # 0.052246 = 0.5 * [cos(84) - cos(90)]
+            #backGTI[i] += 0.5 * (math.cos(j * DTOR) - math.cos((j + 1) * DTOR)) * F2DHI / 0.052264;  # 0.052246 = 0.5 * [cos(84) - cos(90)]
             
         
 
@@ -253,8 +257,8 @@ def getBackSurfaceIrradiances(rowType, maxShadow, PVbackSurface, beta, sazm,
             for j in range (iStopIso, iStartGrd):      #j = iStopIso; j < iStartGrd; j++)                              # Add relections from PV module front surfaces
             
                 L = (PbotX - PcellX) / math.cos(elvDOWN);                    # Diagonal distance from cell to bottom of module in row behind
-                startAlpha = -(j - iStopIso) * dtor + elvUP + elvDOWN;
-                stopAlpha = -(j + 1 - iStopIso) * dtor + elvUP + elvDOWN;
+                startAlpha = -(j - iStopIso) * DTOR + elvUP + elvDOWN;
+                stopAlpha = -(j + 1 - iStopIso) * DTOR + elvUP + elvDOWN;
                 m = L * math.sin(startAlpha);
                 theta = math.pi - elvDOWN - (math.pi / 2.0 - startAlpha) - beta;
                 projectedX2 = m / math.cos(theta);                           # Projected distance on sloped PV module
@@ -283,7 +287,7 @@ def getBackSurfaceIrradiances(rowType, maxShadow, PVbackSurface, beta, sazm,
                     PVreflectedIrr += cellLengthSeen * frontReflected[k];           # Add reflected radiation for this PV cell, if seen, weight by cell length seen
                 
                 PVreflectedIrr /= projectedX2 - projectedX1;                        # Reflected irradiance from PV modules (W/m2)
-                backGTI[i] += 0.5 * (math.cos(j * dtor) - math.cos((j + 1) * dtor)) * SegAOIcor[index][j] * PVreflectedIrr;     # Radiation reflected from PV module surfaces onto back surface of module
+                backGTI[i] += 0.5 * (math.cos(j * DTOR) - math.cos((j + 1) * DTOR)) * SegAOIcor[index][j] * PVreflectedIrr;     # Radiation reflected from PV module surfaces onto back surface of module
             
             # End of adding reflections from PV module surfaces
         #Console.WriteLine("");
@@ -291,9 +295,9 @@ def getBackSurfaceIrradiances(rowType, maxShadow, PVbackSurface, beta, sazm,
         #Console.WriteLine("iStartGrd = 0", iStartGrd);
         for j in range (iStartGrd, 180):                                  # Add ground reflected component
         
-            startElvDown = (j - iStartGrd) * dtor + elvDOWN;             # Start and ending down elevations for this j loop 
-            stopElvDown = (j + 1 - iStartGrd) * dtor + elvDOWN;
-            projectedX2 = PcellX + numpy.float64(PcellY) / math.tan(startElvDown);      # Projection of ElvDown to ground in +x direction (X1 and X2 opposite nomenclature for front irradiance method)
+            startElvDown = (j - iStartGrd) * DTOR + elvDOWN;             # Start and ending down elevations for this j loop 
+            stopElvDown = (j + 1 - iStartGrd) * DTOR + elvDOWN;
+            projectedX2 = PcellX + np.float64(PcellY) / math.tan(startElvDown);      # Projection of ElvDown to ground in +x direction (X1 and X2 opposite nomenclature for front irradiance method)
             projectedX1 = PcellX + PcellY / math.tan(stopElvDown);
             actualGroundGHI = 0.0;                                       # Actuall ground GHI from summing array values
             #if (i == 0)
@@ -378,14 +382,14 @@ def getBackSurfaceIrradiances(rowType, maxShadow, PVbackSurface, beta, sazm,
                 # End of if looping to determine actualGroundGHI
 
             
-            backGTI[i] += 0.5 * (math.cos(j * dtor) - math.cos((j + 1) * dtor)) * SegAOIcor[index][j] * actualGroundGHI * albedo;     # Add ground reflected component
+            backGTI[i] += 0.5 * (math.cos(j * DTOR) - math.cos((j + 1) * DTOR)) * SegAOIcor[index][j] * actualGroundGHI * albedo;     # Add ground reflected component
 
             #Console.WriteLine("actualGroundGHI = 0,6:0.0 inputGHI = 1,6:0.0 aveArrayGroundGHI = 2,6:0.0", actualGroundGHI, dhi + dni * math.cos(zen), aveGroundGHI);
             
             # End of j loop for adding ground reflected componenet 
 
         # Calculate and add direct and circumsolar irradiance components
-        inc, tiltr, sazmr = sunIncident(0, 180-beta / dtor, sazm / dtor - 180, 45.0, zen, azm)  # For calling PerezComp to break diffuse into components for downward facing tilt
+        inc, tiltr, sazmr = sunIncident(0, 180-beta / DTOR, sazm / DTOR - 180, 45.0, zen, azm)  # For calling PerezComp to break diffuse into components for downward facing tilt
         
         gtiAllpc, iso_dif, circ_dif, horiz_dif, grd_dif, beam = perezComp(dni, dhi, albedo, inc, tiltr, zen) # Call to get components for the tilt
 
@@ -510,9 +514,8 @@ def getFrontSurfaceIrradiances(rowType, maxShadow, PVfrontSurface, beta, sazm,
             0.826496, 0.811669, 0.795374, 0.777313, 0.757467, 0.735991, 0.712150, 0.685667, 0.657029, 0.625035, 
             0.589915, 0.551116, 0.508397, 0.460966, 0.408796, 0.351055, 0.287226, 0.216842, 0.139913, 0.062742]]);
 
-    dtor = math.pi / 180.0;      # Factor for converting from degrees to radians
-    beta = beta * dtor;                 # Tilt from horizontal of the PV modules/panels, in radians
-    sazm = sazm * dtor;                 # Surface azimuth of PV module/panels, in radians
+    beta = beta * DTOR                 # Tilt from horizontal of the PV modules/panels, in radians
+    sazm = sazm * DTOR                 # Surface azimuth of PV module/panels, in radians
 
     # 1. Calculate and assign various paramters to be used for modeling irradiances
     iso_dif = 0.0; circ_dif = 0.0; horiz_dif = 0.0; grd_dif = 0.0; beam = 0.0;   # For calling PerezComp to break diffuse into components for zero tilt (horizontal)                           
@@ -593,22 +596,22 @@ def getFrontSurfaceIrradiances(rowType, maxShadow, PVfrontSurface, beta, sazm,
             elvUP = 0.0;
             elvDOWN = 0.0;
         
-        #Console.WriteLine("ElvUp = 0", elvUP / dtor);
+        #Console.WriteLine("ElvUp = 0", elvUP / DTOR);
         #if (i == 0)
-        #    Console.WriteLine("ElvDown = 0", elvDOWN / dtor);
+        #    Console.WriteLine("ElvDown = 0", elvDOWN / DTOR);
 
         if math.isnan(beta):
             print( "Beta is Nan")
         if math.isnan(elvUP):
             print( "elvUP is Nan")
-        if math.isnan((math.pi - beta - elvUP) / dtor):
+        if math.isnan((math.pi - beta - elvUP) / DTOR):
             print( "division is Nan")
         
         
-        iStopIso = int(round(numpy.float64((math.pi - beta - elvUP)) / dtor)) # Last whole degree in arc range that sees sky, first is 0
+        iStopIso = int(round(np.float64((math.pi - beta - elvUP)) / DTOR)) # Last whole degree in arc range that sees sky, first is 0
         #Console.WriteLine("iStopIso = 0", iStopIso);
-        iHorBright = int(round(max(0.0, 6.0 - elvUP / dtor)));    # Number of whole degrees for which horizon brightening occurs
-        iStartGrd = int(round((math.pi - beta + elvDOWN) / dtor));     # First whole degree in arc range that sees ground, last is 180
+        iHorBright = int(round(max(0.0, 6.0 - elvUP / DTOR)));    # Number of whole degrees for which horizon brightening occurs
+        iStartGrd = int(round((math.pi - beta + elvDOWN) / DTOR));     # First whole degree in arc range that sees ground, last is 180
     #                print "iStopIso = ", iStopIso
     #                print "iHorBright = ", iHorBright
     #                print "iStartGrd = ", iStartGrd
@@ -619,12 +622,12 @@ def getFrontSurfaceIrradiances(rowType, maxShadow, PVfrontSurface, beta, sazm,
         for j in range (0, iStopIso):                                        # Add sky diffuse component and horizon brightening if present
         #for (j = 0; j < iStopIso; j++)                                      
         
-            frontGTI[i] += 0.5 * (math.cos(j * dtor) - math.cos((j + 1) * dtor)) * SegAOIcor[index][j] * iso_sky_dif;                               # Sky radiation
-            frontReflected[i] += 0.5 * (math.cos(j * dtor) - math.cos((j + 1) * dtor)) * iso_sky_dif * (1.0 - SegAOIcor[index][j] * (1.0 - Ro));    # Reflected radiation from module
+            frontGTI[i] += 0.5 * (math.cos(j * DTOR) - math.cos((j + 1) * DTOR)) * SegAOIcor[index][j] * iso_sky_dif;                               # Sky radiation
+            frontReflected[i] += 0.5 * (math.cos(j * DTOR) - math.cos((j + 1) * DTOR)) * iso_sky_dif * (1.0 - SegAOIcor[index][j] * (1.0 - Ro));    # Reflected radiation from module
             if ((iStopIso - j) <= iHorBright):                                   # Add horizon brightening term if seen
             
-                frontGTI[i] += 0.5 * (math.cos(j * dtor) - math.cos((j + 1) * dtor)) * SegAOIcor[index][j] * F2DHI / 0.052264;  # 0.052246 = 0.5 * [cos(84) - cos(90)]
-                frontReflected[i] += 0.5 * (math.cos(j * dtor) - math.cos((j + 1) * dtor)) * (F2DHI / 0.052264) * (1.0 - SegAOIcor[index][j] * (1.0 - Ro));    # Reflected radiation from module
+                frontGTI[i] += 0.5 * (math.cos(j * DTOR) - math.cos((j + 1) * DTOR)) * SegAOIcor[index][j] * F2DHI / 0.052264;  # 0.052246 = 0.5 * [cos(84) - cos(90)]
+                frontReflected[i] += 0.5 * (math.cos(j * DTOR) - math.cos((j + 1) * DTOR)) * (F2DHI / 0.052264) * (1.0 - SegAOIcor[index][j] * (1.0 - Ro));    # Reflected radiation from module
             
         
 
@@ -632,9 +635,9 @@ def getFrontSurfaceIrradiances(rowType, maxShadow, PVfrontSurface, beta, sazm,
         #    Console.WriteLine("iStartGrd = 0", iStartGrd);
         for j in range (iStartGrd, 180):                                     # Add ground reflected component
         #(j = iStartGrd; j < 180; j++)                                   
-            startElvDown = (j - iStartGrd) * dtor + elvDOWN;             # Start and ending down elevations for this j loop 
-            stopElvDown = (j + 1 - iStartGrd) * dtor + elvDOWN;
-            projectedX1 = PcellX - numpy.float64(PcellY) / math.tan(startElvDown);      # Projection of ElvDown to ground in -x direction
+            startElvDown = (j - iStartGrd) * DTOR + elvDOWN;             # Start and ending down elevations for this j loop 
+            stopElvDown = (j + 1 - iStartGrd) * DTOR + elvDOWN;
+            projectedX1 = PcellX - np.float64(PcellY) / math.tan(startElvDown);      # Projection of ElvDown to ground in -x direction
             projectedX2 = PcellX - PcellY / math.tan(stopElvDown);
             actualGroundGHI = 0.0;                                       # Actuall ground GHI from summing array values
             #if (i == 0)
@@ -698,13 +701,13 @@ def getFrontSurfaceIrradiances(rowType, maxShadow, PVfrontSurface, beta, sazm,
                 #if (i == 0)
                 #    Console.WriteLine("j=0 index1=1 index2=2 projectX1=3,5:0.0 projectX2=4,5:0.0 actualGrdGHI=5,6:0.0", j, index1, index2, projectedX1, projectedX2, actualGroundGHI);
             
-            frontGTI[i] += 0.5 * (math.cos(j * dtor) - math.cos((j + 1) * dtor)) * SegAOIcor[index][j] * actualGroundGHI * albedo;     # Add ground reflected component
-            frontReflected[i] += 0.5 * (math.cos(j * dtor) - math.cos((j + 1) * dtor)) * actualGroundGHI * albedo * (1.0 - SegAOIcor[index][j] * (1.0 - Ro));    # Reflected ground radiation from module
+            frontGTI[i] += 0.5 * (math.cos(j * DTOR) - math.cos((j + 1) * DTOR)) * SegAOIcor[index][j] * actualGroundGHI * albedo;     # Add ground reflected component
+            frontReflected[i] += 0.5 * (math.cos(j * DTOR) - math.cos((j + 1) * DTOR)) * actualGroundGHI * albedo * (1.0 - SegAOIcor[index][j] * (1.0 - Ro));    # Reflected ground radiation from module
             #Console.WriteLine("actualGroundGHI = 0,6:0.0 inputGHI = 1,6:0.0 aveArrayGroundGHI = 2,6:0.0", actualGroundGHI, dhi + dni * math.cos(zen), aveGroundGHI);
             # End of j loop for adding ground reflected componenet 
 
         # Calculate and add direct and circumsolar irradiance components
-        inc, tiltr, sazmr = sunIncident(0, beta / dtor, sazm / dtor, 45.0, zen, azm) # For calling PerezComp to break diffuse into components for 90 degree tilt (vertical)
+        inc, tiltr, sazmr = sunIncident(0, beta / DTOR, sazm / DTOR, 45.0, zen, azm) # For calling PerezComp to break diffuse into components for 90 degree tilt (vertical)
     #                print "sunIncident 2."
     #                print "inc = ", inc
     #                print "tiltr = ", tiltr
@@ -793,8 +796,8 @@ def getGroundShadeFactors(rowType, beta, C, D, elv, azm, sazm):
     rearGroundSH = []
     frontGroundSH = []
     
-    beta = beta * math.pi / 180.0;      # Tilt from horizontal of the PV modules/panels, in radians
-    sazm = sazm * math.pi / 180.0;      # Surface azimuth of PV module/pamels, in radians
+    beta = beta * DTOR  # Tilt from horizontal of the PV modules/panels, in radians
+    sazm = sazm * DTOR  # Surface azimuth of PV module/pamels, in radians
 
     h = math.sin(beta);          # Vertical height of sloped PV panel (in PV panel slope lengths)                    
     x1 = math.cos(beta);         # Horizontal distance from front of panel to rear of panel (in PV panel slope lengths)
@@ -1129,7 +1132,7 @@ def getSkyConfigurationFactors(rowType, beta, C, D):
         Ground clearance of PV panel (in PV module/panel slope lengths)            
     D : float
         Horizontal distance between rows of PV panels (in PV module/panel slope
-        lengths)             
+        lengths)
 
     Returns
     -------
@@ -1139,106 +1142,93 @@ def getSkyConfigurationFactors(rowType, beta, C, D):
     frontSkyConfigFactors : array of size [100]
         Sky configuration factors to rear of leading PVmodule edge (decimal
         fraction)
+
+    Notes
+    -----
+    The horizontal distance between rows, `D`, is from the back edge of one row
+    to the front edge of the next, and it is not the row-to-row spacing.
     """
 
     rearSkyConfigFactors = []
     frontSkyConfigFactors = []
     
-    beta = beta * math.pi / 180.0;      # Tilt from horizontal of the PV modules/panels, in radians
-    h = math.sin(beta);          # Vertical height of sloped PV panel (in PV panel slope lengths)                    
-    x1 = math.cos(beta);         # Horizontal distance from front of panel to rear of panel (in PV panel slope lengths)
-    rtr = D + x1;                # Row-to-row distance (in PV panel slope lengths)
-    
+    # Tilt from horizontal of the PV modules/panels, in radians
+    beta = beta * DTOR
+    # Vertical height of sloped PV panel (in PV panel slope lengths)                    
+    h = math.sin(beta)
+    # Horizontal distance from front of panel to rear of panel (in PV panel
+    # slope lengths)
+    x1 = math.cos(beta)
+    rtr = D + x1  # Row-to-row distance (in PV panel slope lengths)
+
+    # Forced fix for case of C = 0
+    # FIXME: for some reason the Config Factors go from 1 to 2 and not 0 to 1.
+    # TODO: investigate why this is happening in the code.
     if C==0:
-        C=0.0000000001  # Forced fix for case of C = 0. , which for some reason the Config Factors go from 1 to 2 and not 0 to 1. Todo: investigate why this is happening in the code.
+        C=0.0000000001
         
     if C < 0:
-        print("ERROR: Height is below ground level. Function GetSkyConfigurationFactors will continue but results might be unreliable");
-
+        LOGGER.error(
+            "Height is below ground level. Function GetSkyConfigurationFactors"
+            " will continue but results might be unreliable")
         
-    # Divide the row-to-row spacing into 100 intervals and calculate configuration factors
-    delta = rtr / 100.0;
+    # Divide the row-to-row spacing into 100 intervals and calculate
+    # configuration factors
+    delta = rtr / 100.0
 
     if (rowType == "interior"):
-        x = -delta / 2.0;    # Initialize horizontal dimension x to provide midpoint of intervals
+        # Initialize horizontal dimension x to provide midpoint of intervals
+        x = -delta / 2.0
 
-        #beta6all=[]
-        for i in range(0,100):
-        # (int i = 0; i <= 99; i++):
-        
-            x += delta;
-            angA = math.atan((h + C) / (2.0 * rtr + x1 - x));
+        for i in range(0,100):        
+            x += delta
+            angA = math.atan((h + C) / (2.0 * rtr + x1 - x))
             if (angA < 0.0):
-                angA += math.pi;
-            angB = math.atan(C / (2.0 * rtr - x));
+                angA += math.pi
+            angB = math.atan(C / (2.0 * rtr - x))
             if (angB < 0.0):
-                angB += math.pi;
-            beta1 = max(angA, angB);
-            #minibeta=min(angA,angB);
+                angB += math.pi
+            beta1 = max(angA, angB)
 
-            angA = math.atan((h + C) / (rtr + x1 - x));
+            angA = math.atan((h + C) / (rtr + x1 - x))
             if (angA < 0.0):
-                angA += math.pi;
-            angB = math.atan(C / (rtr - x));
+                angA += math.pi
+            angB = math.atan(C / (rtr - x))
             if (angB < 0.0):
-                angB += math.pi;
-            beta2 = min(angA, angB);
+                angB += math.pi
+            beta2 = min(angA, angB)
 
-            beta3 = max(angA, angB);
+            beta3 = max(angA, angB)
 
-            beta4 = math.atan((h + C) / (x1 - x));
+            beta4 = math.atan((h + C) / (x1 - x))
             if (beta4 < 0.0):
-                beta4 += math.pi;
+                beta4 += math.pi
 
-            beta5 = math.atan(C / (-x));
+            beta5 = math.atan(C / (-x))
             if (beta5 < 0.0):
-                beta5 += math.pi;
+                beta5 += math.pi
 
-            beta6 = math.atan((h + C) / (-D - x));
+            beta6 = math.atan((h + C) / (-D - x))
             if (beta6 < 0.0):
-                beta6 += math.pi;
-            #beta6all.append(beta6*180/math.pi)
-            sky1 =0; sky2 =0; sky3 =0;
+                beta6 += math.pi
+            sky1 =0; sky2 =0; sky3 =0
             if (beta2 > beta1):
-                sky1 = 0.5 * (math.cos(beta1) - math.cos(beta2));
+                sky1 = 0.5 * (math.cos(beta1) - math.cos(beta2))
             if (beta4 > beta3):
-                sky2 = 0.5 * (math.cos(beta3) - math.cos(beta4));
+                sky2 = 0.5 * (math.cos(beta3) - math.cos(beta4))
             if (beta6 > beta5):
-                sky3 = 0.5 * (math.cos(beta5) - math.cos(beta6));
-            skyAll = sky1 + sky2 + sky3;
-            
-            # Calculating Form Factors for PVSyst Comparison - deprecated
-            '''
-            ff1 = 0; ff2 = 0; ff3 = 0
-            ff1 = 0.5 * (math.cos(beta4) - math.cos(beta5));
-            ff2 = (0.5 * (math.cos(beta2) - math.cos(beta3)));
-            ff3 = (0.5 * (math.cos(minibeta) - math.cos(beta1)));
+                sky3 = 0.5 * (math.cos(beta5) - math.cos(beta6))
+            skyAll = sky1 + sky2 + sky3
 
-            # Sanity check                
-            if ff3 < 0 :
-                print( "Ff3 less 0 in i", i)
-            if ff2 < 0 :
-                print( "Ff2 less 0 in i", i)
-            
-            if ff1 < 0 :
-                print( "Ff1 less 0 in i", i)
-
-            ffpanel = ff1 + ff2 + ff3;
-            ffConfigFactors.append(ffpanel)
-            #import matplotlib.pyplot as plt
-            #plt.plot(ffall); plt.ylim([0,1])
-            '''
-            
-            rearSkyConfigFactors.append(skyAll);    # Save as arrays of values, same for both to the rear and front
-            frontSkyConfigFactors.append(skyAll);
-            #Console.WriteLine("0,5:0.000,1,5:0.000,2,5:0.000,3,5:0.000,4,5:0.000", x, sky1, sky2, sky3, skyAll);
-            #sw.WriteLine("0,5:0.000,1,5:0.000,2,5:0.000,3,5:0.000,4,5:0.000", x, sky1, sky2, sky3, skyAll);
-        
+            # Save as arrays of values, same for both to the rear and front
+            rearSkyConfigFactors.append(skyAll)
+            frontSkyConfigFactors.append(skyAll)        
         # End of if "interior"
 
     elif (rowType == "first"):
     
-        #  RearSkyConfigFactors don't have a row in front, calculation of sky3 changed, beta6 = 180 degrees
+        # RearSkyConfigFactors don't have a row in front, calculation of sky3
+        # changed, beta6 = 180 degrees
         x = -delta / 2.0;    # Initialize horizontal dimension x to provide midpoint of intervals
 
         for i in range(0,100):
@@ -1490,27 +1480,41 @@ def getSkyConfigurationFactors(rowType, beta, C, D):
 
 
 def rowSpacing(beta, sazm, lat, lng, tz, hour, minute):
-    # {double beta, double sazm, double lat, double lng, double tz, int hour, double minute)
-    #            // This method determines the horizontal distance D between rows of PV panels (in PV module/panel slope lengths)
-    #            // for no shading on December 21 (north hemisphere) June 21 (south hemisphere) for a module tilt angle beta and surface azimuth sazm, and a given latitude,
-    #            // longitude, and time zone and for the time passed to the method (typically 9 am).
-    #            // (REf: the row-to-row spacing is then D + cos(beta) )
-    #            // 8/21/2015
-    #            //
-    #            // Input Variables          Description
-    #            // beta                     Tilt from horizontal of the PV modules/panels (deg)
-    #            // sazm                     Surface azimuth of the PV modules/panels (deg)
-    #            // lat                      Site latitude (deg)
-    #            // lng                      Site longitude (deg)
-    #            // tz                       Time zone (hrs)
-    #            // hour                     hour for no shading criteria
-    #            // minute                   minute for no shading
-    #            //
-    #            // Returned Variables
-    #            // D                        Horizontal distance between rows of PV panels (in PV panel slope lengths)
-            
-    beta = beta * math.pi / 180.0;     #// Tilt from horizontal of the PV modules/panels, in radians
-    sazm = sazm * math.pi / 180.0;     #// Surface azimuth of PV module/pamels, in radians
+    """
+    This method determines the horizontal distance D between rows of PV panels
+    (in PV module/panel slope lengths) for no shading on December 21 (north
+    hemisphere) June 21 (south hemisphere) for a module tilt angle beta and
+    surface azimuth sazm, and a given latitude, longitude, and time zone and
+    for the time passed to the method (typically 9 am).
+
+    (Ref: the row-to-row spacing is then ``D + cos(beta)``)
+    8/21/2015
+
+    Parameters
+    ----------
+    beta : double
+        Tilt from horizontal of the PV modules/panels (deg)
+    sazm : double
+        Surface azimuth of the PV modules/panels (deg)
+    lat : double
+        Site latitude (deg)
+    lng : double
+        Site longitude (deg)
+    tz : double
+        Time zone (hrs)
+    hour : int
+        hour for no shading criteria
+    minute: double
+        minute for no shading
+
+    Returns
+    -------
+    D : numeric
+        Horizontal distance between rows of PV panels (in PV panel slope
+        lengths)
+    """     
+    beta = beta * DTOR  # Tilt from horizontal of the PV modules/panels, in radians
+    sazm = sazm * DTOR  # Surface azimuth of PV module/pamels, in radians
     if lat >= 0:
         [azm, zen, elv, dec, sunrise, sunset, Eo, tst] = solarPos (2014, 12, 21, hour, minute, lat, lng, tz)
     else:
@@ -1525,24 +1529,23 @@ def rowSpacing(beta, sazm, lat, lng, tz, hour, minute):
         [azm, zen, elv, dec, sunrise, sunset, Eo, tst] = solarPos(2014, 6, 21, hour, minute, lat, lng, tz)
       
     # Console.WriteLine("tst = {0} azm = {1} elv = {2}", tst, azm * 180.0 / Math.PI, elv * 180.0 / Math.PI);
-    D = math.cos(sazm - azm) * math.sin(beta) / math.tan(elv);
-    return D;
+    D = math.cos(sazm - azm) * math.sin(beta) / math.tan(elv)
+    return D
 # End of RowSpacing  
 
 
 def trackingBFvaluescalculator(beta, hub_height, r2r):
     '''
     C, D = trackingBFvaluescalculator(beta, hub_height, r2r)
-    
-    1-axis tracking helper file to calculate C = ground clearance of PV panel and D = row-to-row distance
-    (each in PV panel slope lengths)
-    
+
+    1-axis tracking helper file to calculate C = ground clearance of PV panel
+    and D = row-to-row distance (each in PV panel slope lengths)
+
     Created on Tue Jun 13 08:01:56 2017
-    
+
     @author: sayala
-    
     '''
-    beta = beta * math.pi / 180.0;      # Tilt from horizontal of the PV modules/panels, in radians
+    beta = beta * DTOR  # Tilt from horizontal of the PV modules/panels, in radians
     x1 = math.cos(beta);         # Horizontal distance from front of panel to rear of panel (in PV panel slope lengths)
     #rtr = D + x1;                # Row-to-row distance (in PV panel slope lengths)
     D = r2r - x1;                # Calculates D DistanceBetweenRows(panel slope lengths)
@@ -1550,4 +1553,4 @@ def trackingBFvaluescalculator(beta, hub_height, r2r):
     #C = 0.5+Cv-hm               # Ground clearance of PV panel (in PV panel slope lengths). 
     C = hub_height - hm          #Adding a 0.5 for half a panel slope length, since it is assumed the panel is rotating around its middle axis 
 
-    return C, D;
+    return C, D

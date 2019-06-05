@@ -13,6 +13,10 @@ View Factors
 ------------
 .. automodule:: bifacialvf.vf
 
-Get PVcell Back Surface Irradiances
+Get Back Surface Irradiances
 +++++++++++++++++++++++++++++++++++
 .. autofunction:: getBackSurfaceIrradiances
+
+Get Front Surface Irradiances
+++++++++++++++++++++++++++++++++++++
+.. autofunction:: getFrontSurfaceIrradiances

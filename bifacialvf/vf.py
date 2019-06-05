@@ -7,348 +7,385 @@ ViewFactor module - VF calculation helper files for bifacial-viewfactor
 
 """
 
-
-from __future__ import division, print_function # ensure python3 compatible division and printing
+# ensure python3 compatible division and printing
+from __future__ import division, print_function, absolute_import
 import math
 import numpy
-from sun import solarPos, sunIncident, perezComp, aOIcorrection
+from .sun import solarPos, sunIncident, perezComp, aOIcorrection
 
 
+def getBackSurfaceIrradiances(rowType, maxShadow, PVbackSurface, beta, sazm,
+                              dni, dhi, C, D, albedo, zen, azm, cellRows,
+                              pvBackSH, rearGroundGHI, frontGroundGHI,
+                              frontReflected, offset=0):      
+    """
+    This method calculates the AOI corrected irradiance on the back of the PV
+    module/panel. 11/19/2015
+
+    Added rowType and other changes to distinguish between types of rows.
+    4/19/2016
+
+    Added input of offset of reference cell from PV module back (in PV panel
+    slope lengths) for modeling Sara's reference cell measurements, should be
+    set to zero for PV module cell irradiances.
+
+    Added while loop so projected Xs aren't too negative causing array index
+    problems (<0) 12/13/2016::
+
+        while (projectedX1 < -100.0 || projectedX2 < -100.0):
+            # Offset so array indexes are >= -100.0  12/13/2016
+
+            projectedX1 += 100.0;
+            projectedX2 += 100.0;
+
+    Parameters
+    ----------
+    rowType : str
+        Type of row: "first", "interior", "last", or "single" 
+    maxShadow
+        Maximum shadow length projected to the front(-) or rear (+) from the
+        front of the module 
+    PVbackSurface
+        PV module back surface material type, either "glass" or "ARglass"
+    beta
+        Tilt from horizontal of the PV modules/panels (deg) (for front surface)
+    sazm
+        Surface azimuth of PV panels (deg) (for front surface)
+    dni
+        Direct normal irradiance (W/m2)
+    dhi
+        Diffuse horizontal irradiance (W/m2)
+    C
+        Ground clearance of PV panel (in PV panel slope lengths)            
+    D
+        Horizontal distance between rows of PV panels (in PV panel slope
+        lengths) 
+    albedo
+        Ground albedo
+    zen
+        Sun zenith (in radians)
+    azm
+        Sun azimuth (in radians)
+    pvBackSH
+        Decimal fraction of the back surface of the PV panel that is shaded,
+        0.0 to 1.0
+    rearGroundGHI : array of size [100]
+        Global horizontal irradiance for each of 100 ground segments (W/m2)
+    frontGroundGHI : array of size [100]
+        Global horizontal irradiance for each of 100 ground segments (W/m2)
+    frontReflected : array of size [cellRows]
+        Irradiance reflected from the front of the PV module/panel (W/m2) in
+        the row behind the one of interest
+    offset
+        Offset of reference cell from PV module back (in PV panel slope
+        lengths), set to zero for PV module cell irradiances
+
+    Returns
+    -------
+    backGTI : array of size [cellRows]
+        AOI corrected irradiance on back side of PV module/panel, one for each
+        cell row (W/m2)
+    aveGroundGHI : numeric
+        Average GHI on ground under PV array
+
+    Notes
+    -----
+    1-degree hemispherical segment AOI correction factor for glass (index=0)
+    and ARglass (index=1)
+    """
+    backGTI = []
+
+    SegAOIcor = ([[0.057563, 0.128570, 0.199651, 0.265024, 0.324661, 0.378968, 0.428391, 0.473670, 0.514788, 0.552454, 
+            0.586857, 0.618484, 0.647076, 0.673762, 0.698029, 0.720118, 0.740726, 0.759671, 0.776946, 0.792833, 
+            0.807374, 0.821010, 0.833534, 0.845241, 0.855524, 0.865562, 0.874567, 0.882831, 0.890769, 0.897939, 
+            0.904373, 0.910646, 0.916297, 0.921589, 0.926512, 0.930906, 0.935179, 0.939074, 0.942627, 0.946009, 
+            0.949096, 0.952030, 0.954555, 0.957157, 0.959669, 0.961500, 0.963481, 0.965353, 0.967387, 0.968580, 
+            0.970311, 0.971567, 0.972948, 0.974114, 0.975264, 0.976287, 0.977213, 0.978142, 0.979057, 0.979662, 
+            0.980460, 0.981100, 0.981771, 0.982459, 0.982837, 0.983199, 0.983956, 0.984156, 0.984682, 0.985026, 
+            0.985364, 0.985645, 0.985954, 0.986241, 0.986484, 0.986686, 0.986895, 0.987043, 0.987287, 0.987388, 
+            0.987541, 0.987669, 0.987755, 0.987877, 0.987903, 0.987996, 0.988022, 0.988091, 0.988104, 0.988114, 
+            0.988114, 0.988104, 0.988091, 0.988022, 0.987996, 0.987903, 0.987877, 0.987755, 0.987669, 0.987541, 
+            0.987388, 0.987287, 0.987043, 0.986895, 0.986686, 0.986484, 0.986240, 0.985954, 0.985645, 0.985364, 
+            0.985020, 0.984676, 0.984156, 0.983956, 0.983199, 0.982837, 0.982459, 0.981771, 0.981100, 0.980460, 
+            0.979662, 0.979057, 0.978142, 0.977213, 0.976287, 0.975264, 0.974114, 0.972947, 0.971567, 0.970311, 
+            0.968580, 0.967387, 0.965353, 0.963481, 0.961501, 0.959671, 0.957157, 0.954555, 0.952030, 0.949096, 
+            0.946009, 0.942627, 0.939074, 0.935179, 0.930906, 0.926512, 0.921589, 0.916297, 0.910646, 0.904373, 
+            0.897939, 0.890769, 0.882831, 0.874567, 0.865562, 0.855524, 0.845241, 0.833534, 0.821010, 0.807374, 
+            0.792833, 0.776946, 0.759671, 0.740726, 0.720118, 0.698029, 0.673762, 0.647076, 0.618484, 0.586857, 
+            0.552454, 0.514788, 0.473670, 0.428391, 0.378968, 0.324661, 0.265024, 0.199651, 0.128570, 0.057563],
+        [0.062742, 0.139913, 0.216842, 0.287226, 0.351055, 0.408796, 0.460966, 0.508397, 0.551116, 0.589915,
+            0.625035, 0.657029, 0.685667, 0.712150, 0.735991, 0.757467, 0.777313, 0.795374, 0.811669, 0.826496, 
+            0.839932, 0.852416, 0.863766, 0.874277, 0.883399, 0.892242, 0.900084, 0.907216, 0.914023, 0.920103, 
+            0.925504, 0.930744, 0.935424, 0.939752, 0.943788, 0.947313, 0.950768, 0.953860, 0.956675, 0.959339, 
+            0.961755, 0.964039, 0.965984, 0.967994, 0.969968, 0.971283, 0.972800, 0.974223, 0.975784, 0.976647, 
+            0.977953, 0.978887, 0.979922, 0.980773, 0.981637, 0.982386, 0.983068, 0.983759, 0.984436, 0.984855, 
+            0.985453, 0.985916, 0.986417, 0.986934, 0.987182, 0.987435, 0.988022, 0.988146, 0.988537, 0.988792, 
+            0.989043, 0.989235, 0.989470, 0.989681, 0.989857, 0.990006, 0.990159, 0.990263, 0.990455, 0.990515, 
+            0.990636, 0.990731, 0.990787, 0.990884, 0.990900, 0.990971, 0.990986, 0.991042, 0.991048, 0.991057, 
+            0.991057, 0.991048, 0.991042, 0.990986, 0.990971, 0.990900, 0.990884, 0.990787, 0.990731, 0.990636, 
+            0.990515, 0.990455, 0.990263, 0.990159, 0.990006, 0.989857, 0.989681, 0.989470, 0.989235, 0.989043, 
+            0.988787, 0.988532, 0.988146, 0.988022, 0.987435, 0.987182, 0.986934, 0.986417, 0.985916, 0.985453, 
+            0.984855, 0.984436, 0.983759, 0.983068, 0.982386, 0.981637, 0.980773, 0.979920, 0.978887, 0.977953, 
+            0.976647, 0.975784, 0.974223, 0.972800, 0.971284, 0.969970, 0.967994, 0.965984, 0.964039, 0.961755, 
+            0.959339, 0.956675, 0.953860, 0.950768, 0.947313, 0.943788, 0.939752, 0.935424, 0.930744, 0.925504, 
+            0.920103, 0.914023, 0.907216, 0.900084, 0.892242, 0.883399, 0.874277, 0.863766, 0.852416, 0.839932, 
+            0.826496, 0.811669, 0.795374, 0.777313, 0.757467, 0.735991, 0.712150, 0.685667, 0.657029, 0.625035, 
+            0.589915, 0.551116, 0.508397, 0.460966, 0.408796, 0.351055, 0.287226, 0.216842, 0.139913, 0.062742]]);
 
 
-def getBackSurfaceIrradiances(rowType, maxShadow, PVbackSurface, beta, sazm, dni, dhi, C, D, albedo, zen, azm, cellRows, pvBackSH, rearGroundGHI, frontGroundGHI, frontReflected, offset=0):      
-        backGTI = []
+    dtor = math.pi / 180.0;      # Factor for converting from degrees to radians
+    beta = beta * dtor;                 # Tilt from horizontal of the PV modules/panels, in radians
+    sazm = sazm * dtor;                 # Surface azimuth of PV module/panels, in radians
+
+    # 1. Calculate and assign various paramters to be used for modeling irradiances
+    iso_dif = 0.0; circ_dif = 0.0; horiz_dif = 0.0; grd_dif = 0.0; beam = 0.0;   # For calling PerezComp to break diffuse into components for zero tilt (horizontal)                           
+    ghi, iso_dif, circ_dif, horiz_dif, grd_dif, beam = perezComp(dni, dhi, albedo, zen, 0.0, zen) # Call to get iso_dif for horizontal surface          
+
+    
+    iso_sky_dif = iso_dif;       # Isotropic irradiance from sky on horizontal surface, used later for determining isotropic sky component
+
+
+    inc, tiltr, sazmr = sunIncident(0, 90.0, 180.0, 45.0, zen, azm) # For calling PerezComp to break diffuse into components for 90 degree tilt (vertical)
+
+    vti, iso_dif, circ_dif, horiz_dif, grd_dif, beam = perezComp(dni, dhi, albedo, inc, tiltr, zen) # Call to get horiz_dif for vertical surface
+
+
+    F2DHI = horiz_dif;           # Horizon diffuse irradiance on a vertical surface, used later for determining horizon brightening irradiance component
+
+    index = -99;
+    n2 = -99.9;
+    if (PVbackSurface == "glass"):
+    
+        index = 0;          # Index to use with 1-degree hemispherical segment AOI correction factor array
+        n2 = 1.526;         # Index of refraction for glass
+    
+    elif (PVbackSurface == "ARglass"):
+    
+        index = 1;          # Index to use with 1-degree hemispherical segment AOI correction factor array
+        n2 = 1.300;         # Index of refraction for ARglass
+    else:
+        raise Exception("Incorrect text input for PVbackSurface. Must be glass or ARglass.")
         
-        # This method calculates the AOI corrected irradiance on the back of the PV module/panel 11/19/2015
-        #
-        # Added rowType and other changes to distinguish between types of rows.        4/19/2016
-        #
-        # Added input of offset of reference cell from PV module back (in PV panel slope lengths) for modeling Sara's reference cell measurements, 
-        # should be set to zero for PV module cell irradiances.
-        # 
-        # Added while loop so projected Xs aren't too negative causing array index problems (<0)   12/13/2016
-        # while (projectedX1 < -100.0 || projectedX2 < -100.0)            # Offset so array indexes are >= -100.0  12/13/2016
-        # 
-        #    projectedX1 += 100.0;
-        #    projectedX2 += 100.0;
-        # 
+    Ro = math.pow((n2 - 1.0) / (n2 + 1.0), 2.0);     # Reflectance at normal incidence, Duffie and Beckman p217
 
-        #
-        # Input Variables          Description 
-        # rowType                  Type of row: "first", "interior", "last", or "single" 
-        # maxShadow                Maximum shadow length projected to the front(-) or rear (+) from the front of the module 
-        # PVbackSurface            PV module back surface material type, either "glass" or "ARglass"
-        # beta                     Tilt from horizontal of the PV modules/panels (deg) (for front surface)
-        # sazm                     Surface azimuth of PV panels (deg) (for front surface)
-        # dni                      Direct normal irradiance (W/m2)
-        # dhi                      Diffuse horizontal irradiance (W/m2)
-        # C                        Ground clearance of PV panel (in PV panel slope lengths)            
-        # D                        Horizontal distance between rows of PV panels (in PV panel slope lengths) 
-        # albedo                   Ground albedo
-        # zen                      Sun zenith (in radians)
-        # azm                      Sun azimuth (in radians)
-        # pvBackSH                 Decimal fraction of the back surface of the PV panel that is shaded, 0.0 to 1.0
-        # rearGroundGHI[100]       Global horizontal irradiance for each of 100 ground segments (W/m2)
-        # frontGroundGHI[100]      Global horizontal irradiance for each of 100 ground segments (W/m2)
-        # frontReflected[cellRows] Irradiance reflected from the front of the PV module/panel (W/m2) in the row behind the one of interest
-        # offset                   Offset of reference cell from PV module back (in PV panel slope lengths), set to zero for PV module cell irradiances
+    aveGroundGHI = 0.0;          # Average GHI on ground under PV array for cases when x projection exceed 2*rtr
+    for i in range(0,100):
+        aveGroundGHI += rearGroundGHI[i] / 100.0;
 
-        # Returned Variables
-        # backGTI[cellRows]        AOI corrected irradiance on back side of PV module/panel, one for each cell row (W/m2)
-        # aveGroundGHI             Average GHI on ground under PV array
+    # Calculate x,y coordinates of bottom and top edges of PV row in back of desired PV row so that portions of sky and ground viewed by the 
+    # PV cell may be determined. Origin of x-y axis is the ground pobelow the lower front edge of the desired PV row. The row in back of 
+    # the desired row is in the positive x direction.
 
-        # 1-degree hemispherical segment AOI correction factor for glass (index=0) and ARglass (index=1)
+    h = math.sin(beta);          # Vertical height of sloped PV panel (in PV panel slope lengths)                    
+    x1 = math.cos(beta);         # Horizontal distance from front of panel to rear of panel (in PV panel slope lengths)
+    rtr = D + x1;                # Row-to-row distance (in PV panel slope lengths)
+    PbotX = rtr;                 # x value for poon bottom egde of PV module/panel of row in back of (in PV panel slope lengths)
+    PbotY = C;                   # y value for poon bottom egde of PV module/panel of row in back of (in PV panel slope lengths)
+    PtopX = rtr + x1;            # x value for poon top egde of PV module/panel of row in back of (in PV panel slope lengths)
+    PtopY = h + C;               # y value for poon top egde of PV module/panel of row in back of (in PV panel slope lengths)
+
+    # 2. Calculate diffuse and direct component irradiances for each cell row 
+    for i in range (0, cellRows):
+    
+        # Calculate diffuse irradiances and reflected amounts for each cell row over it's field of view of 180 degrees, 
+        # beginning with the angle providing the upper most view of the sky (j=0)
+        #PcellX = x1 * (i + 0.5) / ((double)cellRows);                    # x value for location of PV cell
+        #PcellY = C + h * (i + 0.5) / ((double)cellRows);                 # y value for location of PV cell
+        PcellX = x1 * (i + 0.5) / (cellRows) + offset * math.sin(beta);    # x value for location of PV cell with OFFSET FOR SARA REFERENCE CELLS     4/26/2016
+        PcellY = C + h * (i + 0.5) / (cellRows) - offset * math.cos(beta); # y value for location of PV cell with OFFSET FOR SARA REFERENCE CELLS     4/26/2016
+        elvUP = math.atan((PtopY - PcellY) / (PtopX - PcellX));          # Elevation angle up from PV cell to top of PV module/panel, radians
+        elvDOWN = math.atan((PcellY - PbotY) / (PbotX - PcellX));        # Elevation angle down from PV cell to bottom of PV module/panel, radians
+        if (rowType == "last" or rowType == "single"):                         # 4/19/16 No array to the rear for these cases
         
-        SegAOIcor = ([[0.057563, 0.128570, 0.199651, 0.265024, 0.324661, 0.378968, 0.428391, 0.473670, 0.514788, 0.552454, 
-             0.586857, 0.618484, 0.647076, 0.673762, 0.698029, 0.720118, 0.740726, 0.759671, 0.776946, 0.792833, 
-             0.807374, 0.821010, 0.833534, 0.845241, 0.855524, 0.865562, 0.874567, 0.882831, 0.890769, 0.897939, 
-             0.904373, 0.910646, 0.916297, 0.921589, 0.926512, 0.930906, 0.935179, 0.939074, 0.942627, 0.946009, 
-             0.949096, 0.952030, 0.954555, 0.957157, 0.959669, 0.961500, 0.963481, 0.965353, 0.967387, 0.968580, 
-             0.970311, 0.971567, 0.972948, 0.974114, 0.975264, 0.976287, 0.977213, 0.978142, 0.979057, 0.979662, 
-             0.980460, 0.981100, 0.981771, 0.982459, 0.982837, 0.983199, 0.983956, 0.984156, 0.984682, 0.985026, 
-             0.985364, 0.985645, 0.985954, 0.986241, 0.986484, 0.986686, 0.986895, 0.987043, 0.987287, 0.987388, 
-             0.987541, 0.987669, 0.987755, 0.987877, 0.987903, 0.987996, 0.988022, 0.988091, 0.988104, 0.988114, 
-             0.988114, 0.988104, 0.988091, 0.988022, 0.987996, 0.987903, 0.987877, 0.987755, 0.987669, 0.987541, 
-             0.987388, 0.987287, 0.987043, 0.986895, 0.986686, 0.986484, 0.986240, 0.985954, 0.985645, 0.985364, 
-             0.985020, 0.984676, 0.984156, 0.983956, 0.983199, 0.982837, 0.982459, 0.981771, 0.981100, 0.980460, 
-             0.979662, 0.979057, 0.978142, 0.977213, 0.976287, 0.975264, 0.974114, 0.972947, 0.971567, 0.970311, 
-             0.968580, 0.967387, 0.965353, 0.963481, 0.961501, 0.959671, 0.957157, 0.954555, 0.952030, 0.949096, 
-             0.946009, 0.942627, 0.939074, 0.935179, 0.930906, 0.926512, 0.921589, 0.916297, 0.910646, 0.904373, 
-             0.897939, 0.890769, 0.882831, 0.874567, 0.865562, 0.855524, 0.845241, 0.833534, 0.821010, 0.807374, 
-             0.792833, 0.776946, 0.759671, 0.740726, 0.720118, 0.698029, 0.673762, 0.647076, 0.618484, 0.586857, 
-             0.552454, 0.514788, 0.473670, 0.428391, 0.378968, 0.324661, 0.265024, 0.199651, 0.128570, 0.057563],
-            [0.062742, 0.139913, 0.216842, 0.287226, 0.351055, 0.408796, 0.460966, 0.508397, 0.551116, 0.589915,
-             0.625035, 0.657029, 0.685667, 0.712150, 0.735991, 0.757467, 0.777313, 0.795374, 0.811669, 0.826496, 
-             0.839932, 0.852416, 0.863766, 0.874277, 0.883399, 0.892242, 0.900084, 0.907216, 0.914023, 0.920103, 
-             0.925504, 0.930744, 0.935424, 0.939752, 0.943788, 0.947313, 0.950768, 0.953860, 0.956675, 0.959339, 
-             0.961755, 0.964039, 0.965984, 0.967994, 0.969968, 0.971283, 0.972800, 0.974223, 0.975784, 0.976647, 
-             0.977953, 0.978887, 0.979922, 0.980773, 0.981637, 0.982386, 0.983068, 0.983759, 0.984436, 0.984855, 
-             0.985453, 0.985916, 0.986417, 0.986934, 0.987182, 0.987435, 0.988022, 0.988146, 0.988537, 0.988792, 
-             0.989043, 0.989235, 0.989470, 0.989681, 0.989857, 0.990006, 0.990159, 0.990263, 0.990455, 0.990515, 
-             0.990636, 0.990731, 0.990787, 0.990884, 0.990900, 0.990971, 0.990986, 0.991042, 0.991048, 0.991057, 
-             0.991057, 0.991048, 0.991042, 0.990986, 0.990971, 0.990900, 0.990884, 0.990787, 0.990731, 0.990636, 
-             0.990515, 0.990455, 0.990263, 0.990159, 0.990006, 0.989857, 0.989681, 0.989470, 0.989235, 0.989043, 
-             0.988787, 0.988532, 0.988146, 0.988022, 0.987435, 0.987182, 0.986934, 0.986417, 0.985916, 0.985453, 
-             0.984855, 0.984436, 0.983759, 0.983068, 0.982386, 0.981637, 0.980773, 0.979920, 0.978887, 0.977953, 
-             0.976647, 0.975784, 0.974223, 0.972800, 0.971284, 0.969970, 0.967994, 0.965984, 0.964039, 0.961755, 
-             0.959339, 0.956675, 0.953860, 0.950768, 0.947313, 0.943788, 0.939752, 0.935424, 0.930744, 0.925504, 
-             0.920103, 0.914023, 0.907216, 0.900084, 0.892242, 0.883399, 0.874277, 0.863766, 0.852416, 0.839932, 
-             0.826496, 0.811669, 0.795374, 0.777313, 0.757467, 0.735991, 0.712150, 0.685667, 0.657029, 0.625035, 
-             0.589915, 0.551116, 0.508397, 0.460966, 0.408796, 0.351055, 0.287226, 0.216842, 0.139913, 0.062742]]);
-
-
-        dtor = math.pi / 180.0;      # Factor for converting from degrees to radians
-        beta = beta * dtor;                 # Tilt from horizontal of the PV modules/panels, in radians
-        sazm = sazm * dtor;                 # Surface azimuth of PV module/panels, in radians
-
-        # 1. Calculate and assign various paramters to be used for modeling irradiances
-        iso_dif = 0.0; circ_dif = 0.0; horiz_dif = 0.0; grd_dif = 0.0; beam = 0.0;   # For calling PerezComp to break diffuse into components for zero tilt (horizontal)                           
-        ghi, iso_dif, circ_dif, horiz_dif, grd_dif, beam = perezComp(dni, dhi, albedo, zen, 0.0, zen) # Call to get iso_dif for horizontal surface          
-
+            elvUP = 0.0;
+            elvDOWN = 0.0;
         
-        iso_sky_dif = iso_dif;       # Isotropic irradiance from sky on horizontal surface, used later for determining isotropic sky component
+        #Console.WriteLine("ElvUp = 0", elvUP / dtor);
+        #if (i == 0)
+        #    Console.WriteLine("ElvDown = 0", elvDOWN / dtor);
 
+        #123
+        #iStopIso = Convert.ToInt32((beta - elvUP) / dtor);        # Last whole degree in arc range that sees sky, first is 0
+        #Console.WriteLine("iStopIso = 0", iStopIso);
+        #iHorBright = Convert.ToInt32(max(0.0, 6.0 - elvUP / dtor));    # Number of whole degrees for which horizon brightening occurs
+        #iStartGrd = Convert.ToInt32((beta + elvDOWN) / dtor);               # First whole degree in arc range that sees ground, last is 180
 
-        inc, tiltr, sazmr = sunIncident(0, 90.0, 180.0, 45.0, zen, azm) # For calling PerezComp to break diffuse into components for 90 degree tilt (vertical)
+        iStopIso = int(round((beta - elvUP) / dtor));        # Last whole degree in arc range that sees sky, first is 0
+        #Console.WriteLine("iStopIso = 0", iStopIso);
+        iHorBright = int(round(max(0.0, 6.0 - elvUP / dtor)));    # Number of whole degrees for which horizon brightening occurs
+        iStartGrd = int(round((beta + elvDOWN) / dtor));               # First whole degree in arc range that sees ground, last is 180
 
-        vti, iso_dif, circ_dif, horiz_dif, grd_dif, beam = perezComp(dni, dhi, albedo, inc, tiltr, zen) # Call to get horiz_dif for vertical surface
+        backGTI.append(0.0)                                                      # Initialtize front GTI
 
-
-        F2DHI = horiz_dif;           # Horizon diffuse irradiance on a vertical surface, used later for determining horizon brightening irradiance component
-
-        index = -99;
-        n2 = -99.9;
-        if (PVbackSurface == "glass"):
+        for j in range (0, iStopIso):                                      # Add sky diffuse component and horizon brightening if present
         
-            index = 0;          # Index to use with 1-degree hemispherical segment AOI correction factor array
-            n2 = 1.526;         # Index of refraction for glass
-        
-        elif (PVbackSurface == "ARglass"):
-        
-            index = 1;          # Index to use with 1-degree hemispherical segment AOI correction factor array
-            n2 = 1.300;         # Index of refraction for ARglass
-        else:
-            raise Exception("Incorrect text input for PVbackSurface. Must be glass or ARglass.")
+            backGTI[i] += 0.5 * (math.cos(j * dtor) - math.cos((j + 1) * dtor)) * SegAOIcor[index][j] * iso_sky_dif;                               # Sky radiation
+    #          backGTI[i] += 0.5 * (math.cos(j * dtor) - math.cos((j + 1) * dtor)) * iso_sky_dif;                               # Sky radiation
+
+            if ((iStopIso - j) <= iHorBright):                                   # Add horizon brightening term if seen
             
-        Ro = math.pow((n2 - 1.0) / (n2 + 1.0), 2.0);     # Reflectance at normal incidence, Duffie and Beckman p217
-
-        aveGroundGHI = 0.0;          # Average GHI on ground under PV array for cases when x projection exceed 2*rtr
-        for i in range(0,100):
-            aveGroundGHI += rearGroundGHI[i] / 100.0;
-
-        # Calculate x,y coordinates of bottom and top edges of PV row in back of desired PV row so that portions of sky and ground viewed by the 
-        # PV cell may be determined. Origin of x-y axis is the ground pobelow the lower front edge of the desired PV row. The row in back of 
-        # the desired row is in the positive x direction.
-
-        h = math.sin(beta);          # Vertical height of sloped PV panel (in PV panel slope lengths)                    
-        x1 = math.cos(beta);         # Horizontal distance from front of panel to rear of panel (in PV panel slope lengths)
-        rtr = D + x1;                # Row-to-row distance (in PV panel slope lengths)
-        PbotX = rtr;                 # x value for poon bottom egde of PV module/panel of row in back of (in PV panel slope lengths)
-        PbotY = C;                   # y value for poon bottom egde of PV module/panel of row in back of (in PV panel slope lengths)
-        PtopX = rtr + x1;            # x value for poon top egde of PV module/panel of row in back of (in PV panel slope lengths)
-        PtopY = h + C;               # y value for poon top egde of PV module/panel of row in back of (in PV panel slope lengths)
-
-        # 2. Calculate diffuse and direct component irradiances for each cell row 
-        for i in range (0, cellRows):
+                backGTI[i] += 0.5 * (math.cos(j * dtor) - math.cos((j + 1) * dtor)) * SegAOIcor[index][j] * F2DHI / 0.052264;  # 0.052246 = 0.5 * [cos(84) - cos(90)]
+            #backGTI[i] += 0.5 * (math.cos(j * dtor) - math.cos((j + 1) * dtor)) * F2DHI / 0.052264;  # 0.052246 = 0.5 * [cos(84) - cos(90)]
+            
         
-            # Calculate diffuse irradiances and reflected amounts for each cell row over it's field of view of 180 degrees, 
-            # beginning with the angle providing the upper most view of the sky (j=0)
-            #PcellX = x1 * (i + 0.5) / ((double)cellRows);                    # x value for location of PV cell
-            #PcellY = C + h * (i + 0.5) / ((double)cellRows);                 # y value for location of PV cell
-            PcellX = x1 * (i + 0.5) / (cellRows) + offset * math.sin(beta);    # x value for location of PV cell with OFFSET FOR SARA REFERENCE CELLS     4/26/2016
-            PcellY = C + h * (i + 0.5) / (cellRows) - offset * math.cos(beta); # y value for location of PV cell with OFFSET FOR SARA REFERENCE CELLS     4/26/2016
-            elvUP = math.atan((PtopY - PcellY) / (PtopX - PcellX));          # Elevation angle up from PV cell to top of PV module/panel, radians
-            elvDOWN = math.atan((PcellY - PbotY) / (PbotX - PcellX));        # Elevation angle down from PV cell to bottom of PV module/panel, radians
-            if (rowType == "last" or rowType == "single"):                         # 4/19/16 No array to the rear for these cases
+
+        if (rowType == "interior" or rowType == "first"):                          # 4/19/16 Only add reflections from PV modules for these cases
+        
+
+            for j in range (iStopIso, iStartGrd):      #j = iStopIso; j < iStartGrd; j++)                              # Add relections from PV module front surfaces
             
-                elvUP = 0.0;
-                elvDOWN = 0.0;
+                L = (PbotX - PcellX) / math.cos(elvDOWN);                    # Diagonal distance from cell to bottom of module in row behind
+                startAlpha = -(j - iStopIso) * dtor + elvUP + elvDOWN;
+                stopAlpha = -(j + 1 - iStopIso) * dtor + elvUP + elvDOWN;
+                m = L * math.sin(startAlpha);
+                theta = math.pi - elvDOWN - (math.pi / 2.0 - startAlpha) - beta;
+                projectedX2 = m / math.cos(theta);                           # Projected distance on sloped PV module
+                m = L * math.sin(stopAlpha);
+                theta = math.pi - elvDOWN - (math.pi / 2.0 - stopAlpha) - beta;
+                projectedX1 = m / math.cos(theta);                           # Projected distance on sloped PV module
+                projectedX1 = max(0.0, projectedX1);
+                #Console.WriteLine("j= 0 projected X1 = 1,6:0.000  projected X2 = 2,6:0.000", j, projectedX1, projectedX2);
+
+                PVreflectedIrr = 0.0;                                        # Irradiance from PV module front cover reflections
+                deltaCell = 1.0 / cellRows;                          # Length of cell in sloped direction in module/panel units (dimensionless)
+                for k in range (0, cellRows):                                  # Determine which cells in behind row are seen, and their reflected irradiance
+                
+                    cellBot = k * deltaCell;                                 # Position of bottom of cell along PV module/panel
+                    cellTop = (k + 1) * deltaCell;                           # Position of top of cell along PV module/panel
+                    cellLengthSeen = 0.0;                                    # Length of cell seen for this row, start with zero
+                    if (cellBot >= projectedX1 and cellTop <= projectedX2):
+                        cellLengthSeen = cellTop - cellBot;                         # Sees the whole cell
+                    elif (cellBot <= projectedX1 and cellTop >= projectedX2):
+                        cellLengthSeen = projectedX2 - projectedX1;                 # Sees portion in the middle of cell
+                    elif (cellBot >= projectedX1 and projectedX2 > cellBot and cellTop >= projectedX2):
+                        cellLengthSeen = projectedX2 - cellBot;                     # Sees bottom of cell
+                    elif (cellBot <= projectedX1 and projectedX1 < cellTop and cellTop <= projectedX2):
+                        cellLengthSeen = cellTop - projectedX1;                     # Sees top of cell
+                    #Console.WriteLine("cell= 0 cellBot = 1,5:0.00 cellTop = 2,5:0.00  Cell length seen = 3,5:0.00", k, cellBot, cellTop, cellLengthSeen);
+                    PVreflectedIrr += cellLengthSeen * frontReflected[k];           # Add reflected radiation for this PV cell, if seen, weight by cell length seen
+                
+                PVreflectedIrr /= projectedX2 - projectedX1;                        # Reflected irradiance from PV modules (W/m2)
+                backGTI[i] += 0.5 * (math.cos(j * dtor) - math.cos((j + 1) * dtor)) * SegAOIcor[index][j] * PVreflectedIrr;     # Radiation reflected from PV module surfaces onto back surface of module
             
-            #Console.WriteLine("ElvUp = 0", elvUP / dtor);
+            # End of adding reflections from PV module surfaces
+        #Console.WriteLine("");
+        #if (i == 0)
+        #Console.WriteLine("iStartGrd = 0", iStartGrd);
+        for j in range (iStartGrd, 180):                                  # Add ground reflected component
+        
+            startElvDown = (j - iStartGrd) * dtor + elvDOWN;             # Start and ending down elevations for this j loop 
+            stopElvDown = (j + 1 - iStartGrd) * dtor + elvDOWN;
+            projectedX2 = PcellX + numpy.float64(PcellY) / math.tan(startElvDown);      # Projection of ElvDown to ground in +x direction (X1 and X2 opposite nomenclature for front irradiance method)
+            projectedX1 = PcellX + PcellY / math.tan(stopElvDown);
+            actualGroundGHI = 0.0;                                       # Actuall ground GHI from summing array values
             #if (i == 0)
-            #    Console.WriteLine("ElvDown = 0", elvDOWN / dtor);
-
-#123       #iStopIso = Convert.ToInt32((beta - elvUP) / dtor);        # Last whole degree in arc range that sees sky, first is 0
-            #Console.WriteLine("iStopIso = 0", iStopIso);
-            #iHorBright = Convert.ToInt32(max(0.0, 6.0 - elvUP / dtor));    # Number of whole degrees for which horizon brightening occurs
-            #iStartGrd = Convert.ToInt32((beta + elvDOWN) / dtor);               # First whole degree in arc range that sees ground, last is 180
- 
-            iStopIso = int(round((beta - elvUP) / dtor));        # Last whole degree in arc range that sees sky, first is 0
-            #Console.WriteLine("iStopIso = 0", iStopIso);
-            iHorBright = int(round(max(0.0, 6.0 - elvUP / dtor)));    # Number of whole degrees for which horizon brightening occurs
-            iStartGrd = int(round((beta + elvDOWN) / dtor));               # First whole degree in arc range that sees ground, last is 180
-
-            backGTI.append(0.0)                                                      # Initialtize front GTI
-
-            for j in range (0, iStopIso):                                      # Add sky diffuse component and horizon brightening if present
+            #    Console.WriteLine("j= 0 projected X1 = 1,6:0.0", j, 100 * projectedX1 / rtr);
+            if (abs(projectedX1 - projectedX2) > 0.99 * rtr):
             
-                backGTI[i] += 0.5 * (math.cos(j * dtor) - math.cos((j + 1) * dtor)) * SegAOIcor[index][j] * iso_sky_dif;                               # Sky radiation
-      #          backGTI[i] += 0.5 * (math.cos(j * dtor) - math.cos((j + 1) * dtor)) * iso_sky_dif;                               # Sky radiation
-
-                if ((iStopIso - j) <= iHorBright):                                   # Add horizon brightening term if seen
+                if (rowType == "last" or rowType == "single"):                  # 4/19/16 No array to rear for these cases
                 
-                    backGTI[i] += 0.5 * (math.cos(j * dtor) - math.cos((j + 1) * dtor)) * SegAOIcor[index][j] * F2DHI / 0.052264;  # 0.052246 = 0.5 * [cos(84) - cos(90)]
-                #backGTI[i] += 0.5 * (math.cos(j * dtor) - math.cos((j + 1) * dtor)) * F2DHI / 0.052264;  # 0.052246 = 0.5 * [cos(84) - cos(90)]
+                    actualGroundGHI = ghi;                                      # Use total value if projection approximates the rtr
                 
+                else:
+                    actualGroundGHI = aveGroundGHI;                                 # Use average value if projection approximates the rtr                        
             
-
-            if (rowType == "interior" or rowType == "first"):                          # 4/19/16 Only add reflections from PV modules for these cases
+            else:
             
+                projectedX1 = 100.0 * projectedX1 / rtr;                        # Normalize projections and multiply by 100
+                projectedX2 = 100.0 * projectedX2 / rtr;
+                #Console.WriteLine("projectedX1 = 0 projectedX2 = 1", projectedX1, projectedX2);
 
-                for j in range (iStopIso, iStartGrd):      #j = iStopIso; j < iStartGrd; j++)                              # Add relections from PV module front surfaces
+                if ((rowType == "last" or rowType == "single") and (abs(projectedX1) > 99.0 or abs(projectedX2) > 99.0)):    #4/19/2016
                 
-                    L = (PbotX - PcellX) / math.cos(elvDOWN);                    # Diagonal distance from cell to bottom of module in row behind
-                    startAlpha = -(j - iStopIso) * dtor + elvUP + elvDOWN;
-                    stopAlpha = -(j + 1 - iStopIso) * dtor + elvUP + elvDOWN;
-                    m = L * math.sin(startAlpha);
-                    theta = math.pi - elvDOWN - (math.pi / 2.0 - startAlpha) - beta;
-                    projectedX2 = m / math.cos(theta);                           # Projected distance on sloped PV module
-                    m = L * math.sin(stopAlpha);
-                    theta = math.pi - elvDOWN - (math.pi / 2.0 - stopAlpha) - beta;
-                    projectedX1 = m / math.cos(theta);                           # Projected distance on sloped PV module
-                    projectedX1 = max(0.0, projectedX1);
-                    #Console.WriteLine("j= 0 projected X1 = 1,6:0.000  projected X2 = 2,6:0.000", j, projectedX1, projectedX2);
-
-                    PVreflectedIrr = 0.0;                                        # Irradiance from PV module front cover reflections
-                    deltaCell = 1.0 / cellRows;                          # Length of cell in sloped direction in module/panel units (dimensionless)
-                    for k in range (0, cellRows):                                  # Determine which cells in behind row are seen, and their reflected irradiance
-                    
-                        cellBot = k * deltaCell;                                 # Position of bottom of cell along PV module/panel
-                        cellTop = (k + 1) * deltaCell;                           # Position of top of cell along PV module/panel
-                        cellLengthSeen = 0.0;                                    # Length of cell seen for this row, start with zero
-                        if (cellBot >= projectedX1 and cellTop <= projectedX2):
-                            cellLengthSeen = cellTop - cellBot;                         # Sees the whole cell
-                        elif (cellBot <= projectedX1 and cellTop >= projectedX2):
-                            cellLengthSeen = projectedX2 - projectedX1;                 # Sees portion in the middle of cell
-                        elif (cellBot >= projectedX1 and projectedX2 > cellBot and cellTop >= projectedX2):
-                            cellLengthSeen = projectedX2 - cellBot;                     # Sees bottom of cell
-                        elif (cellBot <= projectedX1 and projectedX1 < cellTop and cellTop <= projectedX2):
-                            cellLengthSeen = cellTop - projectedX1;                     # Sees top of cell
-                        #Console.WriteLine("cell= 0 cellBot = 1,5:0.00 cellTop = 2,5:0.00  Cell length seen = 3,5:0.00", k, cellBot, cellTop, cellLengthSeen);
-                        PVreflectedIrr += cellLengthSeen * frontReflected[k];           # Add reflected radiation for this PV cell, if seen, weight by cell length seen
-                    
-                    PVreflectedIrr /= projectedX2 - projectedX1;                        # Reflected irradiance from PV modules (W/m2)
-                    backGTI[i] += 0.5 * (math.cos(j * dtor) - math.cos((j + 1) * dtor)) * SegAOIcor[index][j] * PVreflectedIrr;     # Radiation reflected from PV module surfaces onto back surface of module
-                
-               # End of adding reflections from PV module surfaces
-            #Console.WriteLine("");
-            #if (i == 0)
-            #Console.WriteLine("iStartGrd = 0", iStartGrd);
-            for j in range (iStartGrd, 180):                                  # Add ground reflected component
-            
-                startElvDown = (j - iStartGrd) * dtor + elvDOWN;             # Start and ending down elevations for this j loop 
-                stopElvDown = (j + 1 - iStartGrd) * dtor + elvDOWN;
-                projectedX2 = PcellX + numpy.float64(PcellY) / math.tan(startElvDown);      # Projection of ElvDown to ground in +x direction (X1 and X2 opposite nomenclature for front irradiance method)
-                projectedX1 = PcellX + PcellY / math.tan(stopElvDown);
-                actualGroundGHI = 0.0;                                       # Actuall ground GHI from summing array values
-                #if (i == 0)
-                #    Console.WriteLine("j= 0 projected X1 = 1,6:0.0", j, 100 * projectedX1 / rtr);
-                if (abs(projectedX1 - projectedX2) > 0.99 * rtr):
-                
-                    if (rowType == "last" or rowType == "single"):                  # 4/19/16 No array to rear for these cases
-                    
-                        actualGroundGHI = ghi;                                      # Use total value if projection approximates the rtr
-                    
-                    else:
-                        actualGroundGHI = aveGroundGHI;                                 # Use average value if projection approximates the rtr                        
+                    actualGroundGHI = ghi;                                      # Use total value if projection > rtr for "last" or "single"
                 
                 else:
                 
-                    projectedX1 = 100.0 * projectedX1 / rtr;                        # Normalize projections and multiply by 100
-                    projectedX2 = 100.0 * projectedX2 / rtr;
-                    #Console.WriteLine("projectedX1 = 0 projectedX2 = 1", projectedX1, projectedX2);
-
-                    if ((rowType == "last" or rowType == "single") and (abs(projectedX1) > 99.0 or abs(projectedX2) > 99.0)):    #4/19/2016
+                    while (projectedX1 >= 100.0 or projectedX2 >= 100.0):            # Offset so array indexes are less than 100
                     
-                        actualGroundGHI = ghi;                                      # Use total value if projection > rtr for "last" or "single"
+                        projectedX1 -= 100.0;
+                        projectedX2 -= 100.0;
+                    
+                    while (projectedX1 < -100.0 or projectedX2 < -100.0):            # Offset so array indexes are >= -100.0  12/13/2016
+                    
+                        projectedX1 += 100.0;
+                        projectedX2 += 100.0;
+                    
+
+                    #Console.WriteLine("projectedX1 = 0 projectedX2 = 1", projectedX1, projectedX2);
+                    index1 = (int)(projectedX1 + 100.0) - 100;                  # Determine indexes for use with rearGroundGHI array and frontGroundGHI array(truncates values)
+                    index2 = (int)(projectedX2 + 100.0) - 100;                  # (int)(1.9) = 1 and (int)(-1.9) = -1; (int)(1.9+100) - 100 = 1 and (int)(-1.9+100) - 100 = -2
+                    #Console.WriteLine("index1=0 index2=1", index1, index2);
+                    if (index1 == index2):
+                    
+                        if (index1 < 0):
+                            actualGroundGHI = frontGroundGHI[index1 + 100];
+                        #actualGroundGHI = 0.0;
+                        else:
+                            actualGroundGHI = rearGroundGHI[index1];                        # x projections in same groundGHI element THIS SEEMS TO ADD HICCUP 4/26/2016 ***************************
+                        #actualGroundGHI = 0.0;
                     
                     else:
                     
-                        while (projectedX1 >= 100.0 or projectedX2 >= 100.0):            # Offset so array indexes are less than 100
+                        for k in range (index1, index2+1):  #for (k = index1; k <= index2; k++)                      # Sum the irradiances on the ground if projections are in different groundGHI elements
                         
-                            projectedX1 -= 100.0;
-                            projectedX2 -= 100.0;
-                        
-                        while (projectedX1 < -100.0 or projectedX2 < -100.0):            # Offset so array indexes are >= -100.0  12/13/2016
-                        
-                            projectedX1 += 100.0;
-                            projectedX2 += 100.0;
-                        
-
-                        #Console.WriteLine("projectedX1 = 0 projectedX2 = 1", projectedX1, projectedX2);
-                        index1 = (int)(projectedX1 + 100.0) - 100;                  # Determine indexes for use with rearGroundGHI array and frontGroundGHI array(truncates values)
-                        index2 = (int)(projectedX2 + 100.0) - 100;                  # (int)(1.9) = 1 and (int)(-1.9) = -1; (int)(1.9+100) - 100 = 1 and (int)(-1.9+100) - 100 = -2
-                        #Console.WriteLine("index1=0 index2=1", index1, index2);
-                        if (index1 == index2):
-                        
-                            if (index1 < 0):
-                                actualGroundGHI = frontGroundGHI[index1 + 100];
-                            #actualGroundGHI = 0.0;
-                            else:
-                                actualGroundGHI = rearGroundGHI[index1];                        # x projections in same groundGHI element THIS SEEMS TO ADD HICCUP 4/26/2016 ***************************
-                            #actualGroundGHI = 0.0;
-                        
-                        else:
-                        
-                            for k in range (index1, index2+1):  #for (k = index1; k <= index2; k++)                      # Sum the irradiances on the ground if projections are in different groundGHI elements
+                            if (k == index1):
                             
-                                if (k == index1):
-                                
-                                    if (k < 0):
-                                        actualGroundGHI += frontGroundGHI[k + 100] * (k + 1.0 - projectedX1);
-                                    else:
-                                        actualGroundGHI += rearGroundGHI[k] * (k + 1.0 - projectedX1);
-                                
-                                elif (k == index2):
-                                
-                                    if (k < 0):
-                                        actualGroundGHI += frontGroundGHI[k + 100] * (projectedX2 - k);
-                                    else:
-                                        actualGroundGHI += rearGroundGHI[k] * (projectedX2 - k);
-                                
+                                if (k < 0):
+                                    actualGroundGHI += frontGroundGHI[k + 100] * (k + 1.0 - projectedX1);
                                 else:
-                                
-                                    if (k < 0):
-                                        actualGroundGHI += frontGroundGHI[k + 100];
-                                    else:
-                                        actualGroundGHI += rearGroundGHI[k];
-                                
+                                    actualGroundGHI += rearGroundGHI[k] * (k + 1.0 - projectedX1);
                             
-                            actualGroundGHI /= projectedX2 - projectedX1;                # Irradiance on ground in the 1 degree field of view
+                            elif (k == index2):
+                            
+                                if (k < 0):
+                                    actualGroundGHI += frontGroundGHI[k + 100] * (projectedX2 - k);
+                                else:
+                                    actualGroundGHI += rearGroundGHI[k] * (projectedX2 - k);
+                            
+                            else:
+                            
+                                if (k < 0):
+                                    actualGroundGHI += frontGroundGHI[k + 100];
+                                else:
+                                    actualGroundGHI += rearGroundGHI[k];
+                            
                         
+                        actualGroundGHI /= projectedX2 - projectedX1;                # Irradiance on ground in the 1 degree field of view
                     
-
-                    #if (i == 0)
-                    #    Console.WriteLine("j=0 index1=1 index2=2 projectX1=3,5:0.0 projectX2=4,5:0.0 actualGrdGHI=5,6:0.0", j, index1, index2, projectedX1, projectedX2, actualGroundGHI);
-                   # End of if looping to determine actualGroundGHI
-
                 
-                backGTI[i] += 0.5 * (math.cos(j * dtor) - math.cos((j + 1) * dtor)) * SegAOIcor[index][j] * actualGroundGHI * albedo;     # Add ground reflected component
 
-                #Console.WriteLine("actualGroundGHI = 0,6:0.0 inputGHI = 1,6:0.0 aveArrayGroundGHI = 2,6:0.0", actualGroundGHI, dhi + dni * math.cos(zen), aveGroundGHI);
-                
-               # End of j loop for adding ground reflected componenet 
+                #if (i == 0)
+                #    Console.WriteLine("j=0 index1=1 index2=2 projectX1=3,5:0.0 projectX2=4,5:0.0 actualGrdGHI=5,6:0.0", j, index1, index2, projectedX1, projectedX2, actualGroundGHI);
+                # End of if looping to determine actualGroundGHI
 
-            # Calculate and add direct and circumsolar irradiance components
-            inc, tiltr, sazmr = sunIncident(0, 180-beta / dtor, sazm / dtor - 180, 45.0, zen, azm)  # For calling PerezComp to break diffuse into components for downward facing tilt
             
-            gtiAllpc, iso_dif, circ_dif, horiz_dif, grd_dif, beam = perezComp(dni, dhi, albedo, inc, tiltr, zen) # Call to get components for the tilt
+            backGTI[i] += 0.5 * (math.cos(j * dtor) - math.cos((j + 1) * dtor)) * SegAOIcor[index][j] * actualGroundGHI * albedo;     # Add ground reflected component
 
-            cellShade = pvBackSH * cellRows - i;
-            if (cellShade > 1.0):    # Fully shaded if > 1, no shade if < 0, otherwise fractionally shaded
-                cellShade = 1.0;
-            elif (cellShade < 0.0):
-                cellShade = 0.0;
+            #Console.WriteLine("actualGroundGHI = 0,6:0.0 inputGHI = 1,6:0.0 aveArrayGroundGHI = 2,6:0.0", actualGroundGHI, dhi + dni * math.cos(zen), aveGroundGHI);
+            
+            # End of j loop for adding ground reflected componenet 
 
-            if (cellShade < 1.0 and inc < math.pi / 2.0):  # Cell not shaded entirely and inc < 90 deg
-            
-                cor = aOIcorrection(n2, inc);                # Get AOI correction for beam and circumsolar
-                backGTI[i] += (1.0 - cellShade) * (beam + circ_dif) * cor; # Add beam and circumsolar radiation
-            
-           # End of for i = 0; i < cellRows loop
+        # Calculate and add direct and circumsolar irradiance components
+        inc, tiltr, sazmr = sunIncident(0, 180-beta / dtor, sazm / dtor - 180, 45.0, zen, azm)  # For calling PerezComp to break diffuse into components for downward facing tilt
         
-        return backGTI, aveGroundGHI;
-       # End of GetBackSurfaceIrradiances
+        gtiAllpc, iso_dif, circ_dif, horiz_dif, grd_dif, beam = perezComp(dni, dhi, albedo, inc, tiltr, zen) # Call to get components for the tilt
+
+        cellShade = pvBackSH * cellRows - i;
+        if (cellShade > 1.0):    # Fully shaded if > 1, no shade if < 0, otherwise fractionally shaded
+            cellShade = 1.0;
+        elif (cellShade < 0.0):
+            cellShade = 0.0;
+
+        if (cellShade < 1.0 and inc < math.pi / 2.0):  # Cell not shaded entirely and inc < 90 deg
+        
+            cor = aOIcorrection(n2, inc);                # Get AOI correction for beam and circumsolar
+            backGTI[i] += (1.0 - cellShade) * (beam + circ_dif) * cor; # Add beam and circumsolar radiation
+        
+        # End of for i = 0; i < cellRows loop
+    
+    return backGTI, aveGroundGHI;
+    # End of GetBackSurfaceIrradiances
 
 
 
@@ -991,7 +1028,7 @@ def getGroundShadeFactors(rowType, beta, C, D, elv, azm, sazm):
         return pvFrontSH, pvBackSH, maxShadow, rearGroundSH, frontGroundSH;
         # End of getGroundShadeFactors
 
-def getSkyConfigurationFactors(rowType, beta, C, D):      
+def getSkyConfigurationFactors(rowType, beta, C, D):
         # This method determines the sky configuration factors for points on the ground from the leading edge of
         # one row of PV panels to the leading edge of the next row of PV panels behind it. This row-to-row dimension
         # is divided into 100 ground segments and a sky configuration factor is returned for each ground segment. The 

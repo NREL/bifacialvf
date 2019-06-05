@@ -14,9 +14,13 @@ View Factors
 .. automodule:: bifacialvf.vf
 
 Get Back Surface Irradiances
-+++++++++++++++++++++++++++++++++++
+++++++++++++++++++++++++++++
 .. autofunction:: getBackSurfaceIrradiances
 
 Get Front Surface Irradiances
-++++++++++++++++++++++++++++++++++++
++++++++++++++++++++++++++++++
 .. autofunction:: getFrontSurfaceIrradiances
+
+Get Ground Shade Factors
+++++++++++++++++++++++++
+.. autofunction:: getGroundShadeFactors

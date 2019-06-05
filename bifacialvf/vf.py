@@ -95,82 +95,100 @@ def getBackSurfaceIrradiances(rowType, maxShadow, PVbackSurface, beta, sazm,
     """
     backGTI = []
 
-    SegAOIcor = ([[0.057563, 0.128570, 0.199651, 0.265024, 0.324661, 0.378968, 0.428391, 0.473670, 0.514788, 0.552454, 
-            0.586857, 0.618484, 0.647076, 0.673762, 0.698029, 0.720118, 0.740726, 0.759671, 0.776946, 0.792833, 
-            0.807374, 0.821010, 0.833534, 0.845241, 0.855524, 0.865562, 0.874567, 0.882831, 0.890769, 0.897939, 
-            0.904373, 0.910646, 0.916297, 0.921589, 0.926512, 0.930906, 0.935179, 0.939074, 0.942627, 0.946009, 
-            0.949096, 0.952030, 0.954555, 0.957157, 0.959669, 0.961500, 0.963481, 0.965353, 0.967387, 0.968580, 
-            0.970311, 0.971567, 0.972948, 0.974114, 0.975264, 0.976287, 0.977213, 0.978142, 0.979057, 0.979662, 
-            0.980460, 0.981100, 0.981771, 0.982459, 0.982837, 0.983199, 0.983956, 0.984156, 0.984682, 0.985026, 
-            0.985364, 0.985645, 0.985954, 0.986241, 0.986484, 0.986686, 0.986895, 0.987043, 0.987287, 0.987388, 
-            0.987541, 0.987669, 0.987755, 0.987877, 0.987903, 0.987996, 0.988022, 0.988091, 0.988104, 0.988114, 
-            0.988114, 0.988104, 0.988091, 0.988022, 0.987996, 0.987903, 0.987877, 0.987755, 0.987669, 0.987541, 
-            0.987388, 0.987287, 0.987043, 0.986895, 0.986686, 0.986484, 0.986240, 0.985954, 0.985645, 0.985364, 
-            0.985020, 0.984676, 0.984156, 0.983956, 0.983199, 0.982837, 0.982459, 0.981771, 0.981100, 0.980460, 
-            0.979662, 0.979057, 0.978142, 0.977213, 0.976287, 0.975264, 0.974114, 0.972947, 0.971567, 0.970311, 
-            0.968580, 0.967387, 0.965353, 0.963481, 0.961501, 0.959671, 0.957157, 0.954555, 0.952030, 0.949096, 
-            0.946009, 0.942627, 0.939074, 0.935179, 0.930906, 0.926512, 0.921589, 0.916297, 0.910646, 0.904373, 
-            0.897939, 0.890769, 0.882831, 0.874567, 0.865562, 0.855524, 0.845241, 0.833534, 0.821010, 0.807374, 
-            0.792833, 0.776946, 0.759671, 0.740726, 0.720118, 0.698029, 0.673762, 0.647076, 0.618484, 0.586857, 
-            0.552454, 0.514788, 0.473670, 0.428391, 0.378968, 0.324661, 0.265024, 0.199651, 0.128570, 0.057563],
+    SegAOIcor = [
+        [0.057563, 0.128570, 0.199651, 0.265024, 0.324661, 0.378968, 0.428391, 0.473670, 0.514788, 0.552454, 
+         0.586857, 0.618484, 0.647076, 0.673762, 0.698029, 0.720118, 0.740726, 0.759671, 0.776946, 0.792833, 
+         0.807374, 0.821010, 0.833534, 0.845241, 0.855524, 0.865562, 0.874567, 0.882831, 0.890769, 0.897939, 
+         0.904373, 0.910646, 0.916297, 0.921589, 0.926512, 0.930906, 0.935179, 0.939074, 0.942627, 0.946009, 
+         0.949096, 0.952030, 0.954555, 0.957157, 0.959669, 0.961500, 0.963481, 0.965353, 0.967387, 0.968580, 
+         0.970311, 0.971567, 0.972948, 0.974114, 0.975264, 0.976287, 0.977213, 0.978142, 0.979057, 0.979662, 
+         0.980460, 0.981100, 0.981771, 0.982459, 0.982837, 0.983199, 0.983956, 0.984156, 0.984682, 0.985026, 
+         0.985364, 0.985645, 0.985954, 0.986241, 0.986484, 0.986686, 0.986895, 0.987043, 0.987287, 0.987388, 
+         0.987541, 0.987669, 0.987755, 0.987877, 0.987903, 0.987996, 0.988022, 0.988091, 0.988104, 0.988114, 
+         0.988114, 0.988104, 0.988091, 0.988022, 0.987996, 0.987903, 0.987877, 0.987755, 0.987669, 0.987541, 
+         0.987388, 0.987287, 0.987043, 0.986895, 0.986686, 0.986484, 0.986240, 0.985954, 0.985645, 0.985364, 
+         0.985020, 0.984676, 0.984156, 0.983956, 0.983199, 0.982837, 0.982459, 0.981771, 0.981100, 0.980460, 
+         0.979662, 0.979057, 0.978142, 0.977213, 0.976287, 0.975264, 0.974114, 0.972947, 0.971567, 0.970311, 
+         0.968580, 0.967387, 0.965353, 0.963481, 0.961501, 0.959671, 0.957157, 0.954555, 0.952030, 0.949096, 
+         0.946009, 0.942627, 0.939074, 0.935179, 0.930906, 0.926512, 0.921589, 0.916297, 0.910646, 0.904373, 
+         0.897939, 0.890769, 0.882831, 0.874567, 0.865562, 0.855524, 0.845241, 0.833534, 0.821010, 0.807374, 
+         0.792833, 0.776946, 0.759671, 0.740726, 0.720118, 0.698029, 0.673762, 0.647076, 0.618484, 0.586857, 
+         0.552454, 0.514788, 0.473670, 0.428391, 0.378968, 0.324661, 0.265024, 0.199651, 0.128570, 0.057563],
         [0.062742, 0.139913, 0.216842, 0.287226, 0.351055, 0.408796, 0.460966, 0.508397, 0.551116, 0.589915,
-            0.625035, 0.657029, 0.685667, 0.712150, 0.735991, 0.757467, 0.777313, 0.795374, 0.811669, 0.826496, 
-            0.839932, 0.852416, 0.863766, 0.874277, 0.883399, 0.892242, 0.900084, 0.907216, 0.914023, 0.920103, 
-            0.925504, 0.930744, 0.935424, 0.939752, 0.943788, 0.947313, 0.950768, 0.953860, 0.956675, 0.959339, 
-            0.961755, 0.964039, 0.965984, 0.967994, 0.969968, 0.971283, 0.972800, 0.974223, 0.975784, 0.976647, 
-            0.977953, 0.978887, 0.979922, 0.980773, 0.981637, 0.982386, 0.983068, 0.983759, 0.984436, 0.984855, 
-            0.985453, 0.985916, 0.986417, 0.986934, 0.987182, 0.987435, 0.988022, 0.988146, 0.988537, 0.988792, 
-            0.989043, 0.989235, 0.989470, 0.989681, 0.989857, 0.990006, 0.990159, 0.990263, 0.990455, 0.990515, 
-            0.990636, 0.990731, 0.990787, 0.990884, 0.990900, 0.990971, 0.990986, 0.991042, 0.991048, 0.991057, 
-            0.991057, 0.991048, 0.991042, 0.990986, 0.990971, 0.990900, 0.990884, 0.990787, 0.990731, 0.990636, 
-            0.990515, 0.990455, 0.990263, 0.990159, 0.990006, 0.989857, 0.989681, 0.989470, 0.989235, 0.989043, 
-            0.988787, 0.988532, 0.988146, 0.988022, 0.987435, 0.987182, 0.986934, 0.986417, 0.985916, 0.985453, 
-            0.984855, 0.984436, 0.983759, 0.983068, 0.982386, 0.981637, 0.980773, 0.979920, 0.978887, 0.977953, 
-            0.976647, 0.975784, 0.974223, 0.972800, 0.971284, 0.969970, 0.967994, 0.965984, 0.964039, 0.961755, 
-            0.959339, 0.956675, 0.953860, 0.950768, 0.947313, 0.943788, 0.939752, 0.935424, 0.930744, 0.925504, 
-            0.920103, 0.914023, 0.907216, 0.900084, 0.892242, 0.883399, 0.874277, 0.863766, 0.852416, 0.839932, 
-            0.826496, 0.811669, 0.795374, 0.777313, 0.757467, 0.735991, 0.712150, 0.685667, 0.657029, 0.625035, 
-            0.589915, 0.551116, 0.508397, 0.460966, 0.408796, 0.351055, 0.287226, 0.216842, 0.139913, 0.062742]]);
+         0.625035, 0.657029, 0.685667, 0.712150, 0.735991, 0.757467, 0.777313, 0.795374, 0.811669, 0.826496, 
+         0.839932, 0.852416, 0.863766, 0.874277, 0.883399, 0.892242, 0.900084, 0.907216, 0.914023, 0.920103, 
+         0.925504, 0.930744, 0.935424, 0.939752, 0.943788, 0.947313, 0.950768, 0.953860, 0.956675, 0.959339, 
+         0.961755, 0.964039, 0.965984, 0.967994, 0.969968, 0.971283, 0.972800, 0.974223, 0.975784, 0.976647, 
+         0.977953, 0.978887, 0.979922, 0.980773, 0.981637, 0.982386, 0.983068, 0.983759, 0.984436, 0.984855, 
+         0.985453, 0.985916, 0.986417, 0.986934, 0.987182, 0.987435, 0.988022, 0.988146, 0.988537, 0.988792, 
+         0.989043, 0.989235, 0.989470, 0.989681, 0.989857, 0.990006, 0.990159, 0.990263, 0.990455, 0.990515, 
+         0.990636, 0.990731, 0.990787, 0.990884, 0.990900, 0.990971, 0.990986, 0.991042, 0.991048, 0.991057, 
+         0.991057, 0.991048, 0.991042, 0.990986, 0.990971, 0.990900, 0.990884, 0.990787, 0.990731, 0.990636, 
+         0.990515, 0.990455, 0.990263, 0.990159, 0.990006, 0.989857, 0.989681, 0.989470, 0.989235, 0.989043, 
+         0.988787, 0.988532, 0.988146, 0.988022, 0.987435, 0.987182, 0.986934, 0.986417, 0.985916, 0.985453, 
+         0.984855, 0.984436, 0.983759, 0.983068, 0.982386, 0.981637, 0.980773, 0.979920, 0.978887, 0.977953, 
+         0.976647, 0.975784, 0.974223, 0.972800, 0.971284, 0.969970, 0.967994, 0.965984, 0.964039, 0.961755, 
+         0.959339, 0.956675, 0.953860, 0.950768, 0.947313, 0.943788, 0.939752, 0.935424, 0.930744, 0.925504, 
+         0.920103, 0.914023, 0.907216, 0.900084, 0.892242, 0.883399, 0.874277, 0.863766, 0.852416, 0.839932, 
+         0.826496, 0.811669, 0.795374, 0.777313, 0.757467, 0.735991, 0.712150, 0.685667, 0.657029, 0.625035, 
+         0.589915, 0.551116, 0.508397, 0.460966, 0.408796, 0.351055, 0.287226, 0.216842, 0.139913, 0.062742]]
 
+    dtor = math.pi / 180.0  # Factor for converting from degrees to radians
+    # Tilt from horizontal of the PV modules/panels, in radians
+    beta = beta * dtor
+    sazm = sazm * dtor  # Surface azimuth of PV module/panels, in radians
 
-    dtor = math.pi / 180.0;      # Factor for converting from degrees to radians
-    beta = beta * dtor;                 # Tilt from horizontal of the PV modules/panels, in radians
-    sazm = sazm * dtor;                 # Surface azimuth of PV module/panels, in radians
+    # 1. Calculate and assign various paramters to be used for modeling
+    #    irradiances
 
-    # 1. Calculate and assign various paramters to be used for modeling irradiances
-    iso_dif = 0.0; circ_dif = 0.0; horiz_dif = 0.0; grd_dif = 0.0; beam = 0.0;   # For calling PerezComp to break diffuse into components for zero tilt (horizontal)                           
-    ghi, iso_dif, circ_dif, horiz_dif, grd_dif, beam = perezComp(dni, dhi, albedo, zen, 0.0, zen) # Call to get iso_dif for horizontal surface          
+    # For calling PerezComp to break diffuse into components for zero tilt
+    # (horizontal)
+    iso_dif = 0.0; circ_dif = 0.0; horiz_dif = 0.0; grd_dif = 0.0; beam = 0.0
+    # Call to get iso_dif for horizontal surface
+    ghi, iso_dif, circ_dif, horiz_dif, grd_dif, beam = perezComp(
+        dni, dhi, albedo, zen, 0.0, zen)
 
-    
-    iso_sky_dif = iso_dif;       # Isotropic irradiance from sky on horizontal surface, used later for determining isotropic sky component
+    # Isotropic irradiance from sky on horizontal surface, used later for
+    # determining isotropic sky component
+    iso_sky_dif = iso_dif
 
+    # For calling PerezComp to break diffuse into components for 90 degree tilt
+    # (vertical)
+    inc, tiltr, sazmr = sunIncident(0, 90.0, 180.0, 45.0, zen, azm)
 
-    inc, tiltr, sazmr = sunIncident(0, 90.0, 180.0, 45.0, zen, azm) # For calling PerezComp to break diffuse into components for 90 degree tilt (vertical)
+    # Call to get horiz_dif for vertical surface
+    vti, iso_dif, circ_dif, horiz_dif, grd_dif, beam = perezComp(
+        dni, dhi, albedo, inc, tiltr, zen)
 
-    vti, iso_dif, circ_dif, horiz_dif, grd_dif, beam = perezComp(dni, dhi, albedo, inc, tiltr, zen) # Call to get horiz_dif for vertical surface
+    # Horizon diffuse irradiance on a vertical surface, used later for
+    # determining horizon brightening irradiance component
+    F2DHI = horiz_dif
 
-
-    F2DHI = horiz_dif;           # Horizon diffuse irradiance on a vertical surface, used later for determining horizon brightening irradiance component
-
-    index = -99;
-    n2 = -99.9;
+    index = -99
+    n2 = -99.9
     if (PVbackSurface == "glass"):
-    
-        index = 0;          # Index to use with 1-degree hemispherical segment AOI correction factor array
-        n2 = 1.526;         # Index of refraction for glass
-    
+        # Index to use with 1-degree hemispherical segment AOI correction
+        # factor array
+        index = 0
+        n2 = 1.526  # Index of refraction for glass
     elif (PVbackSurface == "ARglass"):
-    
-        index = 1;          # Index to use with 1-degree hemispherical segment AOI correction factor array
-        n2 = 1.300;         # Index of refraction for ARglass
+        # Index to use with 1-degree hemispherical segment AOI correction
+        # factor array
+        index = 1
+        n2 = 1.300  # Index of refraction for ARglass
     else:
-        raise Exception("Incorrect text input for PVbackSurface. Must be glass or ARglass.")
-        
-    Ro = math.pow((n2 - 1.0) / (n2 + 1.0), 2.0);     # Reflectance at normal incidence, Duffie and Beckman p217
+        raise Exception(
+            "Incorrect text input for PVbackSurface."
+            " Must be glass or ARglass.")
 
-    aveGroundGHI = 0.0;          # Average GHI on ground under PV array for cases when x projection exceed 2*rtr
+    # Reflectance at normal incidence, Duffie and Beckman p217
+    Ro = math.pow((n2 - 1.0) / (n2 + 1.0), 2.0)
+
+    # Average GHI on ground under PV array for cases when x projection exceed
+    # 2*rtr
+    aveGroundGHI = 0.0
     for i in range(0,100):
-        aveGroundGHI += rearGroundGHI[i] / 100.0;
+        aveGroundGHI += rearGroundGHI[i] / 100.0
 
     # Calculate x,y coordinates of bottom and top edges of PV row in back of desired PV row so that portions of sky and ground viewed by the 
     # PV cell may be determined. Origin of x-y axis is the ground pobelow the lower front edge of the desired PV row. The row in back of 
@@ -401,13 +419,13 @@ def getFrontSurfaceIrradiances(rowType, maxShadow, PVfrontSurface, beta, sazm,
     
     Parameters
     ----------
-    rowType :
+    rowType : str
         Type of row: "first", "interior", "last", or "single" 
-    maxShadow :
+    maxShadow
         Maximum shadow length projected to the front (-) or rear (+) from the
         front of the module row (in PV panel slope lengths), only used for
         `rowTypes` other than "interior"
-    PVfrontSurface :
+    PVfrontSurface
         PV module front surface material type, either "glass" or "ARglass"
     beta
         Tilt from horizontal of the PV modules/panels (deg)
@@ -431,18 +449,18 @@ def getFrontSurfaceIrradiances(rowType, maxShadow, PVfrontSurface, beta, sazm,
     pvFrontSH
         Decimal fraction of the front surface of the PV panel that is shaded,
         0.0 to 1.0
-    froutGroundGHI[100]
+    froutGroundGHI : array of size [100]
         Global horizontal irradiance for each of 100 ground segments in front
         of the module row
     
     Returns
     -------
-    frontGTI[cellRows]
+    frontGTI : array of size [cellRows]
         AOI corrected irradiance on front side of PV module/panel, one for each
         cell row (W/m2)
-    frontReflected[cellRows]
+    frontReflected : array of size [cellRows]
         Irradiance reflected from the front of the PV module/panel (W/m2)
-    aveGroundGHI
+    aveGroundGHI : numeric
         Average GHI on the ground (includes effects of shading by array) from
         the array frontGroundGHI[100]
 
@@ -721,338 +739,362 @@ def getFrontSurfaceIrradiances(rowType, maxShadow, PVfrontSurface, beta, sazm,
 
     
 def getGroundShadeFactors(rowType, beta, C, D, elv, azm, sazm):
-            
-        # This method determines if the ground is shaded from direct beam radiation for points on the ground from the leading 
-        # edge of one row of PV panels to the leading edge of the next row of PV panels behind it. This row-to-row dimension
-        # is divided into 100 ground segments and a ground shade factor is returned for each ground segment, with values of 1 
-        # for shaded segments and values of 0 for non shaded segments. The fractional amounts of shading of the front and back
-        # surfaces of the PV panel are also returned. 8/20/2015
+    """
+    This method determines if the ground is shaded from direct beam radiation
+    for points on the ground from the leading edge of one row of PV panels to
+    the leading edge of the next row of PV panels behind it. This row-to-row
+    dimension is divided into 100 ground segments and a ground shade factor is
+    returned for each ground segment, with values of 1 for shaded segments and
+    values of 0 for non shaded segments. The fractional amounts of shading of
+    the front and back surfaces of the PV panel are also returned. 8/20/2015
 
-        #  4/18/2016 - Modified to account for different row types. Because the ground factors may now be different depending on row, 
-        # they are calculated for the row-to-row dimension to the rear of the leading module edge and to the front of the leading edge.
-        # Also returned is the maximum shadow length projected to the front or rear from the front of the module row
-        #
-        # Input Variables          Description 
-        # rowType                  "first", "interior", "last", or "single" 
-        # beta                     Tilt from horizontal of the PV modules/panels (deg)
-        # C                        Ground clearance of PV panel (in PV panel slope lengths)            
-        # D                        Horizontal distance between rows of PV panels (in PV panel slope lengths) 
-        # elv                      Sun elevation (in radians)
-        # azm                      Sun azimuth (in radians)
-        # sazm                     Surface azimuth of PV panels (deg)
-        #
-        # Returned Variables
-        # pvFrontSH                Decimal fraction of the front surface of the PV panel that is shaded, 0.0 to 1.0
-        # pvBackSH                 Decimal fraction of the back surface of the PV panel that is shaded, 0.0 to 1.0
-        # rearGroundSH[100]        Ground shade factors for ground segments to the rear, 0 = not shaded, 1 = shaded
-        # frontGroundSH[100]       Ground shade factors for ground segments to the front, 0 = not shaded, 1 = shaded
-        # maxShadow                Maximum shadow length projected to the front(-) or rear (+) from the front of the module 
-        #                          row (in PV panel slope lengths), only used later for rowTypes other than "interior"
+    4/18/2016 - Modified to account for different row types. Because the ground
+    factors may now be different depending on row, they are calculated for the
+    row-to-row dimension to the rear of the leading module edge and to the
+    front of the leading edge. Also returned is the maximum shadow length
+    projected to the front or rear from the front of the module row
 
-        rearGroundSH = []
-        frontGroundSH = []
+    Parameters
+    ----------
+    rowType : str
+        "first", "interior", "last", or "single" 
+    beta
+        Tilt from horizontal of the PV modules/panels (deg)
+    C
+        Ground clearance of PV panel (in PV panel slope lengths)            
+    D
+        Horizontal distance between rows of PV panels (in PV panel slope
+        lengths) 
+    elv
+        Sun elevation (in radians)
+    azm
+        Sun azimuth (in radians)
+    sazm
+        Surface azimuth of PV panels (deg)
+
+    Returns
+    -------
+    pvFrontSH : numeric
+        Decimal fraction of the front surface of the PV panel that is shaded,
+        0.0 to 1.0
+    pvBackSH : numeric
+        Decimal fraction of the back surface of the PV panel that is shaded,
+        0.0 to 1.0
+    rearGroundSH : array of size [100]
+        Ground shade factors for ground segments to the rear, 0 = not shaded,
+        1 = shaded
+    frontGroundSH : array of size [100]
+        Ground shade factors for ground segments to the front, 0 = not shaded,
+        1 = shaded
+    maxShadow : numeric
+        Maximum shadow length projected to the front(-) or rear (+) from the
+        front of the module row (in PV panel slope lengths), only used later
+        for rowTypes other than "interior"
+    """
+    rearGroundSH = []
+    frontGroundSH = []
+    
+    beta = beta * math.pi / 180.0;      # Tilt from horizontal of the PV modules/panels, in radians
+    sazm = sazm * math.pi / 180.0;      # Surface azimuth of PV module/pamels, in radians
+
+    h = math.sin(beta);          # Vertical height of sloped PV panel (in PV panel slope lengths)                    
+    x1 = math.cos(beta);         # Horizontal distance from front of panel to rear of panel (in PV panel slope lengths)
+    rtr = D + x1;                # Row-to-row distance (in PV panel slope lengths)
+
+    # Divide the row-to-row spacing into 100 intervals for calculating ground shade factors
+    delta = rtr / 100.0;
+    x = -delta / 2.0;    # Initialize horizontal dimension x to provide midpoof intervals
+
+    Lh = (h / math.tan(elv)) * math.cos(sazm - azm); # Horizontal length of shadow perpindicular to row from top of module to bottom of module
+    Lhc = ((h + C) / math.tan(elv)) * math.cos(sazm - azm); # Horizontal length of shadow perpindicular to row from top of module to ground level
+    Lc = (C / math.tan(elv)) * math.cos(sazm - azm); # Horizontal length of shadow perpindicular to row from bottom of module to ground level
+
+    ss1 = 0.0; se1 = 0.0; ss2 = 0.0; se2 = 0.0;  # Initialize shading start (s) and end (e) to zeros for two potential shading segments
+    pvFrontSH = 0.0;
+    pvBackSH = 0.0;
+
+    if (rowType == "interior"):
+    
+        if (Lh > D): # Front side of PV module partially shaded, back completely shaded, ground completely shaded
         
-        beta = beta * math.pi / 180.0;      # Tilt from horizontal of the PV modules/panels, in radians
-        sazm = sazm * math.pi / 180.0;      # Surface azimuth of PV module/pamels, in radians
-
-        h = math.sin(beta);          # Vertical height of sloped PV panel (in PV panel slope lengths)                    
-        x1 = math.cos(beta);         # Horizontal distance from front of panel to rear of panel (in PV panel slope lengths)
-        rtr = D + x1;                # Row-to-row distance (in PV panel slope lengths)
-
-        # Divide the row-to-row spacing into 100 intervals for calculating ground shade factors
-        delta = rtr / 100.0;
-        x = -delta / 2.0;    # Initialize horizontal dimension x to provide midpoof intervals
-
-        Lh = (h / math.tan(elv)) * math.cos(sazm - azm); # Horizontal length of shadow perpindicular to row from top of module to bottom of module
-        Lhc = ((h + C) / math.tan(elv)) * math.cos(sazm - azm); # Horizontal length of shadow perpindicular to row from top of module to ground level
-        Lc = (C / math.tan(elv)) * math.cos(sazm - azm); # Horizontal length of shadow perpindicular to row from bottom of module to ground level
-
-        ss1 = 0.0; se1 = 0.0; ss2 = 0.0; se2 = 0.0;  # Initialize shading start (s) and end (e) to zeros for two potential shading segments
-        pvFrontSH = 0.0;
-        pvBackSH = 0.0;
-
-        if (rowType == "interior"):
+            pvFrontSH = (Lh - D) / (Lh + x1);
+            pvBackSH = 1.0;
+            ss1 = 0.0;      # Ground shaded from 0.0 to rtr
+            se1 = rtr;
         
-            if (Lh > D): # Front side of PV module partially shaded, back completely shaded, ground completely shaded
+        elif (Lh < -(rtr + x1)):  # Back side of PV module partially shaded, front completely shaded, ground completely shaded
+        
+            pvFrontSH = 1.0;
+            pvBackSH = (Lh + rtr + x1) / (Lh + x1);
+            ss1 = 0.0;      # Ground shaded from 0.0 to rtr
+            se1 = rtr;
+        
+        else:        # Ground is partially shaded (I assume)            
+        
+            if (Lhc >= 0.0):     # Shadow to rear of row, module front unshaded, back shaded
             
-                pvFrontSH = (Lh - D) / (Lh + x1);
+                pvFrontSH = 0.0;
                 pvBackSH = 1.0;
-                ss1 = 0.0;      # Ground shaded from 0.0 to rtr
-                se1 = rtr;
+                Ss = Lc;         # Shadow starts at Lc
+                Se = Lhc + x1;   # Shadow ends here
+                while (Ss > rtr):
+                
+                    Ss -= rtr;          # Put shadow in correct rtr space if needed
+                    Se -= rtr;
+                
+                ss1 = Ss;
+                se1 = Se;
+                if (se1 > rtr):          # then need to use two shade areas
+                
+                    se1 = rtr;
+                    ss2 = 0.0;
+                    se2 = Se - rtr;
+                    if (se2 > ss1):
+                        # This would mean ground completely shaded, does this occur?
+                        ss1 = 0.0;      # Ground shaded from 0.0 to rtr
+                        se1 = rtr;
+                    
+                
             
-            elif (Lh < -(rtr + x1)):  # Back side of PV module partially shaded, front completely shaded, ground completely shaded
+            else:                # Shadow to front of row, either front or back might be shaded, depending on tilt and other factors
             
-                pvFrontSH = 1.0;
-                pvBackSH = (Lh + rtr + x1) / (Lh + x1);
-                ss1 = 0.0;      # Ground shaded from 0.0 to rtr
-                se1 = rtr;
-            
-            else:        # Ground is partially shaded (I assume)            
-            
-                if (Lhc >= 0.0):     # Shadow to rear of row, module front unshaded, back shaded
+                Ss = 0.0;         # Shadow starts at Lc, initialize
+                Se = 0.0;         # Shadow ends here, initialize
+                if (Lc < Lhc + x1):
                 
                     pvFrontSH = 0.0;
                     pvBackSH = 1.0;
                     Ss = Lc;         # Shadow starts at Lc
                     Se = Lhc + x1;   # Shadow ends here
-                    while (Ss > rtr):
-                    
-                        Ss -= rtr;          # Put shadow in correct rtr space if needed
-                        Se -= rtr;
-                    
-                    ss1 = Ss;
-                    se1 = Se;
-                    if (se1 > rtr):          # then need to use two shade areas
-                    
-                        se1 = rtr;
-                        ss2 = 0.0;
-                        se2 = Se - rtr;
-                        if (se2 > ss1):
-                           # This would mean ground completely shaded, does this occur?
-                            ss1 = 0.0;      # Ground shaded from 0.0 to rtr
-                            se1 = rtr;
-                        
-                    
-                
-                else:                # Shadow to front of row, either front or back might be shaded, depending on tilt and other factors
-                
-                    Ss = 0.0;         # Shadow starts at Lc, initialize
-                    Se = 0.0;         # Shadow ends here, initialize
-                    if (Lc < Lhc + x1):
-                    
-                        pvFrontSH = 0.0;
-                        pvBackSH = 1.0;
-                        Ss = Lc;         # Shadow starts at Lc
-                        Se = Lhc + x1;   # Shadow ends here
-                    
-                    else:
-                    
-                        pvFrontSH = 1.0;
-                        pvBackSH = 0.0;
-                        Ss = Lhc + x1;  # Shadow starts at Lhc + x1
-                        Se = Lc;        # Shadow ends here
-                    
-                    while (Ss < 0.0):
-                    
-                        Ss += rtr;          # Put shadow in correct rtr space if needed
-                        Se += rtr;
-                    
-                    ss1 = Ss;
-                    se1 = Se;
-                    if (se1 > rtr):         # then need to use two shade areas
-                    
-                        se1 = rtr;
-                        ss2 = 0.0;
-                        se2 = Se - rtr;
-                        if (se2 > ss1):
-                           # This would mean ground completely shaded, does this occur?
-                            ss1 = 0.0;      # Ground shaded from 0.0 to rtr
-                            se1 = rtr;
-                        
-                    
-                
-               # End of if (Lh > D) else branching
-
-            delta = rtr / 100.0;
-            x = -delta / 2.0;    # Initialize horizontal dimension x to provide midpoof intervals            
-            #for (i = 0; i <= 99; i++)
-            for i in range(0,100):
-                
-                x += delta;
-                #if ((x >= ss1 && x < se1) || (x >= ss2 && x < se2)):
-                if ((x >= ss1 and x < se1) or (x >= ss2 and x < se2)):
-                
-                    rearGroundSH.append(1);        # x within a shaded interval, set groundSH to 1 to indicate shaded
-                    frontGroundSH.append(1);       # same for both front and rear
                 
                 else:
                 
-                    rearGroundSH.append(0);        # x not within a shaded interval, set groundSH to 0 to indicated not shaded, i.e. sunny
-                    frontGroundSH.append(0);       # same for both front and rear
+                    pvFrontSH = 1.0;
+                    pvBackSH = 0.0;
+                    Ss = Lhc + x1;  # Shadow starts at Lhc + x1
+                    Se = Lc;        # Shadow ends here
                 
-                #Console.WriteLine("x = 0,6:0.0000 groundSH = 1", x, groundSH[i]);
+                while (Ss < 0.0):
+                
+                    Ss += rtr;          # Put shadow in correct rtr space if needed
+                    Se += rtr;
+                
+                ss1 = Ss;
+                se1 = Se;
+                if (se1 > rtr):         # then need to use two shade areas
+                
+                    se1 = rtr;
+                    ss2 = 0.0;
+                    se2 = Se - rtr;
+                    if (se2 > ss1):
+                        # This would mean ground completely shaded, does this occur?
+                        ss1 = 0.0;      # Ground shaded from 0.0 to rtr
+                        se1 = rtr;
+                    
+                
             
-           # End of if row type == "interior"
+            # End of if (Lh > D) else branching
 
-        elif (rowType == "first"):
+        delta = rtr / 100.0;
+        x = -delta / 2.0;    # Initialize horizontal dimension x to provide midpoof intervals            
+        #for (i = 0; i <= 99; i++)
+        for i in range(0,100):
+            
+            x += delta;
+            #if ((x >= ss1 && x < se1) || (x >= ss2 && x < se2)):
+            if ((x >= ss1 and x < se1) or (x >= ss2 and x < se2)):
+            
+                rearGroundSH.append(1);        # x within a shaded interval, set groundSH to 1 to indicate shaded
+                frontGroundSH.append(1);       # same for both front and rear
+            
+            else:
+            
+                rearGroundSH.append(0);        # x not within a shaded interval, set groundSH to 0 to indicated not shaded, i.e. sunny
+                frontGroundSH.append(0);       # same for both front and rear
+            
+            #Console.WriteLine("x = 0,6:0.0000 groundSH = 1", x, groundSH[i]);
         
-            if (Lh > 0.0):   # Sun is on front side of PV module
+        # End of if row type == "interior"
+
+    elif (rowType == "first"):
+    
+        if (Lh > 0.0):   # Sun is on front side of PV module
+        
+            pvFrontSH = 0.0;
+            pvBackSH = 1.0;
+            ss1 = Lc;           # Ground shaded from shadow of lower edge
+            se1 = x1 + Lhc;     # to shadow of upper edge                                        
+            # End of if sun on front side of PV module
+
+        elif (Lh < -(rtr + x1)):  # Back side of PV module partially shaded from row to rear, front completely shaded, ground completely shaded
+        
+            pvFrontSH = 1.0;
+            pvBackSH = (Lh + rtr + x1) / (Lh + x1);
+            ss1 = -rtr;      # Ground shaded from -rtr to rtr
+            se1 = rtr;
+
+            # End of if back side of PV module partially shaded, front completely shaded, ground completely shaded
+
+        else:   # Shadow to frontside of row, either front or back might be shaded, depending on tilt and other factors     
+        
+            if (Lc < Lhc + x1):
             
                 pvFrontSH = 0.0;
                 pvBackSH = 1.0;
-                ss1 = Lc;           # Ground shaded from shadow of lower edge
-                se1 = x1 + Lhc;     # to shadow of upper edge                                        
-               # End of if sun on front side of PV module
-
-            elif (Lh < -(rtr + x1)):  # Back side of PV module partially shaded from row to rear, front completely shaded, ground completely shaded
+                ss1 = Lc;         # Shadow starts at Lc
+                se1 = Lhc + x1;   # Shadow ends here
+            
+            else:
             
                 pvFrontSH = 1.0;
-                pvBackSH = (Lh + rtr + x1) / (Lh + x1);
-                ss1 = -rtr;      # Ground shaded from -rtr to rtr
-                se1 = rtr;
-
-               # End of if back side of PV module partially shaded, front completely shaded, ground completely shaded
-
-            else:   # Shadow to frontside of row, either front or back might be shaded, depending on tilt and other factors     
-            
-                if (Lc < Lhc + x1):
-                
-                    pvFrontSH = 0.0;
-                    pvBackSH = 1.0;
-                    ss1 = Lc;         # Shadow starts at Lc
-                    se1 = Lhc + x1;   # Shadow ends here
-                
-                else:
-                
-                    pvFrontSH = 1.0;
-                    pvBackSH = 0.0;
-                    ss1 = Lhc + x1;  # Shadow starts at Lhc + x1
-                    se1 = Lc;        # Shadow ends here
-                
-
-               # End of shadow to front of row 
-
-            delta = rtr / 100.0;
-            x = -delta / 2.0;    # Initialize horizontal dimension x to provide midpoof intervals            
-            for i in range(0,100):
-            
-                x += delta;
-                if (x >= ss1 and x < se1):
-                    rearGroundSH.append(1)         # x within a shaded interval, set groundSH to 1 to indicate shaded
-                else:
-                    rearGroundSH.append(0)         # x not within a shaded interval, set groundSH to 0 to indicated not shaded, i.e. sunny
+                pvBackSH = 0.0;
+                ss1 = Lhc + x1;  # Shadow starts at Lhc + x1
+                se1 = Lc;        # Shadow ends here
             
 
-            x = -rtr - delta / 2.0;    # Initialize horizontal dimension x to provide midpoof intervals for front interval           
-            for i in range(0,100):
-            
-                x += delta;
-                if (x >= ss1 and x < se1):
-                    frontGroundSH.append(1)        # x within a shaded interval, set groundSH to 1 to indicate shaded
-                else:
-                    frontGroundSH.append(0)        # x not within a shaded interval, set groundSH to 0 to indicated not shaded, i.e. sunny
-            
-           # End of if row type == "first"
+            # End of shadow to front of row 
 
-        elif (rowType == "last"):
+        delta = rtr / 100.0;
+        x = -delta / 2.0;    # Initialize horizontal dimension x to provide midpoof intervals            
+        for i in range(0,100):
         
-            if (Lh > D): # Front side of PV module partially shaded, back completely shaded, ground completely shaded
-            
-                pvFrontSH = (Lh - D) / (Lh + x1);
-                pvBackSH = 1.0;
-                ss1 = -rtr;      # Ground shaded from -rtr to rtr
-                se1 = rtr;
-            
-            else:   # Shadow to frontside of row, either front or back might be shaded, depending on tilt and other factors     
-            
-                if (Lc < Lhc + x1):
-                
-                    pvFrontSH = 0.0;
-                    pvBackSH = 1.0;
-                    ss1 = Lc;         # Shadow starts at Lc
-                    se1 = Lhc + x1;   # Shadow ends here
-                
-                else:
-                
-                    pvFrontSH = 1.0;
-                    pvBackSH = 0.0;
-                    ss1 = Lhc + x1;  # Shadow starts at Lhc + x1
-                    se1 = Lc;        # Shadow ends here
-                
-
-               # End of shadow to front of row 
-
-            delta = rtr / 100.0;
-            x = -delta / 2.0;    # Initialize horizontal dimension x to provide midpoof intervals            
-            for i in range(0,100):
-            
-                x += delta;
-                if (x >= ss1 and x < se1):
-                    rearGroundSH.append(1);        # x within a shaded interval, set groundSH to 1 to indicate shaded
-                else:
-                    rearGroundSH.append(0);        # x not within a shaded interval, set groundSH to 0 to indicated not shaded, i.e. sunny
-            
-
-            x = -rtr - delta / 2.0;    # Initialize horizontal dimension x to provide midpoof intervals for front interval           
-            for i in range(0,100):
-            
-                x += delta;
-                if (x >= ss1 and x < se1):
-                    frontGroundSH.append(1);        # x within a shaded interval, set groundSH to 1 to indicate shaded
-                else:
-                    frontGroundSH.append(0);        # x not within a shaded interval, set groundSH to 0 to indicated not shaded, i.e. sunny
-            
-
-           # End of if row type == "last"
-
-        elif (rowType == "single"):
+            x += delta;
+            if (x >= ss1 and x < se1):
+                rearGroundSH.append(1)         # x within a shaded interval, set groundSH to 1 to indicate shaded
+            else:
+                rearGroundSH.append(0)         # x not within a shaded interval, set groundSH to 0 to indicated not shaded, i.e. sunny
         
-            if (Lh > 0.0):   # Shadow to the rear
+
+        x = -rtr - delta / 2.0;    # Initialize horizontal dimension x to provide midpoof intervals for front interval           
+        for i in range(0,100):
+        
+            x += delta;
+            if (x >= ss1 and x < se1):
+                frontGroundSH.append(1)        # x within a shaded interval, set groundSH to 1 to indicate shaded
+            else:
+                frontGroundSH.append(0)        # x not within a shaded interval, set groundSH to 0 to indicated not shaded, i.e. sunny
+        
+        # End of if row type == "first"
+
+    elif (rowType == "last"):
+    
+        if (Lh > D): # Front side of PV module partially shaded, back completely shaded, ground completely shaded
+        
+            pvFrontSH = (Lh - D) / (Lh + x1);
+            pvBackSH = 1.0;
+            ss1 = -rtr;      # Ground shaded from -rtr to rtr
+            se1 = rtr;
+        
+        else:   # Shadow to frontside of row, either front or back might be shaded, depending on tilt and other factors     
+        
+            if (Lc < Lhc + x1):
             
                 pvFrontSH = 0.0;
                 pvBackSH = 1.0;
-                ss1 = Lc;           # Ground shaded from shadow of lower edge
-                se1 = x1 + Lhc;     # to shadow of upper edge                                        
-               # End of if sun on front side of PV module
-
-            else:   # Shadow to frontside of row, either front or back might be shaded, depending on tilt and other factors     
+                ss1 = Lc;         # Shadow starts at Lc
+                se1 = Lhc + x1;   # Shadow ends here
             
-                if (Lc < Lhc + x1):
-                
-                    pvFrontSH = 0.0;
-                    pvBackSH = 1.0;
-                    ss1 = Lc;         # Shadow starts at Lc
-                    se1 = Lhc + x1;   # Shadow ends here
-                
-                else:
-                
-                    pvFrontSH = 1.0;
-                    pvBackSH = 0.0;
-                    ss1 = Lhc + x1;  # Shadow starts at Lhc + x1
-                    se1 = Lc;        # Shadow ends here
-                
-
-               # End of shadow to front of row 
-
-            delta = rtr / 100.0;
-            x = -delta / 2.0;    # Initialize horizontal dimension x to provide midpoof intervals            
-            for i in range(0,100):
+            else:
             
-                x += delta;
-                if (x >= ss1 and x < se1):
-                    rearGroundSH.append(1);        # x within a shaded interval, set groundSH to 1 to indicate shaded
-                else:
-                    rearGroundSH.append(0);        # x not within a shaded interval, set groundSH to 0 to indicated not shaded, i.e. sunny
+                pvFrontSH = 1.0;
+                pvBackSH = 0.0;
+                ss1 = Lhc + x1;  # Shadow starts at Lhc + x1
+                se1 = Lc;        # Shadow ends here
             
 
-            x = -rtr - delta / 2.0;    # Initialize horizontal dimension x to provide midpoof intervals for front interval           
-            for i in range(0,100):
+            # End of shadow to front of row 
+
+        delta = rtr / 100.0;
+        x = -delta / 2.0;    # Initialize horizontal dimension x to provide midpoof intervals            
+        for i in range(0,100):
+        
+            x += delta;
+            if (x >= ss1 and x < se1):
+                rearGroundSH.append(1);        # x within a shaded interval, set groundSH to 1 to indicate shaded
+            else:
+                rearGroundSH.append(0);        # x not within a shaded interval, set groundSH to 0 to indicated not shaded, i.e. sunny
+        
+
+        x = -rtr - delta / 2.0;    # Initialize horizontal dimension x to provide midpoof intervals for front interval           
+        for i in range(0,100):
+        
+            x += delta;
+            if (x >= ss1 and x < se1):
+                frontGroundSH.append(1);        # x within a shaded interval, set groundSH to 1 to indicate shaded
+            else:
+                frontGroundSH.append(0);        # x not within a shaded interval, set groundSH to 0 to indicated not shaded, i.e. sunny
+        
+
+        # End of if row type == "last"
+
+    elif (rowType == "single"):
+    
+        if (Lh > 0.0):   # Shadow to the rear
+        
+            pvFrontSH = 0.0;
+            pvBackSH = 1.0;
+            ss1 = Lc;           # Ground shaded from shadow of lower edge
+            se1 = x1 + Lhc;     # to shadow of upper edge                                        
+            # End of if sun on front side of PV module
+
+        else:   # Shadow to frontside of row, either front or back might be shaded, depending on tilt and other factors     
+        
+            if (Lc < Lhc + x1):
             
-                x += delta;
-                if (x >= ss1 and x < se1):
-                    frontGroundSH.append(1);        # x within a shaded interval, set groundSH to 1 to indicate shaded
-                else:
-                    frontGroundSH.append(0);        # x not within a shaded interval, set groundSH to 0 to indicated not shaded, i.e. sunny
+                pvFrontSH = 0.0;
+                pvBackSH = 1.0;
+                ss1 = Lc;         # Shadow starts at Lc
+                se1 = Lhc + x1;   # Shadow ends here
+            
+            else:
+            
+                pvFrontSH = 1.0;
+                pvBackSH = 0.0;
+                ss1 = Lhc + x1;  # Shadow starts at Lhc + x1
+                se1 = Lc;        # Shadow ends here
             
 
-           # End of if row type == "single"
-        else:
-            print ("ERROR: Incorrect row type not passed to function GetGroundShadedFactors ");
+            # End of shadow to front of row 
 
-        if (abs(ss1) > abs(se1)):      # Maximum shadow length projected from the front of the PV module row
-            maxShadow = ss1;
-        else:
-            maxShadow = se1;
+        delta = rtr / 100.0;
+        x = -delta / 2.0;    # Initialize horizontal dimension x to provide midpoof intervals            
+        for i in range(0,100):
+        
+            x += delta;
+            if (x >= ss1 and x < se1):
+                rearGroundSH.append(1);        # x within a shaded interval, set groundSH to 1 to indicate shaded
+            else:
+                rearGroundSH.append(0);        # x not within a shaded interval, set groundSH to 0 to indicated not shaded, i.e. sunny
+        
 
-        #Console.WriteLine("elv = 0,6:0.00  azm = 1,6:0.00  sazm = 2,6:0.00", elv * 180.0 / math.pi, azm * 180.0 / math.pi, sazm * 180.0 / math.pi);
-        #Console.WriteLine("ss1 = 0,6:0.0000 se1 = 1,6:0.0000 ss2 = 2,6:0.0000 se2 = 3,6:0.0000     rtr = 4,6:0.000", ss1, se1, ss2, se2, rtr);
-        #Console.WriteLine("pvFrontSH = 0,6:0.00 pvBackSH = 1,6:0.00", pvFrontSH, pvBackSH);
+        x = -rtr - delta / 2.0;    # Initialize horizontal dimension x to provide midpoof intervals for front interval           
+        for i in range(0,100):
+        
+            x += delta;
+            if (x >= ss1 and x < se1):
+                frontGroundSH.append(1);        # x within a shaded interval, set groundSH to 1 to indicate shaded
+            else:
+                frontGroundSH.append(0);        # x not within a shaded interval, set groundSH to 0 to indicated not shaded, i.e. sunny
+        
 
-       # End of GetGroundShadedFactors
-     
-        #print "rearGroundSH", rearGroundSH[0]
-        return pvFrontSH, pvBackSH, maxShadow, rearGroundSH, frontGroundSH;
-        # End of getGroundShadeFactors
+        # End of if row type == "single"
+    else:
+        print ("ERROR: Incorrect row type not passed to function GetGroundShadedFactors ");
+
+    if (abs(ss1) > abs(se1)):      # Maximum shadow length projected from the front of the PV module row
+        maxShadow = ss1;
+    else:
+        maxShadow = se1;
+
+    #Console.WriteLine("elv = 0,6:0.00  azm = 1,6:0.00  sazm = 2,6:0.00", elv * 180.0 / math.pi, azm * 180.0 / math.pi, sazm * 180.0 / math.pi);
+    #Console.WriteLine("ss1 = 0,6:0.0000 se1 = 1,6:0.0000 ss2 = 2,6:0.0000 se2 = 3,6:0.0000     rtr = 4,6:0.000", ss1, se1, ss2, se2, rtr);
+    #Console.WriteLine("pvFrontSH = 0,6:0.00 pvBackSH = 1,6:0.00", pvFrontSH, pvBackSH);
+
+    # End of GetGroundShadedFactors
+    
+    #print "rearGroundSH", rearGroundSH[0]
+    return pvFrontSH, pvBackSH, maxShadow, rearGroundSH, frontGroundSH;
+    # End of getGroundShadeFactors
 
 def getSkyConfigurationFactors(rowType, beta, C, D):
         # This method determines the sky configuration factors for points on the ground from the leading edge of

@@ -406,7 +406,6 @@ def getBackSurfaceIrradiances(rowType, maxShadow, PVbackSurface, beta, sazm,
     # End of GetBackSurfaceIrradiances
 
 
-
 def getFrontSurfaceIrradiances(rowType, maxShadow, PVfrontSurface, beta, sazm,
                                dni, dhi, C, D, albedo, zen, azm, cellRows,
                                pvFrontSH, frontGroundGHI):      
@@ -1096,380 +1095,399 @@ def getGroundShadeFactors(rowType, beta, C, D, elv, azm, sazm):
     return pvFrontSH, pvBackSH, maxShadow, rearGroundSH, frontGroundSH;
     # End of getGroundShadeFactors
 
+
 def getSkyConfigurationFactors(rowType, beta, C, D):
-        # This method determines the sky configuration factors for points on the ground from the leading edge of
-        # one row of PV panels to the leading edge of the next row of PV panels behind it. This row-to-row dimension
-        # is divided into 100 ground segments and a sky configuration factor is returned for each ground segment. The 
-        # sky configuration factor represents the fraction of the isotropic diffuse sky radiation (unobstructed) that
-        # is present on the ground when partially obstructed by the rows of PV panels.  The equations follow that on
-        # pages in the notebook dated 8/12/2015.                                                           8/20/2015            
+    """
+    This method determines the sky configuration factors for points on the
+    ground from the leading edge of one row of PV panels to the leading edge of
+    the next row of PV panels behind it. This row-to-row dimension is divided
+    into 100 ground segments and a sky configuration factor is returned for
+    each ground segment. The sky configuration factor represents the fraction
+    of the isotropic diffuse sky radiation (unobstructed) that is present on
+    the ground when partially obstructed by the rows of PV panels. The
+    equations follow that on pages in the notebook dated 8/12/2015. 8/20/2015            
 
-        #  4/15/2016 Modifed for calculations other than just the interior rows. Row type is identified with the string
-        #  "rowType", with the possilbe values:
-        #  first = first row of the array
-        #  interior = interior row of array
-        #  last = last row of the array
-        #  single = a single row array
-        # Because the sky configuration factors may now be different dependding on row, they are calculated for the 
-        # row-to-row dimension to the rear of the leading module edge and to the front of the leading edge.
-        #
-        # Input Variables          Description
-        # rowType                  "first", "interior", "last", or "single" 
-        # beta                     Tilt from horizontal of the PV modules/panels (deg)
-        # C                        Ground clearance of PV panel (in PV module/panel slope lengths)            
-        # D                        Horizontal distance between rows of PV panels (in PV module/panel slope lengths)             
-        #
-        # Returned Variables
-        # rearSkyConfigFactors[100]    Sky configuration factors to rear of leading PVmodule edge (decimal fraction)
-        # frontSkyConfigFactors[100]    Sky configuration factors to rear of leading PVmodule edge (decimal fraction)
+    4/15/2016 Modifed for calculations other than just the interior rows. Row
+    type is identified with the string `rowType`, with the possilbe values:
 
+    * first = first row of the array
+    * interior = interior row of array
+    * last = last row of the array
+    * single = a single row array
 
-        rearSkyConfigFactors = []
-        frontSkyConfigFactors = []
-        
-        beta = beta * math.pi / 180.0;      # Tilt from horizontal of the PV modules/panels, in radians
-        h = math.sin(beta);          # Vertical height of sloped PV panel (in PV panel slope lengths)                    
-        x1 = math.cos(beta);         # Horizontal distance from front of panel to rear of panel (in PV panel slope lengths)
-        rtr = D + x1;                # Row-to-row distance (in PV panel slope lengths)
-        
-        if C==0:
-            C=0.0000000001  # Forced fix for case of C = 0. , which for some reason the Config Factors go from 1 to 2 and not 0 to 1. Todo: investigate why this is happening in the code.
-            
-        if C < 0:
-            print("ERROR: Height is below ground level. Function GetSkyConfigurationFactors will continue but results might be unreliable");
+    Because the sky configuration factors may now be different depending on
+    row, they are calculated for the row-to-row dimension to the rear of the
+    leading module edge and to the front of the leading edge.
 
-            
-        # Divide the row-to-row spacing into 100 intervals and calculate configuration factors
-        delta = rtr / 100.0;
+    Parameters
+    ----------
+    rowType : str
+        "first", "interior", "last", or "single"
+    beta : float
+        Tilt from horizontal of the PV modules/panels (deg)
+    C : float
+        Ground clearance of PV panel (in PV module/panel slope lengths)            
+    D : float
+        Horizontal distance between rows of PV panels (in PV module/panel slope
+        lengths)             
 
-        if (rowType == "interior"):
-            x = -delta / 2.0;    # Initialize horizontal dimension x to provide midpoint of intervals
+    Returns
+    -------
+    rearSkyConfigFactors : array of size [100]
+        Sky configuration factors to rear of leading PVmodule edge (decimal
+        fraction)
+    frontSkyConfigFactors : array of size [100]
+        Sky configuration factors to rear of leading PVmodule edge (decimal
+        fraction)
+    """
 
-            #beta6all=[]
-            for i in range(0,100):
-            # (int i = 0; i <= 99; i++):
-            
-                x += delta;
-                angA = math.atan((h + C) / (2.0 * rtr + x1 - x));
-                if (angA < 0.0):
-                    angA += math.pi;
-                angB = math.atan(C / (2.0 * rtr - x));
-                if (angB < 0.0):
-                    angB += math.pi;
-                beta1 = max(angA, angB);
-                #minibeta=min(angA,angB);
-
-                angA = math.atan((h + C) / (rtr + x1 - x));
-                if (angA < 0.0):
-                    angA += math.pi;
-                angB = math.atan(C / (rtr - x));
-                if (angB < 0.0):
-                    angB += math.pi;
-                beta2 = min(angA, angB);
-
-                beta3 = max(angA, angB);
-
-                beta4 = math.atan((h + C) / (x1 - x));
-                if (beta4 < 0.0):
-                    beta4 += math.pi;
-
-                beta5 = math.atan(C / (-x));
-                if (beta5 < 0.0):
-                    beta5 += math.pi;
-
-                beta6 = math.atan((h + C) / (-D - x));
-                if (beta6 < 0.0):
-                    beta6 += math.pi;
-                #beta6all.append(beta6*180/math.pi)
-                sky1 =0; sky2 =0; sky3 =0;
-                if (beta2 > beta1):
-                    sky1 = 0.5 * (math.cos(beta1) - math.cos(beta2));
-                if (beta4 > beta3):
-                    sky2 = 0.5 * (math.cos(beta3) - math.cos(beta4));
-                if (beta6 > beta5):
-                    sky3 = 0.5 * (math.cos(beta5) - math.cos(beta6));
-                skyAll = sky1 + sky2 + sky3;
-                
-                # Calculating Form Factors for PVSyst Comparison - deprecated
-                '''
-                ff1 = 0; ff2 = 0; ff3 = 0
-                ff1 = 0.5 * (math.cos(beta4) - math.cos(beta5));
-                ff2 = (0.5 * (math.cos(beta2) - math.cos(beta3)));
-                ff3 = (0.5 * (math.cos(minibeta) - math.cos(beta1)));
-
-                # Sanity check                
-                if ff3 < 0 :
-                    print( "Ff3 less 0 in i", i)
-                if ff2 < 0 :
-                    print( "Ff2 less 0 in i", i)
-               
-                if ff1 < 0 :
-                    print( "Ff1 less 0 in i", i)
-
-                ffpanel = ff1 + ff2 + ff3;
-                ffConfigFactors.append(ffpanel)
-                #import matplotlib.pyplot as plt
-                #plt.plot(ffall); plt.ylim([0,1])
-                '''
-                
-                rearSkyConfigFactors.append(skyAll);    # Save as arrays of values, same for both to the rear and front
-                frontSkyConfigFactors.append(skyAll);
-                #Console.WriteLine("0,5:0.000,1,5:0.000,2,5:0.000,3,5:0.000,4,5:0.000", x, sky1, sky2, sky3, skyAll);
-                #sw.WriteLine("0,5:0.000,1,5:0.000,2,5:0.000,3,5:0.000,4,5:0.000", x, sky1, sky2, sky3, skyAll);
-            
-           # End of if "interior"
-
-        elif (rowType == "first"):
-        
-            #  RearSkyConfigFactors don't have a row in front, calculation of sky3 changed, beta6 = 180 degrees
-            x = -delta / 2.0;    # Initialize horizontal dimension x to provide midpoint of intervals
-
-            for i in range(0,100):
-            
-                x += delta;
-                angA = math.atan((h + C) / (2.0 * rtr + x1 - x));
-                if (angA < 0.0):
-                    angA += math.pi;
-                angB = math.atan(C / (2.0 * rtr - x));
-                if (angB < 0.0):
-                    angB += math.pi;
-                beta1 = max(angA, angB);
-
-                angA = math.atan((h + C) / (rtr + x1 - x));
-                if (angA < 0.0):
-                    angA += math.pi;
-                angB = math.atan(C / (rtr - x));
-                if (angB < 0.0):
-                    angB += math.pi;
-                beta2 = min(angA, angB);
-
-                beta3 = max(angA, angB);
-
-                beta4 = math.atan((h + C) / (x1 - x));
-                if (beta4 < 0.0):
-                    beta4 += math.pi;
-
-                beta5 = math.atan(C / (-x));
-                if (beta5 < 0.0):
-                    beta5 += math.pi;
-
-                beta6 = math.pi;
-
-                sky1 = 0.0; sky2 = 0.0; sky3 = 0.0;
-                if (beta2 > beta1):
-                    sky1 = 0.5 * (math.cos(beta1) - math.cos(beta2));
-                if (beta4 > beta3):
-                    sky2 = 0.5 * (math.cos(beta3) - math.cos(beta4));
-                if (beta6 > beta5):
-                    sky3 = 0.5 * (math.cos(beta5) - math.cos(beta6));
-                skyAll = sky1 + sky2 + sky3;
-                rearSkyConfigFactors.append(skyAll);    # Save as arrays of values                   
-                #Console.WriteLine("0,5:0.000,1,5:0.000,2,5:0.000,3,5:0.000,4,5:0.000", x, sky1, sky2, sky3, skyAll);
-                #sw.WriteLine("0,5:0.000,1,5:0.000,2,5:0.000,3,5:0.000,4,5:0.000", x, sky1, sky2, sky3, skyAll);
-            
-
-            #  frontSkyConfigFactors don't have a row in front, calculation of sky3 included as part of revised sky2,
-            #  beta 4 set to 180 degrees
-            x = -delta / 2.0;    # Initialize horizontal dimension x to provide midpoint of intervals
-
-            for i in range(0,100):
-            
-                x += delta;
-                angA = math.atan((h + C) / (2.0 * rtr + x1 - x));
-                if (angA < 0.0):
-                    angA += math.pi;
-                angB = math.atan(C / (2.0 * rtr - x));
-                if (angB < 0.0):
-                    angB += math.pi;
-                beta1 = max(angA, angB);
-
-                angA = math.atan((h + C) / (rtr + x1 - x));
-                if (angA < 0.0):
-                    angA += math.pi;
-                angB = math.atan(C / (rtr - x));
-                if (angB < 0.0):
-                    angB += math.pi;
-                beta2 = min(angA, angB);
-
-                beta3 = max(angA, angB);
-
-                beta4 = math.pi;
-
-                sky1 = 0.0; sky2 = 0.0;
-                if (beta2 > beta1):
-                    sky1 = 0.5 * (math.cos(beta1) - math.cos(beta2));
-                if (beta4 > beta3):
-                    sky2 = 0.5 * (math.cos(beta3) - math.cos(beta4));
-
-                skyAll = sky1 + sky2;
-                frontSkyConfigFactors.append(skyAll);  # Save as arrays of values
-                #Console.WriteLine("0,5:0.000,1,5:0.000,2,5:0.000,3,5:0.000,4,5:0.000", x, sky1, sky2, sky3, skyAll);
-                #sw.WriteLine("0,5:0.000,1,5:0.000,2,5:0.000,3,5:0.000,4,5:0.000", x, sky1, sky2, sky3, skyAll);
-            
-           # End of if "first"
-
-        elif (rowType == "last"):
-        
-            #  RearSkyConfigFactors don't have a row to the rear, combine sky1 into sky 2, set beta 3 = 0.0
-            x = -delta / 2.0;    # Initialize horizontal dimension x to provide midpoint of intervals
-
-            for i in range(0,100):
-            
-                x += delta;
-
-                beta3 = 0.0;
-
-                beta4 = math.atan((h + C) / (x1 - x));
-                if (beta4 < 0.0):
-                    beta4 += math.pi;
-
-                beta5 = math.atan(C / (-x));
-                if (beta5 < 0.0):
-                    beta5 += math.pi;
-
-                beta6 = math.atan((h + C) / (-D - x));
-                if (beta6 < 0.0):
-                    beta6 += math.pi;
-
-                sky2 = 0.0; sky3 = 0.0;
-                if (beta4 > beta3):
-                    sky2 = 0.5 * (math.cos(beta3) - math.cos(beta4));
-                if (beta6 > beta5):
-                    sky3 = 0.5 * (math.cos(beta5) - math.cos(beta6));
-                skyAll = sky2 + sky3;
-                rearSkyConfigFactors.append(skyAll);     # Save as arrays of values
-                #Console.WriteLine("0,5:0.000,1,5:0.000,2,5:0.000,3,5:0.000,4,5:0.000", x, sky1, sky2, sky3, skyAll);
-                #sw.WriteLine("0,5:0.000,1,5:0.000,2,5:0.000,3,5:0.000,4,5:0.000", x, sky1, sky2, sky3, skyAll);
-            
-
-            #  FrontSkyConfigFactors have beta1 = 0.0
-            x = -delta / 2.0;    # Initialize horizontal dimension x to provide midpoint of intervals
-
-            for i in range(0,100):
-            
-                x += delta;
-                angA = math.atan((h + C) / (2.0 * rtr + x1 - x));
-                if (angA < 0.0):
-                    angA += math.pi;
-                angB = math.atan(C / (2.0 * rtr - x));
-                if (angB < 0.0):
-                    angB += math.pi;
-                beta1 = max(angA, angB);
-                beta1 = 0.0;
-
-                angA = math.atan((h + C) / (rtr + x1 - x));
-                if (angA < 0.0):
-                    angA += math.pi;
-                angB = math.atan(C / (rtr - x));
-                if (angB < 0.0):
-                    angB += math.pi;
-                beta2 = min(angA, angB);
-
-                beta3 = max(angA, angB);
-
-                beta4 = math.atan((h + C) / (x1 - x));
-                if (beta4 < 0.0):
-                    beta4 += math.pi;
-
-                beta5 = math.atan(C / (-x));
-                if (beta5 < 0.0):
-                    beta5 += math.pi;
-
-                beta6 = math.atan((h + C) / (-D - x));
-                if (beta6 < 0.0):
-                    beta6 += math.pi;
-
-                sky1 = 0.0; sky2 = 0.0; sky3 = 0.0;
-                if (beta2 > beta1):
-                    sky1 = 0.5 * (math.cos(beta1) - math.cos(beta2));
-                if (beta4 > beta3):
-                    sky2 = 0.5 * (math.cos(beta3) - math.cos(beta4));
-                if (beta6 > beta5):
-                    sky3 = 0.5 * (math.cos(beta5) - math.cos(beta6));
-                skyAll = sky1 + sky2 + sky3;
-                frontSkyConfigFactors.append(skyAll);      # Save as arrays of values,
-                #Console.WriteLine("0,5:0.000,1,5:0.000,2,5:0.000,3,5:0.000,4,5:0.000", x, sky1, sky2, sky3, skyAll);
-                #sw.WriteLine("0,5:0.000,1,5:0.000,2,5:0.000,3,5:0.000,4,5:0.000", x, sky1, sky2, sky3, skyAll);
-            
-           # End of if "last" row
-
-        elif (rowType == "single"):
-        
-                       
-            #  RearSkyConfigFactors don't have a row to the rear ir front, combine sky1 into sky 2, set beta 3 = 0.0,
-            #  for sky3, beta6 = 180.0.
-            x = -delta / 2.0;    # Initialize horizontal dimension x to provide midpoint of intervals
-
-            for i in range(0,100):
-            
-                x += delta;
-
-                beta3 = 0.0;
-
-                beta4 = math.atan((h + C) / (x1 - x));
-                if (beta4 < 0.0):
-                    beta4 += math.pi;
-
-                beta5 = math.atan(C / (-x));
-                if (beta5 < 0.0):
-                    beta5 += math.pi;
-
-                beta6 = math.pi;
-
-                sky2 = 0.0; sky3 = 0.0;
-                if (beta4 > beta3):
-                    sky2 = 0.5 * (math.cos(beta3) - math.cos(beta4));
-                if (beta6 > beta5):
-                    sky3 = 0.5 * (math.cos(beta5) - math.cos(beta6));
-                skyAll = sky2 + sky3;
-                rearSkyConfigFactors.append(skyAll);     # Save as arrays of values                    
-                #Console.WriteLine("0,5:0.000,1,5:0.000,2,5:0.000,3,5:0.000,4,5:0.000", x, sky1, sky2, sky3, skyAll);
-                #sw.WriteLine("0,5:0.000,1,5:0.000,2,5:0.000,3,5:0.000,4,5:0.000", x, sky1, sky2, sky3, skyAll);
-            
-
-            #  FrontSkyConfigFactors have only a row to the rear, combine sky3 into sky2, set beta1 = 0, beta4 = 180
-            x = -delta / 2.0;    # Initialize horizontal dimension x to provide midpoint of intervals
-
-            for i in range(0,100):
-            
-                x += delta;
-                angA = math.atan((h + C) / (2.0 * rtr + x1 - x));
-                if (angA < 0.0):
-                    angA += math.pi;
-                angB = math.atan(C / (2.0 * rtr - x));
-                if (angB < 0.0):
-                    angB += math.pi;
-                beta1 = max(angA, angB);
-                beta1 = 0.0;
-
-                angA = math.atan((h + C) / (rtr + x1 - x));
-                if (angA < 0.0):
-                    angA += math.pi;
-                angB = math.atan(C / (rtr - x));
-                if (angB < 0.0):
-                    angB += math.pi;
-                beta2 = min(angA, angB);
-
-                beta3 = max(angA, angB);
-
-                beta4 = math.pi;
-
-                sky1 = 0.0; sky2 = 0.0;
-                if (beta2 > beta1):
-                    sky1 = 0.5 * (math.cos(beta1) - math.cos(beta2));
-                if (beta4 > beta3):
-                    sky2 = 0.5 * (math.cos(beta3) - math.cos(beta4));
-                skyAll = sky1 + sky2;
-                frontSkyConfigFactors.append(skyAll);  # Save as arrays of values
-                #Console.WriteLine("0,5:0.000,1,5:0.000,2,5:0.000,3,5:0.000,4,5:0.000", x, sky1, sky2, sky3, skyAll);
-                #sw.WriteLine("0,5:0.000,1,5:0.000,2,5:0.000,3,5:0.000,4,5:0.000", x, sky1, sky2, sky3, skyAll);
-            
-           # End of if "single"
-        else:
-            print("ERROR: Incorrect row type not passed to function GetSkyConfigurationFactors ");
+    rearSkyConfigFactors = []
+    frontSkyConfigFactors = []
     
-        return rearSkyConfigFactors, frontSkyConfigFactors;
+    beta = beta * math.pi / 180.0;      # Tilt from horizontal of the PV modules/panels, in radians
+    h = math.sin(beta);          # Vertical height of sloped PV panel (in PV panel slope lengths)                    
+    x1 = math.cos(beta);         # Horizontal distance from front of panel to rear of panel (in PV panel slope lengths)
+    rtr = D + x1;                # Row-to-row distance (in PV panel slope lengths)
+    
+    if C==0:
+        C=0.0000000001  # Forced fix for case of C = 0. , which for some reason the Config Factors go from 1 to 2 and not 0 to 1. Todo: investigate why this is happening in the code.
+        
+    if C < 0:
+        print("ERROR: Height is below ground level. Function GetSkyConfigurationFactors will continue but results might be unreliable");
+
+        
+    # Divide the row-to-row spacing into 100 intervals and calculate configuration factors
+    delta = rtr / 100.0;
+
+    if (rowType == "interior"):
+        x = -delta / 2.0;    # Initialize horizontal dimension x to provide midpoint of intervals
+
+        #beta6all=[]
+        for i in range(0,100):
+        # (int i = 0; i <= 99; i++):
+        
+            x += delta;
+            angA = math.atan((h + C) / (2.0 * rtr + x1 - x));
+            if (angA < 0.0):
+                angA += math.pi;
+            angB = math.atan(C / (2.0 * rtr - x));
+            if (angB < 0.0):
+                angB += math.pi;
+            beta1 = max(angA, angB);
+            #minibeta=min(angA,angB);
+
+            angA = math.atan((h + C) / (rtr + x1 - x));
+            if (angA < 0.0):
+                angA += math.pi;
+            angB = math.atan(C / (rtr - x));
+            if (angB < 0.0):
+                angB += math.pi;
+            beta2 = min(angA, angB);
+
+            beta3 = max(angA, angB);
+
+            beta4 = math.atan((h + C) / (x1 - x));
+            if (beta4 < 0.0):
+                beta4 += math.pi;
+
+            beta5 = math.atan(C / (-x));
+            if (beta5 < 0.0):
+                beta5 += math.pi;
+
+            beta6 = math.atan((h + C) / (-D - x));
+            if (beta6 < 0.0):
+                beta6 += math.pi;
+            #beta6all.append(beta6*180/math.pi)
+            sky1 =0; sky2 =0; sky3 =0;
+            if (beta2 > beta1):
+                sky1 = 0.5 * (math.cos(beta1) - math.cos(beta2));
+            if (beta4 > beta3):
+                sky2 = 0.5 * (math.cos(beta3) - math.cos(beta4));
+            if (beta6 > beta5):
+                sky3 = 0.5 * (math.cos(beta5) - math.cos(beta6));
+            skyAll = sky1 + sky2 + sky3;
+            
+            # Calculating Form Factors for PVSyst Comparison - deprecated
+            '''
+            ff1 = 0; ff2 = 0; ff3 = 0
+            ff1 = 0.5 * (math.cos(beta4) - math.cos(beta5));
+            ff2 = (0.5 * (math.cos(beta2) - math.cos(beta3)));
+            ff3 = (0.5 * (math.cos(minibeta) - math.cos(beta1)));
+
+            # Sanity check                
+            if ff3 < 0 :
+                print( "Ff3 less 0 in i", i)
+            if ff2 < 0 :
+                print( "Ff2 less 0 in i", i)
+            
+            if ff1 < 0 :
+                print( "Ff1 less 0 in i", i)
+
+            ffpanel = ff1 + ff2 + ff3;
+            ffConfigFactors.append(ffpanel)
+            #import matplotlib.pyplot as plt
+            #plt.plot(ffall); plt.ylim([0,1])
+            '''
+            
+            rearSkyConfigFactors.append(skyAll);    # Save as arrays of values, same for both to the rear and front
+            frontSkyConfigFactors.append(skyAll);
+            #Console.WriteLine("0,5:0.000,1,5:0.000,2,5:0.000,3,5:0.000,4,5:0.000", x, sky1, sky2, sky3, skyAll);
+            #sw.WriteLine("0,5:0.000,1,5:0.000,2,5:0.000,3,5:0.000,4,5:0.000", x, sky1, sky2, sky3, skyAll);
+        
+        # End of if "interior"
+
+    elif (rowType == "first"):
+    
+        #  RearSkyConfigFactors don't have a row in front, calculation of sky3 changed, beta6 = 180 degrees
+        x = -delta / 2.0;    # Initialize horizontal dimension x to provide midpoint of intervals
+
+        for i in range(0,100):
+        
+            x += delta;
+            angA = math.atan((h + C) / (2.0 * rtr + x1 - x));
+            if (angA < 0.0):
+                angA += math.pi;
+            angB = math.atan(C / (2.0 * rtr - x));
+            if (angB < 0.0):
+                angB += math.pi;
+            beta1 = max(angA, angB);
+
+            angA = math.atan((h + C) / (rtr + x1 - x));
+            if (angA < 0.0):
+                angA += math.pi;
+            angB = math.atan(C / (rtr - x));
+            if (angB < 0.0):
+                angB += math.pi;
+            beta2 = min(angA, angB);
+
+            beta3 = max(angA, angB);
+
+            beta4 = math.atan((h + C) / (x1 - x));
+            if (beta4 < 0.0):
+                beta4 += math.pi;
+
+            beta5 = math.atan(C / (-x));
+            if (beta5 < 0.0):
+                beta5 += math.pi;
+
+            beta6 = math.pi;
+
+            sky1 = 0.0; sky2 = 0.0; sky3 = 0.0;
+            if (beta2 > beta1):
+                sky1 = 0.5 * (math.cos(beta1) - math.cos(beta2));
+            if (beta4 > beta3):
+                sky2 = 0.5 * (math.cos(beta3) - math.cos(beta4));
+            if (beta6 > beta5):
+                sky3 = 0.5 * (math.cos(beta5) - math.cos(beta6));
+            skyAll = sky1 + sky2 + sky3;
+            rearSkyConfigFactors.append(skyAll);    # Save as arrays of values                   
+            #Console.WriteLine("0,5:0.000,1,5:0.000,2,5:0.000,3,5:0.000,4,5:0.000", x, sky1, sky2, sky3, skyAll);
+            #sw.WriteLine("0,5:0.000,1,5:0.000,2,5:0.000,3,5:0.000,4,5:0.000", x, sky1, sky2, sky3, skyAll);
+        
+
+        #  frontSkyConfigFactors don't have a row in front, calculation of sky3 included as part of revised sky2,
+        #  beta 4 set to 180 degrees
+        x = -delta / 2.0;    # Initialize horizontal dimension x to provide midpoint of intervals
+
+        for i in range(0,100):
+        
+            x += delta;
+            angA = math.atan((h + C) / (2.0 * rtr + x1 - x));
+            if (angA < 0.0):
+                angA += math.pi;
+            angB = math.atan(C / (2.0 * rtr - x));
+            if (angB < 0.0):
+                angB += math.pi;
+            beta1 = max(angA, angB);
+
+            angA = math.atan((h + C) / (rtr + x1 - x));
+            if (angA < 0.0):
+                angA += math.pi;
+            angB = math.atan(C / (rtr - x));
+            if (angB < 0.0):
+                angB += math.pi;
+            beta2 = min(angA, angB);
+
+            beta3 = max(angA, angB);
+
+            beta4 = math.pi;
+
+            sky1 = 0.0; sky2 = 0.0;
+            if (beta2 > beta1):
+                sky1 = 0.5 * (math.cos(beta1) - math.cos(beta2));
+            if (beta4 > beta3):
+                sky2 = 0.5 * (math.cos(beta3) - math.cos(beta4));
+
+            skyAll = sky1 + sky2;
+            frontSkyConfigFactors.append(skyAll);  # Save as arrays of values
+            #Console.WriteLine("0,5:0.000,1,5:0.000,2,5:0.000,3,5:0.000,4,5:0.000", x, sky1, sky2, sky3, skyAll);
+            #sw.WriteLine("0,5:0.000,1,5:0.000,2,5:0.000,3,5:0.000,4,5:0.000", x, sky1, sky2, sky3, skyAll);
+        
+        # End of if "first"
+
+    elif (rowType == "last"):
+    
+        #  RearSkyConfigFactors don't have a row to the rear, combine sky1 into sky 2, set beta 3 = 0.0
+        x = -delta / 2.0;    # Initialize horizontal dimension x to provide midpoint of intervals
+
+        for i in range(0,100):
+        
+            x += delta;
+
+            beta3 = 0.0;
+
+            beta4 = math.atan((h + C) / (x1 - x));
+            if (beta4 < 0.0):
+                beta4 += math.pi;
+
+            beta5 = math.atan(C / (-x));
+            if (beta5 < 0.0):
+                beta5 += math.pi;
+
+            beta6 = math.atan((h + C) / (-D - x));
+            if (beta6 < 0.0):
+                beta6 += math.pi;
+
+            sky2 = 0.0; sky3 = 0.0;
+            if (beta4 > beta3):
+                sky2 = 0.5 * (math.cos(beta3) - math.cos(beta4));
+            if (beta6 > beta5):
+                sky3 = 0.5 * (math.cos(beta5) - math.cos(beta6));
+            skyAll = sky2 + sky3;
+            rearSkyConfigFactors.append(skyAll);     # Save as arrays of values
+            #Console.WriteLine("0,5:0.000,1,5:0.000,2,5:0.000,3,5:0.000,4,5:0.000", x, sky1, sky2, sky3, skyAll);
+            #sw.WriteLine("0,5:0.000,1,5:0.000,2,5:0.000,3,5:0.000,4,5:0.000", x, sky1, sky2, sky3, skyAll);
+        
+
+        #  FrontSkyConfigFactors have beta1 = 0.0
+        x = -delta / 2.0;    # Initialize horizontal dimension x to provide midpoint of intervals
+
+        for i in range(0,100):
+        
+            x += delta;
+            angA = math.atan((h + C) / (2.0 * rtr + x1 - x));
+            if (angA < 0.0):
+                angA += math.pi;
+            angB = math.atan(C / (2.0 * rtr - x));
+            if (angB < 0.0):
+                angB += math.pi;
+            beta1 = max(angA, angB);
+            beta1 = 0.0;
+
+            angA = math.atan((h + C) / (rtr + x1 - x));
+            if (angA < 0.0):
+                angA += math.pi;
+            angB = math.atan(C / (rtr - x));
+            if (angB < 0.0):
+                angB += math.pi;
+            beta2 = min(angA, angB);
+
+            beta3 = max(angA, angB);
+
+            beta4 = math.atan((h + C) / (x1 - x));
+            if (beta4 < 0.0):
+                beta4 += math.pi;
+
+            beta5 = math.atan(C / (-x));
+            if (beta5 < 0.0):
+                beta5 += math.pi;
+
+            beta6 = math.atan((h + C) / (-D - x));
+            if (beta6 < 0.0):
+                beta6 += math.pi;
+
+            sky1 = 0.0; sky2 = 0.0; sky3 = 0.0;
+            if (beta2 > beta1):
+                sky1 = 0.5 * (math.cos(beta1) - math.cos(beta2));
+            if (beta4 > beta3):
+                sky2 = 0.5 * (math.cos(beta3) - math.cos(beta4));
+            if (beta6 > beta5):
+                sky3 = 0.5 * (math.cos(beta5) - math.cos(beta6));
+            skyAll = sky1 + sky2 + sky3;
+            frontSkyConfigFactors.append(skyAll);      # Save as arrays of values,
+            #Console.WriteLine("0,5:0.000,1,5:0.000,2,5:0.000,3,5:0.000,4,5:0.000", x, sky1, sky2, sky3, skyAll);
+            #sw.WriteLine("0,5:0.000,1,5:0.000,2,5:0.000,3,5:0.000,4,5:0.000", x, sky1, sky2, sky3, skyAll);
+        
+        # End of if "last" row
+
+    elif (rowType == "single"):
+    
+                    
+        #  RearSkyConfigFactors don't have a row to the rear ir front, combine sky1 into sky 2, set beta 3 = 0.0,
+        #  for sky3, beta6 = 180.0.
+        x = -delta / 2.0;    # Initialize horizontal dimension x to provide midpoint of intervals
+
+        for i in range(0,100):
+        
+            x += delta;
+
+            beta3 = 0.0;
+
+            beta4 = math.atan((h + C) / (x1 - x));
+            if (beta4 < 0.0):
+                beta4 += math.pi;
+
+            beta5 = math.atan(C / (-x));
+            if (beta5 < 0.0):
+                beta5 += math.pi;
+
+            beta6 = math.pi;
+
+            sky2 = 0.0; sky3 = 0.0;
+            if (beta4 > beta3):
+                sky2 = 0.5 * (math.cos(beta3) - math.cos(beta4));
+            if (beta6 > beta5):
+                sky3 = 0.5 * (math.cos(beta5) - math.cos(beta6));
+            skyAll = sky2 + sky3;
+            rearSkyConfigFactors.append(skyAll);     # Save as arrays of values                    
+            #Console.WriteLine("0,5:0.000,1,5:0.000,2,5:0.000,3,5:0.000,4,5:0.000", x, sky1, sky2, sky3, skyAll);
+            #sw.WriteLine("0,5:0.000,1,5:0.000,2,5:0.000,3,5:0.000,4,5:0.000", x, sky1, sky2, sky3, skyAll);
+        
+
+        #  FrontSkyConfigFactors have only a row to the rear, combine sky3 into sky2, set beta1 = 0, beta4 = 180
+        x = -delta / 2.0;    # Initialize horizontal dimension x to provide midpoint of intervals
+
+        for i in range(0,100):
+        
+            x += delta;
+            angA = math.atan((h + C) / (2.0 * rtr + x1 - x));
+            if (angA < 0.0):
+                angA += math.pi;
+            angB = math.atan(C / (2.0 * rtr - x));
+            if (angB < 0.0):
+                angB += math.pi;
+            beta1 = max(angA, angB);
+            beta1 = 0.0;
+
+            angA = math.atan((h + C) / (rtr + x1 - x));
+            if (angA < 0.0):
+                angA += math.pi;
+            angB = math.atan(C / (rtr - x));
+            if (angB < 0.0):
+                angB += math.pi;
+            beta2 = min(angA, angB);
+
+            beta3 = max(angA, angB);
+
+            beta4 = math.pi;
+
+            sky1 = 0.0; sky2 = 0.0;
+            if (beta2 > beta1):
+                sky1 = 0.5 * (math.cos(beta1) - math.cos(beta2));
+            if (beta4 > beta3):
+                sky2 = 0.5 * (math.cos(beta3) - math.cos(beta4));
+            skyAll = sky1 + sky2;
+            frontSkyConfigFactors.append(skyAll);  # Save as arrays of values
+            #Console.WriteLine("0,5:0.000,1,5:0.000,2,5:0.000,3,5:0.000,4,5:0.000", x, sky1, sky2, sky3, skyAll);
+            #sw.WriteLine("0,5:0.000,1,5:0.000,2,5:0.000,3,5:0.000,4,5:0.000", x, sky1, sky2, sky3, skyAll);
+        
+        # End of if "single"
+    else:
+        print("ERROR: Incorrect row type not passed to function GetSkyConfigurationFactors ");
+
+    return rearSkyConfigFactors, frontSkyConfigFactors;
 # End of GetSkyConfigurationFactors
+
 
 def rowSpacing(beta, sazm, lat, lng, tz, hour, minute):
     # {double beta, double sazm, double lat, double lng, double tz, int hour, double minute)
@@ -1510,7 +1528,8 @@ def rowSpacing(beta, sazm, lat, lng, tz, hour, minute):
     D = math.cos(sazm - azm) * math.sin(beta) / math.tan(elv);
     return D;
 # End of RowSpacing  
-    
+
+
 def trackingBFvaluescalculator(beta, hub_height, r2r):
     '''
     C, D = trackingBFvaluescalculator(beta, hub_height, r2r)

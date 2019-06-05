@@ -24,3 +24,7 @@ Get Front Surface Irradiances
 Get Ground Shade Factors
 ++++++++++++++++++++++++
 .. autofunction:: getGroundShadeFactors
+
+Get Sky Configuration Factors
++++++++++++++++++++++++++++++
+.. autofunction:: getSkyConfigurationFactors

@@ -18,20 +18,20 @@
         #          a. Calculate irradiance distribution on ground
         #          b. Calculate AOI corrected irradiance on front of PV module, and irradiance reflected from front of PV module
         #          c. Calculate irradiance on back of PV module
-             
 
-from __future__ import division, print_function  # ensure python3 compatible division and printing
+# ensure python3 compatible division and printing
+from __future__ import division, print_function, absolute_import
  
 import math
 import csv
 import pvlib
 import os
 
-from vf import getBackSurfaceIrradiances, getFrontSurfaceIrradiances, getGroundShadeFactors
-from vf import getSkyConfigurationFactors, trackingBFvaluescalculator, rowSpacing
-from sun import hrSolarPos, perezComp, solarPos, sunIncident
+from .vf import getBackSurfaceIrradiances, getFrontSurfaceIrradiances, getGroundShadeFactors
+from .vf import getSkyConfigurationFactors, trackingBFvaluescalculator, rowSpacing
+from .sun import hrSolarPos, perezComp, solarPos, sunIncident
 import pandas as pd
-from readepw import readepw
+from .readepw import readepw
 
 
 def simulate(TMYtoread=None, writefiletitle=None,  beta = 0, sazm = 180, C = 0.5, D = None,

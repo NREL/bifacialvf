@@ -1182,35 +1182,19 @@ def getSkyConfigurationFactors(rowType, beta, C, D):
 
         for i in range(0,100):        
             x += delta
-            angA = math.atan((h + C) / (2.0 * rtr + x1 - x))
-            if (angA < 0.0):
-                angA += math.pi
-            angB = math.atan(C / (2.0 * rtr - x))
-            if (angB < 0.0):
-                angB += math.pi
+            # use ATAN2: 4-quadrant tangent instead of ATAN
+            angA = math.atan2(h + C, (2.0 * rtr + x1 - x))
+            angB = math.atan2(C, (2.0 * rtr - x))
             beta1 = max(angA, angB)
 
-            angA = math.atan((h + C) / (rtr + x1 - x))
-            if (angA < 0.0):
-                angA += math.pi
-            angB = math.atan(C / (rtr - x))
-            if (angB < 0.0):
-                angB += math.pi
+            angA = math.atan2(h + C, (rtr + x1 - x))
+            angB = math.atan2(C, (rtr - x))
             beta2 = min(angA, angB)
 
             beta3 = max(angA, angB)
-
-            beta4 = math.atan((h + C) / (x1 - x))
-            if (beta4 < 0.0):
-                beta4 += math.pi
-
-            beta5 = math.atan(C / (-x))
-            if (beta5 < 0.0):
-                beta5 += math.pi
-
-            beta6 = math.atan((h + C) / (-D - x))
-            if (beta6 < 0.0):
-                beta6 += math.pi
+            beta4 = math.atan2(h + C, (x1 - x))
+            beta5 = math.atan2(C, (-x))
+            beta6 = math.atan2(h + C, (-D - x))
             sky1 =0; sky2 =0; sky3 =0
             if (beta2 > beta1):
                 sky1 = 0.5 * (math.cos(beta1) - math.cos(beta2))

@@ -1182,15 +1182,27 @@ def getSkyConfigurationFactors(rowType, beta, C, D):
 
         for i in range(0,100):        
             x += delta
+            #  <--rtr=x1+D--><--rtr=x1+D--><--rtr=x1+D-->
+            # |\            |\            |\            |\ 
+            # | \ `         | \           | \          /| \
+            # h  \   `      h  \          h  \       /  h  \
+            # |   \     `   |   \         |   \    /    |   \
+            # |_x1_\____D__`|_x1_\____D___|_x1_\_/_D____|_x1_\_
+            # |               `   <------x-----/|
+            # C                  `           /
+            # |              angA   `      /  angB
+            # *------------------------`-/---------------------
+            #                          x
             # use ATAN2: 4-quadrant tangent instead of ATAN
+            # check 2 rows away
             angA = math.atan2(h + C, (2.0 * rtr + x1 - x))
             angB = math.atan2(C, (2.0 * rtr - x))
             beta1 = max(angA, angB)
-
+            # check 1 rows away
             angA = math.atan2(h + C, (rtr + x1 - x))
             angB = math.atan2(C, (rtr - x))
             beta2 = min(angA, angB)
-
+            # check 0 rows away
             beta3 = max(angA, angB)
             beta4 = math.atan2(h + C, (x1 - x))
             beta5 = math.atan2(C, (-x))

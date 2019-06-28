@@ -7,11 +7,11 @@ ViewFactor module - VF calculation helper files for bifacial-viewfactor
 
 """
 
-
-from __future__ import division, print_function # ensure python3 compatible division and printing
+# ensure python3 compatible division and printing
+from __future__ import division, print_function, absolute_import
 import math
 import numpy
-from sun import solarPos, sunIncident, perezComp, aOIcorrection
+from .sun import solarPos, sunIncident, perezComp, aOIcorrection
 
 
 

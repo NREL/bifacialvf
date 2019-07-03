@@ -14,11 +14,13 @@ URL: https://www.nrel.gov/docs/fy17osti/67847.pdf
 
 ## Introduction
 
-bifacialvf is a self-contained view factor (or configuration factor)
-model which replicates a single row of a PV system of infinite extent perpendicular to the module rows. 
-Single-axis tracking is supported, and hourly output files based on TMY inputs 
-are saved.  Spatial nonuniformity is reported, with multiple rear-facing irradiances collected
-on the back of each module row.
+bifacialvf is a self-contained view factor (or configuration factor) model which
+replicates a 5-row PV system of infinite extent perpendicular to the module
+rows. The function returns the irradiance profile along the middle (interior)
+row by default, but user interface options include `'first'`, `'interior'`,
+`'last'`, and `'single'`. Single-axis tracking is supported, and hourly output
+files based on TMY inputs are saved. Spatial nonuniformity is reported, with
+multiple rear-facing irradiances collected on the back of each module row.
 
 ## Pre-requisites
 This software is written for Python 2 or 3. NREL recommends [Anaconda Python](https://www.anaconda.com/download/).

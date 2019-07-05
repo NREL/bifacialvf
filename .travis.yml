@@ -21,18 +21,20 @@ script:
 
 # Deploy to pypi on the python 3.6 build with upgraded dependencies when 
 # a new version is tagged on github from the master branch. Example from Rdtools
-deploy:
-  provider: pypi
-  user: cdeline
-  password:
-    secure: Ws5tDsMY1Z5eKWjkC17vqAiZzNYYhMZsaHiHjWRwzW6DuKX3+pWgUNa4Q5oQe+N9wbxdpjHw3/rxqcDk1DsJbJPJXaQxjT3fOfAbCspAmgfNAtg0fu9Ynm40/TRfBU4htw09qbLCqB/2dDh69rWvoDSNDfyd7UKwRQsbBH/sJ/c3FFoGkEPndLcPb7Hr46jTE2sATIrXmM4aPoDNJFmuhvf4zUht4SPD9COqCYWrr9zHPWIRzgqwCnsntbV4/iGpSzvxfTzMioCG5dEcP+0HrA8p7hzbKL8HyJpcf3DldRO4N3aRAzXaKkStZmJ7BAPqwwwyuhmDqgkzdH7boyD5eBtOZOVTlAdArpgA4qDo+4fEEECSMVynFnmLuVeLT+yAE5SVQL1FS7Mnn4VcESrSRhv75j/oT4JaAoOJGS6QNYz5sHzWhG/dvdabMBWWmQ7rUkCiG7PY38wM8/ysq4aFP3mlJe2PLobXytkJyoVI3DHe4c5AnTXKRyl+nBAFCN4nr5O/vxZmQ7DibvQRA9IyanOik01vHNT2M80dP1U56BehQ99MexCRvvihR+wOO4pq1qGn8kq+hNBsdr1qejlUSUbpWIdI71rbRMcVrdmN8O9pJg8gjgYUcDqOSo6YLwdGf4le+xeJYRjCPvl/XHm1X+B0JbKZUfXzSbZwFWjhn2c=
-  on:
-    tags: true
-    branch: master
-    python: 3.6
-    condition: $REQ_ENV == '--upgrade --upgrade-strategy=eager .'
-  distributions: "sdist bdist_wheel"
-  skip_cleanup: true
+#
+# Password not currently working? Need to manually do the release
+#deploy:
+#  provider: pypi
+#  user: cdeline
+#  password:
+#    secure: Ws5tDsMY1Z5eKWjkC17vqAiZzNYYhMZsaHiHjWRwzW6DuKX3+pWgUNa4Q5oQe+N9wbxdpjHw3/rxqcDk1DsJbJPJXaQxjT3fOfAbCspAmgfNAtg0fu9Ynm40/TRfBU4htw09qbLCqB/2dDh69rWvoDSNDfyd7UKwRQsbBH/sJ/c3FFoGkEPndLcPb7Hr46jTE2sATIrXmM4aPoDNJFmuhvf4zUht4SPD9COqCYWrr9zHPWIRzgqwCnsntbV4/iGpSzvxfTzMioCG5dEcP+0HrA8p7hzbKL8HyJpcf3DldRO4N3aRAzXaKkStZmJ7BAPqwwwyuhmDqgkzdH7boyD5eBtOZOVTlAdArpgA4qDo+4fEEECSMVynFnmLuVeLT+yAE5SVQL1FS7Mnn4VcESrSRhv75j/oT4JaAoOJGS6QNYz5sHzWhG/dvdabMBWWmQ7rUkCiG7PY38wM8/ysq4aFP3mlJe2PLobXytkJyoVI3DHe4c5AnTXKRyl+nBAFCN4nr5O/vxZmQ7DibvQRA9IyanOik01vHNT2M80dP1U56BehQ99MexCRvvihR+wOO4pq1qGn8kq+hNBsdr1qejlUSUbpWIdI71rbRMcVrdmN8O9pJg8gjgYUcDqOSo6YLwdGf4le+xeJYRjCPvl/XHm1X+B0JbKZUfXzSbZwFWjhn2c=
+#  on:
+#    tags: true
+#    branch: master
+#    python: 3.6
+#    condition: $REQ_ENV == '--upgrade --upgrade-strategy=eager .'
+#  distributions: "sdist bdist_wheel"
+#  skip_cleanup: true
 #deploy:
 #  password:
 #    secure: EwzDEj8FJLjnMyi/bv3t4DKlS3fF7LyHGlvfMM2XJvyzdZrHOFWRPK73Ln2ht8f3DmPsCWpJWIyGW3vUriAh0lq4jCdRrDsgPDNVr2ZZb5dP+wvFUvXgLFfewKvAKzkOQaxuZNfu4Yuov5i3GMQ0McNzuqfoaVnw7skaDSxcvj3Do/7A26ewyNey0qo4ZtIAPVnj5jKHXVH4HnSvlX6vQA2ej1i62PtImi+PSgNZXS+z+jD0UphRGA6Yfld9sum2bfehpcNfkwjNVaWy3WuuAgxwCznjWHS1v72rXUE5eUzvUiDr32dM+Ql0kmaUl5mYQkdygBOKP7wQfzGslB/i2vjD47mDNjVfMTVd6vCPFIsa1B9ydVv9d1cTJJdf633Qedw55g/UcQpmYX2AK38VkYQ5vpjnZTTdfTn8WWAtpZXGc3bkeZvYbdfxZoQu5MNj8Ao37RLIFaznS15bhNkq/m5eCnQdfEYG/i01yGrGhfFwbkgegTKIO11POHrDkUiSMrLlEbEPRzzLY+W4EFk1WpjXnNXEJrBO8kW2IKzRXsIqW0a/Y4iJyZYByhsJ5qaHCxiV6Z3oYnW+CYMFqjKsP5wPiDWDDwlXlAAWPvACLx/ttAhQUfYp2e45X2xms98kTFMVa/HYWMFXMG4E9D9XDKplCDDZpUrCvtP5i7j0kxc=

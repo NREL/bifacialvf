@@ -40,12 +40,11 @@ For those interested in contributing to bifacialvf:
 
 ## Usage
 
-```python
-import bifacialvf
+    import bifacialvf
 
-bifacialvf.simulate(inputTMY, outputfile, tilt, azm, clearance, rowspacing)
-(data, metadata) = bifacialvf.loadVFresults(outputfile)
-```
+    bifacialvf.simulate(inputTMY, outputfile, tilt, azm, clearance, rowspacing)
+    (data, metadata) = bifacialvf.loadVFresults(outputfile)
+
 For more usage examples, see the Jupyter notebooks in \docs\
 
 ## Prerequisites
@@ -55,20 +54,19 @@ For more usage examples, see the Jupyter notebooks in \docs\
 
 
 ## Main Functions
-```python
-bifacialvf.simulate(TMYtoread, writefiletitle,  beta, sazm, C=1, D=0.5,
-             rowType = 'interior', transFactor=0.01, cellRows=6, 
-             PVfrontSurface='glass', PVbackSurface='glass',  albedo=0.62,  
-             tracking=False, backtrack=False, r2r=1.5, Cv=0.05, offset=0)
-```
+
+    bifacialvf.simulate(
+        TMYtoread, writefiletitle,  beta, sazm, C=1, D=0.5,
+        rowType = 'interior', transFactor=0.01, cellRows=6,
+        PVfrontSurface='glass', PVbackSurface='glass',  albedo=0.62,
+        tracking=False, backtrack=False, r2r=1.5, Cv=0.05, offset=0)
 
 This is the main runfile.  Hourly TMY3 inputs are read, and an outputfile is saved with
 a number of irradiance points along the module chord specified by `cellRows`.
 
 
-```
-loadVFresults.loadVFresults(filename=None)
-```
+    loadVFresults.loadVFresults(filename=None)
+
 read in saved file from `bifacialvf.simulate`.  If no filename is passed, a tkinter GUI opens for file selection
 
 ## Subroutines

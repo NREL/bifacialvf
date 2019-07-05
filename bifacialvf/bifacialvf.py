@@ -91,9 +91,9 @@ def simulate(TMYtoread=None, writefiletitle=None,  beta = 0, sazm = 180, C = 0.5
         ## Read TMY3 data and start loop ~  
         if TMYtoread is None: # if no file passed in, the readtmy3 graphical file picker will open.
             (myTMY3,meta)=pvlib.tmy.readtmy3(TMYtoread)        
-        elif TMYtoread.endswith('.csv') :  
+        elif TMYtoread.lower().endswith('.csv') :  
             (myTMY3,meta)=pvlib.tmy.readtmy3(TMYtoread)
-        elif TMYtoread.endswith('.epw') : 
+        elif TMYtoread.lower().endswith('.epw') : 
             (myTMY3,meta) = readepw(TMYtoread)
             # rename different field parameters to match DNI, DHI, DryBulb, Wspd
             myTMY3.rename(columns={'Direct normal radiation in Wh/m2':'DNI','Diffuse horizontal radiation in Wh/m2':'DHI','Dry bulb temperature in C':'DryBulb','Wind speed in m/s':'Wspd'}, inplace=True)

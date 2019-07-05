@@ -109,8 +109,10 @@ def readepw(filename=None):
     meta['latitude'] = float(temp['latitude'])
     meta['longitude'] = float(temp['longitude'])
     meta['TZ'] = float(temp['TZ'])
-    meta['USAF'] = int(temp['USAF'])
-
+    try:
+        meta['USAF'] = int(temp['USAF'])
+    except:
+        meta['USAF'] = None
 
     headers = ["year","month","day","hour","min","Dry bulb temperature in C","Dew point temperature in C","Relative humidity in percent","Atmospheric pressure in Pa","Extraterrestrial horizontal radiation in Wh/m2","Extraterrestrial direct normal radiation in Wh/m2","Horizontal infrared radiation intensity in Wh/m2","Global horizontal radiation in Wh/m2","Direct normal radiation in Wh/m2","Diffuse horizontal radiation in Wh/m2","Averaged global horizontal illuminance in lux during minutes preceding the indicated time","Direct normal illuminance in lux during minutes preceding the indicated time","Diffuse horizontal illuminance in lux  during minutes preceding the indicated time","Zenith luminance in Cd/m2 during minutes preceding the indicated time","Wind direction. N=0, E=90, S=180, W=270","Wind speed in m/s","Total sky cover","Opaque sky cover","Visibility in km","Ceiling height in m","Present weather observation","Present weather codes","Precipitable water in mm","Aerosol optical depth","Snow depth in cm","Days since last snowfall","Albedo","Liquid precipitation depth in mm","Liquid precipitation quantity"]
     Data = pd.read_csv(filename, skiprows=8,header=None)

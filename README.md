@@ -1,4 +1,5 @@
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
+[![Build Status](https://travis-ci.org/NREL/bifacialvf.svg?branch=master)](https://travis-ci.org/NREL/bifacialvf)
 
 # bifacialvf_mismatch - Bifacial PV View Factor model with Mismatch routines
 python, configuration factor model, electrical model mismatch for bifacial modules.
@@ -26,59 +27,65 @@ Marion, B., Rummel, S., & Anderberg, A. (2004). Current--voltage curve translati
 
 ## Introduction
 
+
+bifacialvf is a self-contained view factor (or configuration factor) model which
+replicates a 5-row PV system of infinite extent perpendicular to the module
+rows. The function returns the irradiance profile along the middle (interior)
+row by default, but user interface options include `'first'`, `'interior'`,
+`'last'`, and `'single'`. Single-axis tracking is supported, and hourly output
+files based on TMY inputs are saved. Spatial nonuniformity is reported, with
+multiple rear-facing irradiances collected on the back of each module row.
+
 Bilinear interpolation code add-on to bifacialvf (description below) to pre-generate IV arrays and bifacial coefficients, and to examine the energy production with back side irradiance mismatch for either a portrait or landscape module.   
 Included are IV curves and bifacial info for a Yingli (standard) module. 
 
-bifacialvf is a self-contained view factor (or configuration factor)
-model which replicates a 5-row PV system of infinite extent perpendicular to the module rows. 
-Single-axis tracking is supported, and hourly output files based on TMY inputs 
-are saved.  Spatial nonuniformity is reported, with multiple rear-facing irradiances collected
-on the back of each module row.
-
 ## Pre-requisites
-The software is written in Python 2.7. Download the Anaconda Python 2.7 environment for best compatibility.
+This software is written for Python 2 or 3. NREL recommends [Anaconda Python](https://www.anaconda.com/download/).
 
 ## Install using pip
+[bifacialvf](https://pypi.org/project/bifacialvf/) is at the Python Package Index (PyPI). Use pip to install the latest release in your conda environment or virtualenv:
 
-1. Clone or download the bifacialvf repository.
-2. Navigate to the repository directory where setup.py is located: `cd bifacialvf-master`
-3. Install via pip: `pip install .`
-4. Alternate installation development mode: `pip install -e .`
+    (myenv)$ pip install bifacialvf
+
+### Install development mode from GitHub
+For those interested in contributing to bifacialvf:
+
+1. Clone the bifacialvf repository: `$ git clone https://github.com/NREL/bifacialvf.git bifacialvf-master`
+2. Navigate to the repository directory where `setup.py` is located: `$ cd bifacialvf-master`
+3. Install via pip in development mode: `$ pip install -e .`
 
 ## Usage
 
-```
-import bifacialvf
+    import bifacialvf
 
-bifacialvf.simulate(TMYtoread, writefiletitle, beta, sazm, C, D, 
-                     rowType, transFactor, cellRows, 
-                     PVfrontSurface, PVbackSurface, albedo, 
-                     tracking, backtrack, rtr, max_angle,
-                     calculateBilInterpol, interpolA, IVArray, beta_voc_all,
-                     m_all, bee_all, calculateDetailedMismatch, portraitorlandscape)
-(data, metadata) = bifacialvf.loadVFresults(outputfile)
+    bifacialvf.simulate(inputTMY, outputfile, tilt, azm, clearance, rowspacing)
+    (data, metadata) = bifacialvf.loadVFresults(outputfile)
 ```
+
 For more usage examples, see the Jupyter notebooks in \docs\
 
 ## Prerequisites
 
-*none
+* [NumPy](https://www.numpy.org/)
+* [pvlib python](https://pvlib-python.readthedocs.io/en/stable/)
 
 
 ## Main Functions
-`bifacialvf.simulate(TMYtoread=None, writefiletitle=None, beta=0, sazm=180, C=0.5, D=None,
-             rowType='interior', transFactor=0.01, cellRows=6, 
-             PVfrontSurface='glass', PVbackSurface='glass', albedo=0.2,  
-             tracking=False, backtrack=True, rtr=None, max_angle=45,
-             calculateBilInterpol=False, interpolA=0.005, IVArray=None, beta_voc_all=None,
-             m_all=None, bee_all=None, calculateDetailedMismatch=False, portraitorlandscape='landscape')`:  
+
+    bifacialvf.simulate(
+        TMYtoread, writefiletitle,  beta, sazm, C=1, D=0.5,
+        rowType = 'interior', transFactor=0.01, cellRows=6,
+        PVfrontSurface='glass', PVbackSurface='glass',  albedo=0.62,
+        tracking=False, backtrack=False, r2r=1.5, Cv=0.05, offset=0)
+
 
 This is the main runfile.  Hourly TMY3 inputs are read, and an outputfile is saved with
-a number of irradiance points along the module chord specified by 'cellRows'.
+a number of irradiance points along the module chord specified by `cellRows`.
 
 
-`loadVFresults.loadVFresults(filename = none)` : 
-read in saved file from bifacialvf.simulate.  If no filename is passed, a tkinter GUI opens for file selection
+    loadVFresults.loadVFresults(filename=None)
+
+read in saved file from `bifacialvf.simulate`.  If no filename is passed, a tkinter GUI opens for file selection
 
 ## Subroutines
 
@@ -90,13 +97,11 @@ BilinearInterpolation calculation for Portrait modules
 
 `sun.py`: 
 Solar position and irradiance-related helper files including
-hrSolarPos, perezComp, solarPos, and sunIncident
+`hrSolarPos`, `perezComp`, `solarPos`, and `sunIncident`
 
 `vf.py`:
 View Factor helper files to help with configuration-factor calculation
 1-axis tracking and self-shading calculation.
 Subroutines include:
-getBackSurfaceIrradiances, getFrontSurfaceIrradiances, getGroundShadeFactors,
-getSkyConfigurationFactors, trackingBFvaluescalculator, rowSpacing
-
-;
+`getBackSurfaceIrradiances`, `getFrontSurfaceIrradiances`, `getGroundShadeFactors`,
+`getSkyConfigurationFactors`, `trackingBFvaluescalculator`, `rowSpacing`

@@ -1,0 +1,40 @@
+sudo: false
+
+language: python
+
+python:
+- '2.7'
+- '3.6'
+# Test two environments:
+# 1) dependencies with pinned versions from requirements.txt
+# 2) 'pip install --upgrade --upgrade-strategy=eager .' to install upgraded
+#    dependencies from PyPi using version ranges defined within setup.py
+env:
+- REQ_ENV='-r requirements.txt .'
+- REQ_ENV='--upgrade --upgrade-strategy=eager .'
+
+install:
+- pip install $REQ_ENV
+
+script:
+- pytest
+
+# Deploy to pypi on the python 3.6 build with upgraded dependencies when 
+# a new version is tagged on github from the master branch. Example from Rdtools
+deploy:
+  provider: pypi
+  user: cdeline
+  password:
+    secure:  BF2lMlW35x7AwkxrvSfDdiZalEcVLfe0Q0kdioTneBNpCeOGaUIJU8MW8ASUY5bfjebfRLqh08nXN2Bpzc+HYc1seq29LJWtmxLQOYEpftAr6O1XiiB+BHAlzQ+GDk2fFof1+1KLikLi6QBSNB0QTcyEvrN1vGjc/Pttnxgr/vF/s+/yvJt2GbHD9G7ldKtFni1VBCiFJxo/TjUjZoNA5k9HbOtSylj4Km4AhykvufaxH9SsXTtyREdxzq4A7C0/pKym5Q8vO+AuOaPfBZpHSVwJvSfdIOP6jT+oHPpGr9VsABNgr24RMTEwirw0bXBWkrbSs5XvO68rll45vplUVmHSg7TbtD2lk3TndwW1LnKJK1ewtXIqi5kZpwkk+KXiBydfadpmcAGyDl9/+Lc02Z1RJy/N8qrC8Y7t16yAwlFIHH6Zc4IVNk7FaEWCZDWxdkk7eguj7SOA/sItOlukrywwCR0VNuL1zF8OqdvcpzENHntIkkaQ93nGwqhT7wzTPZkQD1DWCeofQoc6eJiyGZy7nE2TFXswkt6+c99nESS8CZPv+UYquTh0EOeWGZm9Z1U4xRrbhoywHYrzj21fsVUNRYqGwSPABoo7+cTMH2WSc5CFbbIeAj7sPpHYL44PP9tYl4CXUknRpLaDdKGoCgrSjJRgOfax7kesjq6xM1Q=
+  on:
+    tags: true
+    branch: master
+    python: 3.6
+    condition: $REQ_ENV == '--upgrade --upgrade-strategy=eager .'
+  distributions: "sdist bdist_wheel"
+  skip_cleanup: true
+#deploy:
+#  password:
+#    secure: Ws5tDsMY1Z5eKWjkC17vqAiZzNYYhMZsaHiHjWRwzW6DuKX3+pWgUNa4Q5oQe+N9wbxdpjHw3/rxqcDk1DsJbJPJXaQxjT3fOfAbCspAmgfNAtg0fu9Ynm40/TRfBU4htw09qbLCqB/2dDh69rWvoDSNDfyd7UKwRQsbBH/sJ/c3FFoGkEPndLcPb7Hr46jTE2sATIrXmM4aPoDNJFmuhvf4zUht4SPD9COqCYWrr9zHPWIRzgqwCnsntbV4/iGpSzvxfTzMioCG5dEcP+0HrA8p7hzbKL8HyJpcf3DldRO4N3aRAzXaKkStZmJ7BAPqwwwyuhmDqgkzdH7boyD5eBtOZOVTlAdArpgA4qDo+4fEEECSMVynFnmLuVeLT+yAE5SVQL1FS7Mnn4VcESrSRhv75j/oT4JaAoOJGS6QNYz5sHzWhG/dvdabMBWWmQ7rUkCiG7PY38wM8/ysq4aFP3mlJe2PLobXytkJyoVI3DHe4c5AnTXKRyl+nBAFCN4nr5O/vxZmQ7DibvQRA9IyanOik01vHNT2M80dP1U56BehQ99MexCRvvihR+wOO4pq1qGn8kq+hNBsdr1qejlUSUbpWIdI71rbRMcVrdmN8O9pJg8gjgYUcDqOSo6YLwdGf4le+xeJYRjCPvl/XHm1X+B0JbKZUfXzSbZwFWjhn2c=
+#            EwzDEj8FJLjnMyi/bv3t4DKlS3fF7LyHGlvfMM2XJvyzdZrHOFWRPK73Ln2ht8f3DmPsCWpJWIyGW3vUriAh0lq4jCdRrDsgPDNVr2ZZb5dP+wvFUvXgLFfewKvAKzkOQaxuZNfu4Yuov5i3GMQ0McNzuqfoaVnw7skaDSxcvj3Do/7A26ewyNey0qo4ZtIAPVnj5jKHXVH4HnSvlX6vQA2ej1i62PtImi+PSgNZXS+z+jD0UphRGA6Yfld9sum2bfehpcNfkwjNVaWy3WuuAgxwCznjWHS1v72rXUE5eUzvUiDr32dM+Ql0kmaUl5mYQkdygBOKP7wQfzGslB/i2vjD47mDNjVfMTVd6vCPFIsa1B9ydVv9d1cTJJdf633Qedw55g/UcQpmYX2AK38VkYQ5vpjnZTTdfTn8WWAtpZXGc3bkeZvYbdfxZoQu5MNj8Ao37RLIFaznS15bhNkq/m5eCnQdfEYG/i01yGrGhfFwbkgegTKIO11POHrDkUiSMrLlEbEPRzzLY+W4EFk1WpjXnNXEJrBO8kW2IKzRXsIqW0a/Y4iJyZYByhsJ5qaHCxiV6Z3oYnW+CYMFqjKsP5wPiDWDDwlXlAAWPvACLx/ttAhQUfYp2e45X2xms98kTFMVa/HYWMFXMG4E9D9XDKplCDDZpUrCvtP5i7j0kxc=
+#            Va3D5oj6GXthucE18cvEeW5r7x5Noate/WEY6mexWWFreFY7FntT+s2m7STm2WnwfKXjCDad6+/t9QvZ+oPCb6VdYbW8+wRidxNM+NeJXopUnoHQxQ3oLas/v6zg2E8w1OrhWoEPT6CuzTk6vzleNcMmdxbF2M0cmozrsE/E+7sZhzwiq7lglD0xOCClpQQpv0lnVeTrS8A7DMDaMi2moEtKFrKcw/UDGIzclXXwygjun7IQyZ+iipJX4ITCNW2RdXZS0ERvkWBZzdFFPCDjIBVFry7ECX/eK7h/cmdoJZgpoAR/Md1LJtjEFIo1ury+RrR7vvxDpNcCGR/ZoIeL/PcYRdosqEu+xv6PX92ntQ+Mjnxi84s3qUSkDZlcydtirDG3KnMhScwKjF+z+HQqdRW5dWYbCV2yNsCZU8qscldFlOHmiU4xM0Y0jUIR5IrTimjrAJqgh844+xdP3QnhsxQmEjQiz7/go8EplK99v3yrq4eSAllMHCaLtBuFTUFh4zx82RuZzYkNtEuspd6+xqvPK97S1AP6bmfcABOYLfed+/g26mKYx+KB1H5YzIqtRRczg0kM+aGRrTjYPiqpXxVLcEwxr/1daAjPnk2eXehPWxicbIt+q1/fMQwJ3Ll36sDZtlrt8pA3Etu6quhlB/jKh/Nu+YfJ+/6OtjHJWHI=

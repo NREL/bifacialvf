@@ -18,9 +18,9 @@
         #          a. Calculate irradiance distribution on ground
         #          b. Calculate AOI corrected irradiance on front of PV module, and irradiance reflected from front of PV module
         #          c. Calculate irradiance on back of PV module
-             
 
-from __future__ import division, print_function  # ensure python3 compatible division and printing
+# ensure python3 compatible division and printing
+from __future__ import division, print_function, absolute_import
  
 import math
 import csv
@@ -28,11 +28,13 @@ import pvlib
 import os
 import sys
 
-from vf import getBackSurfaceIrradiances, getFrontSurfaceIrradiances, getGroundShadeFactors
-from vf import getSkyConfigurationFactors, trackingBFvaluescalculator, rowSpacing
-from sun import hrSolarPos, perezComp, solarPos, sunIncident
+from .vf import getBackSurfaceIrradiances, getFrontSurfaceIrradiances, getGroundShadeFactors
+from .vf import getSkyConfigurationFactors, trackingBFvaluescalculator, rowSpacing
+from .sun import hrSolarPos, perezComp, solarPos, sunIncident
 import pandas as pd
 from readepw import readepw
+
+# Electrical Mismatch Calculation 
 import scipy.io as sio
 sys.path.insert(0, 'BF_BifacialIrradiances')
 from PortraitSingleHour import PortraitSingleHour    # For calculateBilInterpol
@@ -99,9 +101,9 @@ def simulate(TMYtoread=None, writefiletitle=None, beta=0, sazm=180, C=0.5, D=Non
         ## Read TMY3 data and start loop ~  
         if TMYtoread is None: # if no file passed in, the readtmy3 graphical file picker will open.
             (myTMY3,meta)=pvlib.tmy.readtmy3(TMYtoread)        
-        elif TMYtoread.endswith('.csv') :  
+        elif TMYtoread.lower().endswith('.csv') :  
             (myTMY3,meta)=pvlib.tmy.readtmy3(TMYtoread)
-        elif TMYtoread.endswith('.epw') : 
+        elif TMYtoread.lower().endswith('.epw') : 
             (myTMY3,meta) = readepw(TMYtoread)
             # rename different field parameters to match DNI, DHI, DryBulb, Wspd
             myTMY3.rename(columns={'Direct normal radiation in Wh/m2':'DNI','Diffuse horizontal radiation in Wh/m2':'DHI','Dry bulb temperature in C':'DryBulb','Wind speed in m/s':'Wspd'}, inplace=True)

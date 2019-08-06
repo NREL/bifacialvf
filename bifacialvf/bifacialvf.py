@@ -82,13 +82,18 @@ def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180,
         
         if (clearance_height == None) & (hub_height != None):
             clearance_height = hub_height
+            if tracking == False:
+                print('Warning: hub_height passed and is being used as clearance_height for the fixed_tilt routine.')
         elif (clearance_height == None) & (hub_height == None):
             raise Exception('No row distance specified in either D or pitch') 
         else:
             print('Warning: clearance_height and hub_height passed in. Using ' + ('hub_height' if tracking else 'clearance_height') )
             if tracking == True:
                 clearance_height = hub_height
-                                                
+        
+        C=clearance_height
+        heightlabel = 'Clearance_Height'
+
         if tracking == True:
             axis_tilt = 0  # algorithm only allows for zero north-south tilt with SAT
             #limit_angle = 45  # maximum tracker rotation 
@@ -97,7 +102,7 @@ def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180,
             hub_height = C      # Ground clearance at tilt = 0.  C >= 0.5
             if hub_height < 0.5:
                 print('Warning: tracker hub height C < 0.5 may result in ground clearance errors')
-        
+            heightlabel = 'Hub_Height'
 
         D = pitch - math.cos(tilt / 180.0 * math.pi)
 
@@ -130,7 +135,7 @@ def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180,
         print( "Running Simulation for TMY3: ", TMYtoread)
         print( "Location:  ", name)
         print( "Lat: ", lat, " Long: ", lng, " Tz ", tz)
-        print( "Parameters: tilt: ", tilt, "  Sazm: ", sazm, "  Height: ", C, "  pitch separation: ", pitch, "  Row type: ", rowType, "  Albedo: ", albedo)
+        print( "Parameters: tilt: ", tilt, "  Sazm: ", sazm, "   ", heightlabel, ": ", C, "  Pitch: ", pitch, "  Row type: ", rowType, "  Albedo: ", albedo)
         print( "Saving into", writefiletitle)
         print( " ")
         print( " ")
@@ -157,20 +162,20 @@ def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180,
             # Write Simulation Parameters (from setup file)
             
             
-            if !tracking and backtracking:
-                print("Warning: Tracking is FAlse but backtracking is true. Setting backtrackign to False because it doesn't make sense to backtrack on fixed tilt systems.")
+            if tracking==False and backtrack==True:
+                print("Warning: tracking=False, but backtrac=True. Setting backtrac=False because it doesn't make sense to backtrack on fixed tilt systems.")
                 backtrack = False
             outputheader=['Latitude(deg)','Longitude(deg)', 'Time Zone','Tilt(deg)', 
-                         'PV Azimuth(deg)','GroundClearance(panel slope lengths)', 'Pitch', 'RowType(first interior last single)',
+                         'PV Azimuth(deg)',heightlabel, 'Pitch', 'RowType(first interior last single)',
                          'TransmissionFactor(open area fraction)','sensorsy(# hor rows in panel)', 
                          'PVfrontSurface(glass or ARglass)', 'PVbackSurface(glass or ARglass)',
                          'Albedo',  'Tracking', 'backtracking', 'CalculatePVOutput (Bilinear Interpol)','CalculatePVOutput (PVMismatch)', 'PortraitorLandscape']
-            outputheadervars=[lat, lng, tz, tilt, sazm, C, pitch, rowType, transFactor, sensorsy, PVfrontSurface,
+            outputheadervars=[lat, lng, tz, tilt, sazm, clearance_height, pitch, rowType, transFactor, sensorsy, PVfrontSurface,
                              PVbackSurface, albedo, tracking, backtrack, calculateBilInterpol, calculatePVMismatch, portraitorlandscape]
             
                                             
             if calculatePVMismatch == True:
-                cellCenterPVM, stdpl, cellsx, cellsy = setupforPVMismatch(portraitorlandscape='portrait', sensorsy=100):
+                cellCenterPVM, stdpl, cellsx, cellsy = analysis.setupforPVMismatch(portraitorlandscape=portraitorlandscape, sensorsy=sensorsy)
 
             if calculateBilInterpol==True:              
                 cellCenterBI, interpolA, IVArray, beta_voc_all, m_all, bee_all = analysis.setupforBilinearInterpolation(portraitorlandscape=portraitorlandscape, sensorsy=sensorsy, BilInterpolParams=BilInterpolParams)
@@ -347,12 +352,12 @@ def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180,
                         outputvalues.append(D)
 
                     if calculateBilInterpol==True:
-                        PowerAveraged, PowerDetailed = calculateVFBilinearInterpolation(portraitorlandscape, sensorsy, cellCenterBI, interpolA, IVArray, beta_voc_all, m_all, bee_all, frontGTIrow, backGTIrow, Tamb, VWind):
+                        PowerAveraged, PowerDetailed = analysis.calculateVFBilinearInterpolation(portraitorlandscape, sensorsy, cellCenterBI, interpolA, IVArray, beta_voc_all, m_all, bee_all, frontGTIrow, backGTIrow, Tamb, VWind)
                         outputvalues.append(PowerAveraged)
                         outputvalues.append(PowerDetailed)
 
                     if calculatePVMismatch==True:
-                        PowerAveraged, PowerDetailed = calculateVFPVMismatch(cellCenterPVM, stdpl, cellsy, cellsx, sensorsy, frontGTIrow, backGTIrow)
+                        PowerAveraged, PowerDetailed = analysis.calculateVFPVMismatch(cellCenterPVM, stdpl, cellsy, cellsx, sensorsy, frontGTIrow, backGTIrow)
                         outputvalues.append(PowerAveraged)     
                         outputvalues.append(PowerDetailed)
                                          
@@ -369,44 +374,42 @@ def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180,
         return;
         
 if __name__ == "__main__":    
-    #import time
-    #start_time = time.time()
 
+    # IO Files
+    TMYtoread="data/724010TYA.csv"   # VA Richmond
+    writefiletitle="data/Output/Test_RICHMOND_1.0.csv"
 
+    # Variables
     tilt = 10                   # PV tilt (deg)
     sazm = 180                  # PV Azimuth(deg) or tracker axis direction
-    C = 1.0                      # GroundClearance(panel slope lengths). For tracking this is tilt = 0 hub height 
-    clearance_height
-    D = 0.51519                 # DistanceBetweenRows(panel slope lengths)
+    albedo = 0.62               # ground albedo
+    clearance_height=0.4
+    pitch = 1.5                   # row to row spacing in normalized panel lengths. 
     rowType = "interior"        # RowType(first interior last single)
     transFactor = 0.013         # TransmissionFactor(open area fraction)
     sensorsy = 6                # sensorsy(# hor rows in panel)   <--> THIS ASSUMES LANDSCAPE ORIENTATION 
     PVfrontSurface = "glass"    # PVfrontSurface(glass or ARglass)
     PVbackSurface = "glass"     # PVbackSurface(glass or ARglass)
-    albedo = 0.62               # ground albedo
-    calculateDetailedMismatch = False
 
-     #BILINEAR INTERPOLATION VALUES    
-    calculateBilInterpol = True
+     # Calculate PV Output Through Various Methods    
+    calculateBilInterpol = True   # Only works with landscape at the moment.
     calculatePVMismatch = True
     portraitorlandscape='landscape'   # portrait or landscape
-    #TODO: Portrait of BilinearInterpolation Method not working at the moment.
     
     # Tracking instructions
     tracking=False
     backtrack=True
-    pitch = 1.5                   # row to row spacing in normalized panel lengths. 
     limit_angle = 60
 
-    TMYtoread="data/724010TYA.csv"   # VA Richmond
-    writefiletitle="data/Output/Test_RICHMOND_1.0.csv"
-
-    simulate(TMYtoread, writefiletitle, tilt, sazm, C, 
-                     rowType, transFactor, sensorsy, 
-                     PVfrontSurface, PVbackSurface, albedo, 
-                     tracking, backtrack, pitch, limit_angle,
-                     calculatePVMismatch, portraitorlandscape, 
-                     calculateBilInterpol)
+    # Function
+    simulate(TMYtoread, writefiletitle=writefiletitle, 
+             tilt=tilt, sazm=sazm, pitch=pitch, clearance_height=clearance_height, 
+             rowType=rowType, transFactor=transFactor, sensorsy=sensorsy, 
+             PVfrontSurface=PVfrontSurface, PVbackSurface=PVbackSurface, 
+             albedo=albedo, tracking=tracking, backtrack=backtrack, 
+             limit_angle=limit_angle, calculatePVMismatch=calculatePVMismatch,
+             calculateBilInterpol=calculateBilInterpol,
+             portraitorlandscape=portraitorlandscape)
                 
     #Load the results from the resultfile
     from loadVFresults import loadVFresults
@@ -419,5 +422,5 @@ if __name__ == "__main__":
     # Print the annual bifacial ratio.
     frontIrrSum = data['GTIFrontavg'].sum()
     backIrrSum = data['GTIBackavg'].sum()
-    print('The bifacial ratio for ground clearance {} and pitch spacing {} is: {:.1f}%'.format(C,pitch,backIrrSum/frontIrrSum*100))
+    print('\n The bifacial ratio for this run is: {:.1f}%'.format(backIrrSum/frontIrrSum*100))
     #print("--- %s seconds ---" % (time.time() - start_time))

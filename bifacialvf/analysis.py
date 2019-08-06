@@ -32,7 +32,7 @@ def setupforBilinearInterpolation(portraitorlandscape, sensorsy, BilInterpolPara
         m_all = BilInterpolParams.m_all
         bee_all = BilInterpolParams.bee_all
     except:
-        print("BilInterpolParams dictionary is None OR is wrongly defined. Using default values for Bilintear Interpolation routine")
+        print("Warning: BilInterpolParams dictionary is None OR is wrongly defined. Using default values for Bilintear Interpolation routine")
         mat_contents = sio.loadmat(r'BF_BifacialIrradiances\BilinearInterpParams\IVArrayYingli.mat')
         IVArray=mat_contents['IVArray']        
         mat_contents = sio.loadmat(r'BF_BifacialIrradiances\BilinearInterpParams\newBilinearParamsYingLi.mat')

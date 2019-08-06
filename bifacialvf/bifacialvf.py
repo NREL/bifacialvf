@@ -35,14 +35,8 @@ import pandas as pd
 from readepw import readepw
 
 # Electrical Mismatch Calculation 
-import scipy.io as sio
-sys.path.insert(0, 'BF_BifacialIrradiances')
-from PortraitSingleHour import PortraitSingleHour    # For calculateBilInterpol
-from LandscapeSingleHour import LandscapeSingleHour # For calculateBilInterpol
-from pvmismatch import *  # this imports everything we need
 import numpy as np
-
-
+import analysis
 
 
 def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180, 
@@ -169,83 +163,25 @@ def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180,
             sw = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
             # Write Simulation Parameters (from setup file)
             
+            
+            if !tracking and backtracking:
+                print("Warning: Tracking is FAlse but backtracking is true. Setting backtrackign to False because it doesn't make sense to backtrack on fixed tilt systems.")
+                backtrack = False
             outputheader=['Latitude(deg)','Longitude(deg)', 'Time Zone','Tilt(deg)', 
                          'PV Azimuth(deg)','GroundClearance(panel slope lengths)', 'Pitch', 'RowType(first interior last single)',
                          'TransmissionFactor(open area fraction)','sensorsy(# hor rows in panel)', 
                          'PVfrontSurface(glass or ARglass)', 'PVbackSurface(glass or ARglass)',
-                         'Albedo',  'Tracking', 'CalculatePVOutput (Bilinear Interpol)','CalculatePVOutput (PVMismatch)']
+                         'Albedo',  'Tracking', 'backtracking', 'CalculatePVOutput (Bilinear Interpol)','CalculatePVOutput (PVMismatch)', 'PortraitorLandscape']
             outputheadervars=[lat, lng, tz, tilt, sazm, C, pitch, rowType, transFactor, sensorsy, PVfrontSurface,
-                             PVbackSurface, albedo, tracking, calculateBilInterpol, calculatePVMismatch]
+                             PVbackSurface, albedo, tracking, backtrack, calculateBilInterpol, calculatePVMismatch, portraitorlandscape]
             
-            
-            if tracking==True:
-                outputheader+=['Backtracking']
-                outputheadervars.append(backtrack)
                                             
             if calculatePVMismatch == True:
-                outputheader+=['PortraitorLandscape']
-                outputheadervars.append(portraitorlandscape)  
-                
-                stdpl=np.array([[0,	23,	24,	47,	48,	71,	72,	95],
-                [1,	22,	25,	46,	49,	70,	73,	94],
-                [2,	21,	26,	45,	50,	69,	74,	93],
-                [3,	20,	27,	44,	51,	68,	75,	92],
-                [4,	19,	28,	43,	52,	67,	76,	91],
-                [5,	18,	29,	42,	53,	66,	77,	90],
-                [6,	17,	30,	41,	54,	65,	78,	89],
-                [7,	16,	31,	40,	55,	64,	79,	88],
-                [8,	15,	32,	39,	56,	63,	80,	87],
-                [9,	14,	33,	38,	57,	62,	81,	86],
-                [10,	13,	34,	37,	58,	61,	82,	85],
-                [11,	12,	35,	36,	59,	60,	83,	84]])
+                cellCenterPVM, stdpl, cellsx, cellsy = setupforPVMismatch(portraitorlandscape='portrait', sensorsy=100):
 
-                cellCenterPVM=[]
-                
-                if portraitorlandscape == 'portrait':                    
-                    cellsy = 12
-                    cellsx = 8
-                else:
-                    stdpl = stdpl.transpose()
-                    cellsy = 8
-                    cellsx = 12
-                                            
-                if sensorsy != cellsy:
-                    for i in range (0, cellsy):
-                        cellCenterPVM.append((i*sensorsy/cellsy+(i+1)*sensorsy/cellsy)/2)
-                
             if calculateBilInterpol==True:              
-                try:
-                    interpolA = BilInterpolParams.interpolA
-                    IVArray = BilInterpolParams.IVArray
-                    beta_voc_all = BilInterpolParams.beta_voc_all
-                    m_all = BilInterpolParams.m_all
-                    bee_all = BilInterpolParams.bee_all
-                except:
-                    print("BilInterpolParams dictionary is None OR is wrongly defined. Using default values for Bilintear Interpolation routine")
-                    mat_contents = sio.loadmat(r'BF_BifacialIrradiances\BilinearInterpParams\IVArrayYingli.mat')
-                    IVArray=mat_contents['IVArray']        
-                    mat_contents = sio.loadmat(r'BF_BifacialIrradiances\BilinearInterpParams\newBilinearParamsYingLi.mat')
-                    beta_voc_all=mat_contents['beta_voc_all']        
-                    m_all=mat_contents['m_all']
-                    bee_all=mat_contents['bee_all']
-                    interpolA = 0.005  # More accurate interpolation. Do 0.01 as an option.
-                    
-                cellCenterBI=[]
-                if portraitorlandscape=='portrait':
-                    print("Sorry! Bilintear Interpolation is not fully working for portrait mode. Turning off calculation for bilinear interpolation, try re-running with landscape mode")
-                    calculateBilInterpol = False
-
-                                               
-                if portraitorlandscape == 'landscape':
-                    if sensorsy != 6:
-                        for i in range (0, 6):
-                            cellCenterBI.append((i*sensorsy/6.0+(i+1)*sensorsy/6.0)/2)
-                            
-                outputheader+=['interpolA']
-                outputheadervars.append(interpolA)               
-                outputheader+=['PortraitorLandscape']
-                outputheadervars.append(portraitorlandscape)       
-   
+                cellCenterBI, interpolA, IVArray, beta_voc_all, m_all, bee_all = analysis.setupforBilinearInterpolation(portraitorlandscape=portraitorlandscape, sensorsy=sensorsy, BilInterpolParams=BilInterpolParams)
+              
             sw.writerow(outputheader)
             sw.writerow(outputheadervars)
             
@@ -418,70 +354,12 @@ def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180,
                         outputvalues.append(D)
 
                     if calculateBilInterpol==True:
-                        
-                        if portraitorlandscape=='portrait':
-                        
-                            if sensorsy != 6:                        
-                                cellCenterValFront= np.interp(cellCenterBI, list(range(0,sensorsy)), frontGTIrow)
-                                cellCenterValBack= np.interp(cellCenterBI, list(range(0,sensorsy)), backGTIrow)
-                            else:
-                                cellCenterValFront = frontGTIrow
-                                cellCenterValBack = backGTIrow
-                            
-                            [PmaxIdeal, PmaxUnmatched, PmaxAvg] = PortraitSingleHour(cellCenterValFront, cellCenterValBack, Tamb, VWind, 6, interpolA,IVArray,beta_voc_all,m_all,bee_all)
-                            outputvalues.append(PmaxIdeal)
-                            outputvalues.append(PmaxUnmatched)
-
-                        if portraitorlandscape=='landscape':
-                            
-                            if sensorsy != 6:                        
-                                cellCenterValFront= np.interp(cellCenterBI, list(range(0,sensorsy)), frontGTIrow)
-                                cellCenterValBack= np.interp(cellCenterBI, list(range(0,sensorsy)), backGTIrow)
-
-                            else:
-                                cellCenterValFront = frontGTIrow
-                                cellCenterValBack = backGTIrow
-                                
-                            [PmaxIdeal, PmaxUnmatched, PmaxAvg] = LandscapeSingleHour(cellCenterValFront, cellCenterValBack, Tamb, VWind, 6, interpolA,IVArray,beta_voc_all,m_all,bee_all)
-                            outputvalues.append(PmaxIdeal)
-                            outputvalues.append(PmaxUnmatched)
-
+                        PowerAveraged, PowerDetailed = calculateVFBilinearInterpolation(portraitorlandscape, sensorsy, cellCenterBI, interpolA, IVArray, beta_voc_all, m_all, bee_all, frontGTIrow, backGTIrow, Tamb, VWind):
+                        outputvalues.append(PmaxIdeal)
+                        outputvalues.append(PmaxUnmatched)
 
                     if calculatePVMismatch==True:
-
-                        pvsys = pvsystem.PVsystem(numberStrs=1, numberMods=1)  
-                        # makes the system  # 1 module, in portrait mode. 
-                        
-                        if sensorsy != cellsy:                        
-                            cellCenterValFront= np.interp(cellCenterPVM, list(range(0,sensorsy)), frontGTIrow)
-                            cellCenterValBack= np.interp(cellCenterPVM, list(range(0,sensorsy)), backGTIrow)
-                        else:
-                            cellCenterValFront = frontGTIrow
-                            cellCenterValBack = backGTIrow
-                            
-                        sunmatDetailed=[]
-                        sunmatAveraged=[]
-                        
-                        cellCenterValues_FrontPlusBack = cellCenterValFront+cellCenterValBack
-                        AveFront=cellCenterValFront.mean()                
-                        AveBack=cellCenterValBack.mean()
-                                 
-                        # Repeat to create a matrix to pass matrix.
-                        for j in range (0, len(cellCenterValues_FrontPlusBack)):
-                            sunmatDetailed.append([cellCenterValues_FrontPlusBack[j]/1000]*cellsx)
-                            
-                        for j in range (0, len(cellCenterValFront)):
-                            sunmatAveraged.append([(AveFront+AveBack)/1000]*cellsx)
-        
-                            
-                        # ACtually do calculations
-                        pvsys.setSuns({0: {0: [sunmatAveraged, stdpl]}})
-                        PowerAveraged=pvsys.Pmp
-                        
-                        pvsys.setSuns({0: {0: [sunmatDetailed, stdpl]}})
-                        PowerDetailed=pvsys.Pmp
-                            
-                        # Append Values
+                        PowerAveraged, PowerDetailed = calculateVFPVMismatch(cellCenterPVM, stdpl, cellsy, cellsx, sensorsy, frontGTIrow, backGTIrow)
                         outputvalues.append(PowerAveraged)     
                         outputvalues.append(PowerDetailed)
                                          

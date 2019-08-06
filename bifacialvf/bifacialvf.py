@@ -32,7 +32,7 @@ from .vf import getBackSurfaceIrradiances, getFrontSurfaceIrradiances, getGround
 from .vf import getSkyConfigurationFactors, trackingBFvaluescalculator, rowSpacing
 from .sun import hrSolarPos, perezComp, solarPos, sunIncident
 import pandas as pd
-from readepw import readepw
+from .readepw import readepw
 
 # Electrical Mismatch Calculation 
 import numpy as np

@@ -97,37 +97,42 @@ def calculateVFPVMismatch(cellCenterPVM, stdpl, cellsy, cellsx, sensorsy, frontG
     PowerAveraged, PowerDetailed = calculateVFPVMismatch(cellCenterPVM, stdpl, cellsy, cellsx, sensorsy, frontGTIrow, backGTIrow)
     
     '''
-    pvsys = pvsystem.PVsystem(numberStrs=1, numberMods=1)  
-    # makes the system  # 1 module, in portrait mode. 
     
-    if sensorsy != cellsy:                        
-        cellCenterValFront= np.interp(cellCenterPVM, list(range(0,sensorsy)), frontGTIrow)
-        cellCenterValBack= np.interp(cellCenterPVM, list(range(0,sensorsy)), backGTIrow)
-    else:
-        cellCenterValFront = frontGTIrow
-        cellCenterValBack = backGTIrow
+    if np.mean(frontGTIrow) < 1.0:
+        PowerAveraged = 0
+        PowerDetailed = 0
+    else:                
+        pvsys = pvsystem.PVsystem(numberStrs=1, numberMods=1)  
+        # makes the system  # 1 module, in portrait mode. 
         
-    sunmatDetailed=[]
-    sunmatAveraged=[]
+        if sensorsy != cellsy:                        
+            cellCenterValFront= np.interp(cellCenterPVM, list(range(0,sensorsy)), frontGTIrow)
+            cellCenterValBack= np.interp(cellCenterPVM, list(range(0,sensorsy)), backGTIrow)
+        else:
+            cellCenterValFront = frontGTIrow
+            cellCenterValBack = backGTIrow
+            
+        sunmatDetailed=[]
+        sunmatAveraged=[]
+        
+        cellCenterValues_FrontPlusBack = cellCenterValFront+cellCenterValBack
+        AveFront=cellCenterValFront.mean()                
+        AveBack=cellCenterValBack.mean()
+                 
+        # Repeat to create a matrix to pass matrix.
+        for j in range (0, len(cellCenterValues_FrontPlusBack)):
+            sunmatDetailed.append([cellCenterValues_FrontPlusBack[j]/1000]*cellsx)
+            
+        for j in range (0, len(cellCenterValFront)):
+            sunmatAveraged.append([(AveFront+AveBack)/1000]*cellsx)
     
-    cellCenterValues_FrontPlusBack = cellCenterValFront+cellCenterValBack
-    AveFront=cellCenterValFront.mean()                
-    AveBack=cellCenterValBack.mean()
-             
-    # Repeat to create a matrix to pass matrix.
-    for j in range (0, len(cellCenterValues_FrontPlusBack)):
-        sunmatDetailed.append([cellCenterValues_FrontPlusBack[j]/1000]*cellsx)
+            
+        # ACtually do calculations
+        pvsys.setSuns({0: {0: [sunmatAveraged, stdpl]}})
+        PowerAveraged=pvsys.Pmp
         
-    for j in range (0, len(cellCenterValFront)):
-        sunmatAveraged.append([(AveFront+AveBack)/1000]*cellsx)
-
-        
-    # ACtually do calculations
-    pvsys.setSuns({0: {0: [sunmatAveraged, stdpl]}})
-    PowerAveraged=pvsys.Pmp
-    
-    pvsys.setSuns({0: {0: [sunmatDetailed, stdpl]}})
-    PowerDetailed=pvsys.Pmp
+        pvsys.setSuns({0: {0: [sunmatDetailed, stdpl]}})
+        PowerDetailed=pvsys.Pmp
 
     return PowerAveraged, PowerDetailed
 

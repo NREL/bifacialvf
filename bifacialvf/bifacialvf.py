@@ -355,8 +355,8 @@ def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180,
 
                     if calculateBilInterpol==True:
                         PowerAveraged, PowerDetailed = calculateVFBilinearInterpolation(portraitorlandscape, sensorsy, cellCenterBI, interpolA, IVArray, beta_voc_all, m_all, bee_all, frontGTIrow, backGTIrow, Tamb, VWind):
-                        outputvalues.append(PmaxIdeal)
-                        outputvalues.append(PmaxUnmatched)
+                        outputvalues.append(PowerAveraged)
+                        outputvalues.append(PowerDetailed)
 
                     if calculatePVMismatch==True:
                         PowerAveraged, PowerDetailed = calculateVFPVMismatch(cellCenterPVM, stdpl, cellsy, cellsx, sensorsy, frontGTIrow, backGTIrow)

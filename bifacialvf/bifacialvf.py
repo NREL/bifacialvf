@@ -36,7 +36,7 @@ from .readepw import readepw
 
 # Electrical Mismatch Calculation 
 import numpy as np
-import analysis
+from .analysis import *
 
 
 def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180, 

@@ -41,8 +41,7 @@ import analysis
 
 def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180, 
              clearance_height=None, hub_height = None, 
-             pitch=None, D=None,
-             rowType='interior', transFactor=0.01, sensorsy=6, 
+             pitch=None, rowType='interior', transFactor=0.01, sensorsy=6, 
              PVfrontSurface='glass', PVbackSurface='glass', albedo=0.2,  
              tracking=False, backtrack=True, limit_angle=45,
              calculatePVMismatch=False, portraitorlandscape='landscape',
@@ -63,7 +62,6 @@ def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180,
         tilt:    tilt angle in degrees.  Not used for tracking
         sazm:    surface azimuth orientation in degrees east of north. For tracking this is the tracker axis orientation
         C:       normalized ground clearance.  For trackers, this is the module height at zero tilt
-        D:       normalized gap between PV module rows.  For trackers use pitch
         pitch:     row-to-row normalized distance.  = 1/GCR
         transFactor:   PV module transmission fraction.  Default 1% (0.01)
         sensorsy:      Number of points along the module chord to return irradiance values.  Default 6 (1-up landscape module)
@@ -100,14 +98,9 @@ def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180,
             if hub_height < 0.5:
                 print('Warning: tracker hub height C < 0.5 may result in ground clearance errors')
         
-        if (D == None) & (pitch != None):
-            D = pitch - math.cos(tilt / 180.0 * math.pi)
-        elif (pitch == None) & (D != None):
-            pitch = D + math.cos(tilt / 180.0 * math.pi)
-        elif (D == None) & (pitch == None):
-            raise Exception('No row distance specified in either D or pitch') 
-        else:
-            print('Warning: Gap D and pitch passed in. Using ' + ('pitch' if tracking else 'D') )
+
+        D = pitch - math.cos(tilt / 180.0 * math.pi)
+
         if writefiletitle == None:
             writefiletitle = "data/Output/TEST.csv"
         
@@ -408,7 +401,7 @@ if __name__ == "__main__":
     TMYtoread="data/724010TYA.csv"   # VA Richmond
     writefiletitle="data/Output/Test_RICHMOND_1.0.csv"
 
-    simulate(TMYtoread, writefiletitle, tilt, sazm, C, D, 
+    simulate(TMYtoread, writefiletitle, tilt, sazm, C, 
                      rowType, transFactor, sensorsy, 
                      PVfrontSurface, PVbackSurface, albedo, 
                      tracking, backtrack, pitch, limit_angle,

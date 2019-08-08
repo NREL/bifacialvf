@@ -8,7 +8,7 @@ from __future__ import division, print_function, absolute_import
 import numpy as np
 import scipy.io as sio
 import sys, os
-sys.path.insert(0, 'BF_BifacialIrradiances')
+#sys.path.insert(0, 'BF_BifacialIrradiances')
 from .BF_BifacialIrradiances.PortraitSingleHour import PortraitSingleHour    # For calculateBilInterpol
 from .BF_BifacialIrradiances.LandscapeSingleHour import LandscapeSingleHour # For calculateBilInterpol
 from pvmismatch import *  # this imports everything we need
@@ -33,10 +33,13 @@ def setupforBilinearInterpolation(portraitorlandscape, sensorsy, BilInterpolPara
         m_all = BilInterpolParams.m_all
         bee_all = BilInterpolParams.bee_all
     except:
+        # Try to load bilinear interpolation params dictionary from \BF_BifacialIrradiances\BilinearInterpParams
         print("Warning: BilInterpolParams dictionary is None OR is wrongly defined. Using default values for Bilintear Interpolation routine")
-        mat_contents = sio.loadmat(os.path.join('BF_BifacialIrradiances','BilinearInterpParams','IVArrayYingli.mat'))
+        currentdir =  os.path.abspath(os.path.dirname(__file__))
+
+        mat_contents = sio.loadmat(os.path.join(currentdir,'BF_BifacialIrradiances','BilinearInterpParams','IVArrayYingli.mat'))
         IVArray=mat_contents['IVArray']        
-        mat_contents = sio.loadmat(os.path.join('BF_BifacialIrradiances','BilinearInterpParams','newBilinearParamsYingLi.mat'))
+        mat_contents = sio.loadmat(os.path.join(currentdir,'BF_BifacialIrradiances','BilinearInterpParams','newBilinearParamsYingLi.mat'))
         beta_voc_all=mat_contents['beta_voc_all']        
         m_all=mat_contents['m_all']
         bee_all=mat_contents['bee_all']

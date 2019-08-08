@@ -28,15 +28,15 @@ import pvlib
 import os
 import sys
 
-from .vf import getBackSurfaceIrradiances, getFrontSurfaceIrradiances, getGroundShadeFactors
-from .vf import getSkyConfigurationFactors, trackingBFvaluescalculator, rowSpacing
-from .sun import hrSolarPos, perezComp, solarPos, sunIncident
+from bifacialvf.vf import getBackSurfaceIrradiances, getFrontSurfaceIrradiances, getGroundShadeFactors
+from bifacialvf.vf import getSkyConfigurationFactors, trackingBFvaluescalculator, rowSpacing
+from bifacialvf.sun import hrSolarPos, perezComp, solarPos, sunIncident
 import pandas as pd
-from .readepw import readepw
+from bifacialvf.readepw import readepw
 
 # Electrical Mismatch Calculation 
 import numpy as np
-from .analysis import *
+from bifacialvf.analysis import *
 #import bifacialvf.analysis as analysis
 
 def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180, 

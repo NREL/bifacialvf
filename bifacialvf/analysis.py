@@ -9,8 +9,8 @@ import numpy as np
 import scipy.io as sio
 import sys, os
 #sys.path.insert(0, 'BF_BifacialIrradiances')
-from .BF_BifacialIrradiances.PortraitSingleHour import PortraitSingleHour    # For calculateBilInterpol
-from .BF_BifacialIrradiances.LandscapeSingleHour import LandscapeSingleHour # For calculateBilInterpol
+from bifacialvf.BF_BifacialIrradiances.PortraitSingleHour import PortraitSingleHour    # For calculateBilInterpol
+from bifacialvf.BF_BifacialIrradiances.LandscapeSingleHour import LandscapeSingleHour # For calculateBilInterpol
 from pvmismatch import *  # this imports everything we need
 
 

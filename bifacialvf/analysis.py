@@ -4,12 +4,13 @@ Created on Tue Aug  6 14:38:36 2019
 
 @author: sayala
 """
+from __future__ import division, print_function, absolute_import
 import numpy as np
 import scipy.io as sio
 import sys
 sys.path.insert(0, 'BF_BifacialIrradiances')
-from PortraitSingleHour import PortraitSingleHour    # For calculateBilInterpol
-from LandscapeSingleHour import LandscapeSingleHour # For calculateBilInterpol
+from .BF_BifacialIrradiances.PortraitSingleHour import PortraitSingleHour    # For calculateBilInterpol
+from .BF_BifacialIrradiances.LandscapeSingleHour import LandscapeSingleHour # For calculateBilInterpol
 from pvmismatch import *  # this imports everything we need
 
 

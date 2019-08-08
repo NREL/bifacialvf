@@ -37,7 +37,7 @@ from .readepw import readepw
 # Electrical Mismatch Calculation 
 import numpy as np
 from .analysis import *
-
+#import bifacialvf.analysis as analysis
 
 def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180, 
              clearance_height=None, hub_height = None, 

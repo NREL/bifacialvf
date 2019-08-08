@@ -44,7 +44,7 @@ def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180,
              pitch=None, rowType='interior', transFactor=0.01, sensorsy=6, 
              PVfrontSurface='glass', PVbackSurface='glass', albedo=0.2,  
              tracking=False, backtrack=True, limit_angle=45,
-             calculatePVMismatch=False, portraitorlandscape='landscape',
+             calculatePVMismatch=False, portraitorlandscape='NA',
              calculateBilInterpol=False, BilInterpolParams=None):
 
         '''

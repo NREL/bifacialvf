@@ -12,7 +12,9 @@ import sys, os
 from bifacialvf.BF_BifacialIrradiances.PortraitSingleHour import PortraitSingleHour    # For calculateBilInterpol
 from bifacialvf.BF_BifacialIrradiances.LandscapeSingleHour import LandscapeSingleHour # For calculateBilInterpol
 from pvmismatch import *  # this imports everything we need
-
+import bifacialvf
+import os
+import pandas as pd
 
 def setupforBilinearInterpolation(portraitorlandscape, sensorsy, BilInterpolParams=None):
     r'''Reads dictionary and assigns values. Also calcualtes the center location
@@ -80,12 +82,12 @@ def setupforPVMismatch(portraitorlandscape, sensorsy):
     cellCenterPVM=[]
     
     if portraitorlandscape == 'portrait':                    
-        cellsy = 12
         cellsx = 8
-    else:
+        cellsy = 12
+    if portraitorlandscape == 'landscape':
         stdpl = stdpl.transpose()
-        cellsy = 8
         cellsx = 12
+        cellsy = 8
                                 
     if sensorsy != cellsy:
         for i in range (0, cellsy):
@@ -94,7 +96,7 @@ def setupforPVMismatch(portraitorlandscape, sensorsy):
     return cellCenterPVM, stdpl, cellsx, cellsy
 
 
-def calculateVFPVMismatch(cellCenterPVM, stdpl, cellsy, cellsx, sensorsy, frontGTIrow, backGTIrow):
+def calculateVFPVMismatch(cellCenterPVM, stdpl, cellsx, cellsy, sensorsy, frontGTIrow, backGTIrow, debug=False):
     r''' calls PVMismatch with all the pre-generated values on view factor.
     
     Example:
@@ -124,13 +126,13 @@ def calculateVFPVMismatch(cellCenterPVM, stdpl, cellsy, cellsx, sensorsy, frontG
         AveBack=cellCenterValBack.mean()
                  
         # Repeat to create a matrix to pass matrix.
+        #Chris: I'm sure you can make this matrix in a prettier way than I can!
         for j in range (0, len(cellCenterValues_FrontPlusBack)):
             sunmatDetailed.append([cellCenterValues_FrontPlusBack[j]/1000]*cellsx)
             
         for j in range (0, len(cellCenterValFront)):
             sunmatAveraged.append([(AveFront+AveBack)/1000]*cellsx)
-    
-            
+                        
         # ACtually do calculations
         pvsys.setSuns({0: {0: [sunmatAveraged, stdpl]}})
         PowerAveraged=pvsys.Pmp
@@ -138,8 +140,11 @@ def calculateVFPVMismatch(cellCenterPVM, stdpl, cellsy, cellsx, sensorsy, frontG
         pvsys.setSuns({0: {0: [sunmatDetailed, stdpl]}})
         PowerDetailed=pvsys.Pmp
 
-    return PowerAveraged, PowerDetailed
-
+    if debug:          
+        return PowerAveraged, PowerDetailed, sunmatDetailed, sunmatAveraged
+    else:
+        return PowerAveraged, PowerDetailed, 
+    
 def calculateVFBilinearInterpolation(portraitorlandscape, sensorsy, cellCenterBI, interpolA, IVArray, beta_voc_all, m_all, bee_all, frontGTIrow, backGTIrow, Tamb, VWind):
     r''' calls BilinearInterpolationRoutine for the view factor results frontGTIrow and backGTIrow 
     
@@ -171,3 +176,66 @@ def calculateVFBilinearInterpolation(portraitorlandscape, sensorsy, cellCenterBI
 
         
         return PmaxIdeal, PmaxUnmatched
+
+def analyseVFResultsPVMismatch(filename, portraitorlandscape='portrait', writefilename=None):
+    '''
+    Opens a finished bifacialVF results file with the metadata and the irradiance
+    results for Front and back in format "No_1_RowFrontGTI", detects how many
+    points were sampled along the panel ('sensorsy' variable), and given if the
+    panel for PVMismatch is on portrait or landscape orientation it writes into
+    an outputfile.
+    
+    If no writefilename is passed it uses the same filename of input adding a 
+    '_PVMismatch.csv' ending
+    
+    Example:
+    analyseVFResultsPVMismatch(filename='Output\test.csv', 
+                               portraitorlandscape='portrait',
+                               writefiletitle='Output\test.csv') 
+                                #This will rewrite the input file!
+    '''
+    
+    filename=r'C:\Users\sayala\Documents\GitHub\bifacialvf\bifacialvf\data\Output\test.csv'
+    (data, metadata) = bifacialvf.loadVFresults(filename)
+
+    # Checking to see if PVMismatch has already been run:
+    if 'CalculatePVOutput (PVMismatch)' in metadata:
+        if metadata['CalculatePVOutput (PVMismatch)'] == True:
+            print("Selected File already has a PVMismatch Calculation in it. Exiting calculation!")
+            return
+        else:
+            metadata['CalculatePVOutput (PVMismatch)'] = 'True'
+    
+    metadata['PortraitorLandscape'] = portraitorlandscape
+
+    frontGTI = [col for col in data if col.endswith('RowFrontGTI')]
+    backGTI = [col for col in data if col.endswith('RowBackGTI')]
+    sensorsy=frontGTI
+    
+    frontGTI=data[frontGTI]
+    backGTI=data[backGTI]
+
+    cellCenterPVM, stdpl, cellsx, cellsy = bifacialvf.analysis.setupforPVMismatch(portraitorlandscape=portraitorlandscape, sensorsy=sensorsy)
+
+    PowerAveraged_all=[]
+    PowerDetailed_all=[]
+    
+    for i in range (0,len(frontGTI)):
+        PowerAveraged, PowerDetailed = bifacialvf.analysis.calculateVFPVMismatch(cellCenterPVM=cellCenterPVM, stdpl=stdpl, cellsx=cellsx, cellsy=cellsy, sensorsy=sensorsy, frontGTIrow=frontGTI.iloc[i], backGTIrow=backGTI.iloc[i])
+        PowerAveraged_all.append(PowerAveraged)
+        PowerDetailed_all.append(PowerDetailed)
+    
+    data['PVMismatch PowerAveraged']=PowerAveraged_all
+    data['PVMismatch PowerDetailed']=PowerDetailed_all
+
+    metadata['Orientation'] = portraitorlandscape
+    metadata2=pd.Series(metadata).to_frame().T
+    
+    writefilename=(os.path.splitext(filename)[0])+'_PVMismatch.csv'
+    metadata2.to_csv(writefilename,index=False)
+    data.to_csv(writefilename, mode='a', index=False, header=True)
+    
+    print("The DC Power Mismatch loss for the year is of: {:.3f}%".format(100-data['PVMismatch PowerDetailed'].sum()*100/data['PVMismatch PowerAveraged'].sum()))
+    
+
+    

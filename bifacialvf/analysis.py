@@ -117,14 +117,29 @@ def calculateVFPVMismatch(cellCenterPVM, stdpl, cellsx, cellsy, sensorsy, frontG
         else:
             cellCenterValFront = frontGTIrow
             cellCenterValBack = backGTIrow
-            
-        sunmatDetailed=[]
-        sunmatAveraged=[]
+
+        cellCenterValues_FrontPlusBack = [(x+y)/1000 for x,y in zip(cellCenterValFront,cellCenterValBack)]
+        
+        # New section from bifacial_radiance optimized
+        G=np.array([cellCenterValues_FrontPlusBack]).transpose()
+        H = np.ones([1,cellsx]) 
+        array_det = np.dot(G,H) 
+        array_avg = np.ones([cellsy,cellsx])*(np.mean(cellCenterValues_FrontPlusBack))        
+        
+        # Actually do calculations
+        pvsys.setSuns({0: {0: [array_avg, stdpl]}})
+        PowerAveraged=pvsys.Pmp
+        
+        pvsys.setSuns({0: {0: [array_det, stdpl]}})
+        PowerDetailed=pvsys.Pmp        
+
+        '''
+        OLD Version
         
         cellCenterValues_FrontPlusBack = cellCenterValFront+cellCenterValBack
         AveFront=cellCenterValFront.mean()                
         AveBack=cellCenterValBack.mean()
-                 
+        
         # Repeat to create a matrix to pass matrix.
         #Chris: I'm sure you can make this matrix in a prettier way than I can!
         for j in range (0, len(cellCenterValues_FrontPlusBack)):
@@ -139,11 +154,12 @@ def calculateVFPVMismatch(cellCenterPVM, stdpl, cellsx, cellsy, sensorsy, frontG
         
         pvsys.setSuns({0: {0: [sunmatDetailed, stdpl]}})
         PowerDetailed=pvsys.Pmp
-
+        '''
+        
     if debug:          
-        return PowerAveraged, PowerDetailed, sunmatDetailed, sunmatAveraged
+        return PowerAveraged, PowerDetailed, array_avg, array_det
     else:
-        return PowerAveraged, PowerDetailed, 
+        return PowerAveraged, PowerDetailed
     
 def calculateVFBilinearInterpolation(portraitorlandscape, sensorsy, cellCenterBI, interpolA, IVArray, beta_voc_all, m_all, bee_all, frontGTIrow, backGTIrow, Tamb, VWind):
     r''' calls BilinearInterpolationRoutine for the view factor results frontGTIrow and backGTIrow 

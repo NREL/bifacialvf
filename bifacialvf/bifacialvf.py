@@ -175,10 +175,10 @@ def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180,
             
                                             
             if calculatePVMismatch == True:
-                cellCenterPVM, stdpl, cellsx, cellsy = analysis.setupforPVMismatch(portraitorlandscape=portraitorlandscape, sensorsy=sensorsy)
+                cellCenterPVM, stdpl, cellsx, cellsy = setupforPVMismatch(portraitorlandscape=portraitorlandscape, sensorsy=sensorsy)
 
             if calculateBilInterpol==True:              
-                cellCenterBI, interpolA, IVArray, beta_voc_all, m_all, bee_all = analysis.setupforBilinearInterpolation(portraitorlandscape=portraitorlandscape, sensorsy=sensorsy, BilInterpolParams=BilInterpolParams)
+                cellCenterBI, interpolA, IVArray, beta_voc_all, m_all, bee_all = setupforBilinearInterpolation(portraitorlandscape=portraitorlandscape, sensorsy=sensorsy, BilInterpolParams=BilInterpolParams)
               
             sw.writerow(outputheader)
             sw.writerow(outputheadervars)
@@ -352,12 +352,12 @@ def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180,
                         outputvalues.append(D)
 
                     if calculateBilInterpol==True:
-                        PowerAveraged, PowerDetailed = analysis.calculateVFBilinearInterpolation(portraitorlandscape, sensorsy, cellCenterBI, interpolA, IVArray, beta_voc_all, m_all, bee_all, frontGTIrow, backGTIrow, Tamb, VWind)
+                        PowerAveraged, PowerDetailed = calculateVFBilinearInterpolation(portraitorlandscape, sensorsy, cellCenterBI, interpolA, IVArray, beta_voc_all, m_all, bee_all, frontGTIrow, backGTIrow, Tamb, VWind)
                         outputvalues.append(PowerAveraged)
                         outputvalues.append(PowerDetailed)
 
                     if calculatePVMismatch==True:
-                        PowerAveraged, PowerDetailed = analysis.calculateVFPVMismatch(cellCenterPVM, stdpl, cellsy, cellsx, sensorsy, frontGTIrow, backGTIrow)
+                        PowerAveraged, PowerDetailed = calculateVFPVMismatch(cellCenterPVM, stdpl, cellsx, cellsy, sensorsy, frontGTIrow, backGTIrow)
                         outputvalues.append(PowerAveraged)     
                         outputvalues.append(PowerDetailed)
                                          

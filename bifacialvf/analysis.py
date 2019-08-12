@@ -96,11 +96,14 @@ def setupforPVMismatch(portraitorlandscape, sensorsy):
     return cellCenterPVM, stdpl, cellsx, cellsy
 
 
-def calculateVFPVMismatch(cellCenterPVM, stdpl, cellsx, cellsy, sensorsy, frontGTIrow, backGTIrow, debug=False):
+def calculateVFPVMismatch(cellCenterPVM, stdpl, cellsx, cellsy, sensorsy, frontGTIrow, backGTIrow, bififactor=1.0, debug=False):
     r''' calls PVMismatch with all the pre-generated values on view factor.
     
+    Inputs:
+    bififactor: bifaciality factor of the module. Max 1.0. ALL Rear irradiance values saved include the bifi-factor.
+
     Example:
-    PowerAveraged, PowerDetailed = calculateVFPVMismatch(cellCenterPVM, stdpl, cellsy, cellsx, sensorsy, frontGTIrow, backGTIrow)
+    PowerAveraged, PowerDetailed = calculateVFPVMismatch(cellCenterPVM, stdpl, cellsy, cellsx, sensorsy, frontGTIrow, backGTIrow, bififactor)
     
     '''
     
@@ -118,7 +121,7 @@ def calculateVFPVMismatch(cellCenterPVM, stdpl, cellsx, cellsy, sensorsy, frontG
             cellCenterValFront = frontGTIrow
             cellCenterValBack = backGTIrow
 
-        cellCenterValues_FrontPlusBack = [(x+y)/1000 for x,y in zip(cellCenterValFront,cellCenterValBack)]
+        cellCenterValues_FrontPlusBack = [(x+y*bififactor)/1000 for x,y in zip(cellCenterValFront,cellCenterValBack)]
         
         # New section from bifacial_radiance optimized
         G=np.array([cellCenterValues_FrontPlusBack]).transpose()
@@ -193,7 +196,7 @@ def calculateVFBilinearInterpolation(portraitorlandscape, sensorsy, cellCenterBI
         
         return PmaxIdeal, PmaxUnmatched
 
-def analyseVFResultsPVMismatch(filename, portraitorlandscape='portrait', writefilename=None):
+def analyseVFResultsPVMismatch(filename, portraitorlandscape='portrait', bififactor=1.0, writefilename=None):
     '''
     Opens a finished bifacialVF results file with the metadata and the irradiance
     results for Front and back in format "No_1_RowFrontGTI", detects how many
@@ -204,6 +207,11 @@ def analyseVFResultsPVMismatch(filename, portraitorlandscape='portrait', writefi
     If no writefilename is passed it uses the same filename of input adding a 
     '_PVMismatch.csv' ending
     
+    Inputs:
+    bififactor: bifaciality factor of the module. Max 1.0. ALL Rear irradiance values saved include the bifi-factor.
+    portraitorlandscape: 'portrait' or 'landscape', for PVMismatch input
+                      which defines the electrical interconnects inside the module. 
+
     Example:
     analyseVFResultsPVMismatch(filename='Output\test.csv', 
                                portraitorlandscape='portrait',
@@ -226,7 +234,7 @@ def analyseVFResultsPVMismatch(filename, portraitorlandscape='portrait', writefi
 
     frontGTI = [col for col in data if col.endswith('RowFrontGTI')]
     backGTI = [col for col in data if col.endswith('RowBackGTI')]
-    sensorsy=frontGTI
+    sensorsy=len(frontGTI)
     
     frontGTI=data[frontGTI]
     backGTI=data[backGTI]
@@ -237,7 +245,7 @@ def analyseVFResultsPVMismatch(filename, portraitorlandscape='portrait', writefi
     PowerDetailed_all=[]
     
     for i in range (0,len(frontGTI)):
-        PowerAveraged, PowerDetailed = bifacialvf.analysis.calculateVFPVMismatch(cellCenterPVM=cellCenterPVM, stdpl=stdpl, cellsx=cellsx, cellsy=cellsy, sensorsy=sensorsy, frontGTIrow=frontGTI.iloc[i], backGTIrow=backGTI.iloc[i])
+        PowerAveraged, PowerDetailed = bifacialvf.analysis.calculateVFPVMismatch(cellCenterPVM=cellCenterPVM, stdpl=stdpl, cellsx=cellsx, cellsy=cellsy, sensorsy=sensorsy, frontGTIrow=frontGTI.iloc[i], backGTIrow=backGTI.iloc[i], bififactor=bififactor)
         PowerAveraged_all.append(PowerAveraged)
         PowerDetailed_all.append(PowerDetailed)
     

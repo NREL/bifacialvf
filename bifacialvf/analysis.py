@@ -219,7 +219,6 @@ def analyseVFResultsPVMismatch(filename, portraitorlandscape='portrait', bififac
                                 #This will rewrite the input file!
     '''
     
-    filename=r'C:\Users\sayala\Documents\GitHub\bifacialvf\bifacialvf\data\Output\test.csv'
     (data, metadata) = bifacialvf.loadVFresults(filename)
 
     # Checking to see if PVMismatch has already been run:

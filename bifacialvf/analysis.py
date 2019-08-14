@@ -59,64 +59,87 @@ def setupforBilinearInterpolation(portraitorlandscape, sensorsy, BilInterpolPara
     
     return cellCenterBI, interpolA, IVArray, beta_voc_all, m_all, bee_all      
 
-def setupforPVMismatch(portraitorlandscape, sensorsy):
+def setupforPVMismatch(portraitorlandscape, sensorsy, numcells=72):
     r''' Sets values for calling PVMismatch, for ladscape or portrait modes and 
     
     Example:
-    cellCenterPVM, stdpl, cellsx, cellsy = setupforPVMismatch(portraitorlandscape='portrait', sensorsy=100):
+    cellCenterPVM, stdpl, cellsx, cellsy = setupforPVMismatch(portraitorlandscape='portrait', sensorsy=100, numcells=72):
     '''
     
-    stdpl=np.array([[0,	23,	24,	47,	48,	71,	72,	95],
-        [1,	22,	25,	46,	49,	70,	73,	94],
-        [2,	21,	26,	45,	50,	69,	74,	93],
-        [3,	20,	27,	44,	51,	68,	75,	92],
-        [4,	19,	28,	43,	52,	67,	76,	91],
-        [5,	18,	29,	42,	53,	66,	77,	90],
-        [6,	17,	30,	41,	54,	65,	78,	89],
-        [7,	16,	31,	40,	55,	64,	79,	88],
-        [8,	15,	32,	39,	56,	63,	80,	87],
-        [9,	14,	33,	38,	57,	62,	81,	86],
-        [10,	13,	34,	37,	58,	61,	82,	85],
-        [11,	12,	35,	36,	59,	60,	83,	84]])
-
-    cellCenterPVM=[]
+    # cell placement for 'portrait'.
+    if numcells == 72:
+        stdpl=np.array([[0,	23,	24,	47,	48,	71],
+        [1,	22,	25,	46,	49,	70],
+        [2,	21,	26,	45,	50,	69],
+        [3,	20,	27,	44,	51,	68],
+        [4,	19,	28,	43,	52,	67],
+        [5,	18,	29,	42,	53,	66],
+        [6,	17,	30,	41,	54,	65],
+        [7,	16,	31,	40,	55,	64],
+        [8,	15,	32,	39,	56,	63],
+        [9,	14,	33,	38,	57,	62],
+        [10,	13,	34,	37,	58,	61],
+        [11,	12,	35,	36,	59,	60]])
     
-    if portraitorlandscape == 'portrait':                    
-        cellsx = 8
-        cellsy = 12
+    elif numcells == 96:
+        stdpl=np.array([[0,	23,	24,	47,	48,	71,	72,	95],
+            [1,	22,	25,	46,	49,	70,	73,	94],
+            [2,	21,	26,	45,	50,	69,	74,	93],
+            [3,	20,	27,	44,	51,	68,	75,	92],
+            [4,	19,	28,	43,	52,	67,	76,	91],
+            [5,	18,	29,	42,	53,	66,	77,	90],
+            [6,	17,	30,	41,	54,	65,	78,	89],
+            [7,	16,	31,	40,	55,	64,	79,	88],
+            [8,	15,	32,	39,	56,	63,	80,	87],
+            [9,	14,	33,	38,	57,	62,	81,	86],
+            [10,	13,	34,	37,	58,	61,	82,	85],
+            [11,	12,	35,	36,	59,	60,	83,	84]])
+    else:
+        print("Error. Only 72 and 96 cells modules supported at the moment. Change numcells to either of this options!")
+        return
+    
     if portraitorlandscape == 'landscape':
         stdpl = stdpl.transpose()
-        cellsx = 12
-        cellsy = 8
-                                
-    if sensorsy != cellsy:
-        for i in range (0, cellsy):
-            cellCenterPVM.append((i*sensorsy/cellsy+(i+1)*sensorsy/cellsy)/2)
+    elif portraitorlandscape != 'portrait':
+        print("Error. portraitorlandscape variable must either be 'landscape' or 'portrait'")
+        return
     
-    return cellCenterPVM, stdpl, cellsx, cellsy
+    cellsx = len(stdpl[1]); cellsy = len(stdpl)
+               
+    return stdpl, cellsx, cellsy
 
 
-def calculateVFPVMismatch(cellCenterPVM, stdpl, cellsx, cellsy, sensorsy, frontGTIrow, backGTIrow, bififactor=1.0, debug=False):
+def calculateVFPVMismatch(stdpl, cellsx, cellsy, sensorsy, frontGTIrow, backGTIrow, bififactor=1.0, debug=False):
     r''' calls PVMismatch with all the pre-generated values on view factor.
     
     Inputs:
     bififactor: bifaciality factor of the module. Max 1.0. ALL Rear irradiance values saved include the bifi-factor.
 
     Example:
-    PowerAveraged, PowerDetailed = calculateVFPVMismatch(cellCenterPVM, stdpl, cellsy, cellsx, sensorsy, frontGTIrow, backGTIrow, bififactor)
+    PowerAveraged, PowerDetailed = calculateVFPVMismatch(stdpl, cellsy, cellsx, sensorsy, frontGTIrow, backGTIrow, bififactor)
     
     '''
+    import pvmismatch
     
     if np.mean(frontGTIrow) < 1.0:
         PowerAveraged = 0
         PowerDetailed = 0
     else:                
-        pvsys = pvsystem.PVsystem(numberStrs=1, numberMods=1)  
+        if cellsx*cellsy == 72:
+            cell_pos = pvmismatch.pvmismatch_lib.pvmodule.STD72
+        elif cellsx*cellsy == 96:
+            cell_pos = pvmismatch.pvmismatch_lib.pvmodule.STD96
+        else:
+            print("Error. Only 72 and 96 cells modules supported at the moment. Change numcells to either of this options!")
+            return
+        
+        pvmod=pvmismatch.pvmismatch_lib.pvmodule.PVmodule(cell_pos=cell_pos)
+        pvsys = pvmismatch.pvsystem.PVsystem(numberStrs=1, numberMods=1, pvmods=pvmod)  
         # makes the system  # 1 module, in portrait mode. 
         
         if sensorsy != cellsy:                        
-            cellCenterValFront= np.interp(cellCenterPVM, list(range(0,sensorsy)), frontGTIrow)
-            cellCenterValBack= np.interp(cellCenterPVM, list(range(0,sensorsy)), backGTIrow)
+            cellCenterValFront= np.interp(np.linspace(0, (sensorsy-1), cellsy), list(range(0,sensorsy)), frontGTIrow)
+            cellCenterValBack= np.interp(np.linspace(0, (sensorsy-1), cellsy), list(range(0,sensorsy)), backGTIrow)
         else:
             cellCenterValFront = frontGTIrow
             cellCenterValBack = backGTIrow
@@ -135,29 +158,6 @@ def calculateVFPVMismatch(cellCenterPVM, stdpl, cellsx, cellsy, sensorsy, frontG
         
         pvsys.setSuns({0: {0: [array_det, stdpl]}})
         PowerDetailed=pvsys.Pmp        
-
-        '''
-        OLD Version
-        
-        cellCenterValues_FrontPlusBack = cellCenterValFront+cellCenterValBack
-        AveFront=cellCenterValFront.mean()                
-        AveBack=cellCenterValBack.mean()
-        
-        # Repeat to create a matrix to pass matrix.
-        #Chris: I'm sure you can make this matrix in a prettier way than I can!
-        for j in range (0, len(cellCenterValues_FrontPlusBack)):
-            sunmatDetailed.append([cellCenterValues_FrontPlusBack[j]/1000]*cellsx)
-            
-        for j in range (0, len(cellCenterValFront)):
-            sunmatAveraged.append([(AveFront+AveBack)/1000]*cellsx)
-                        
-        # ACtually do calculations
-        pvsys.setSuns({0: {0: [sunmatAveraged, stdpl]}})
-        PowerAveraged=pvsys.Pmp
-        
-        pvsys.setSuns({0: {0: [sunmatDetailed, stdpl]}})
-        PowerDetailed=pvsys.Pmp
-        '''
         
     if debug:          
         return PowerAveraged, PowerDetailed, array_avg, array_det
@@ -196,7 +196,7 @@ def calculateVFBilinearInterpolation(portraitorlandscape, sensorsy, cellCenterBI
         
         return PmaxIdeal, PmaxUnmatched
 
-def analyseVFResultsPVMismatch(filename, portraitorlandscape='portrait', bififactor=1.0, writefilename=None):
+def analyseVFResultsPVMismatch(filename, portraitorlandscape='portrait', bififactor=1.0, numcells=72, writefilename=None):
     '''
     Opens a finished bifacialVF results file with the metadata and the irradiance
     results for Front and back in format "No_1_RowFrontGTI", detects how many
@@ -224,8 +224,7 @@ def analyseVFResultsPVMismatch(filename, portraitorlandscape='portrait', bififac
     # Checking to see if PVMismatch has already been run:
     if 'CalculatePVOutput (PVMismatch)' in metadata:
         if metadata['CalculatePVOutput (PVMismatch)'] == True:
-            print("Selected File already has a PVMismatch Calculation in it. Exiting calculation!")
-            return
+            print("Warning: Selected File already has a PVMismatch Calculation in it. If writing column has same name it will be rewriten, or else new calculation might be appended at the end who knows.")
         else:
             metadata['CalculatePVOutput (PVMismatch)'] = 'True'
     
@@ -238,20 +237,27 @@ def analyseVFResultsPVMismatch(filename, portraitorlandscape='portrait', bififac
     frontGTI=data[frontGTI]
     backGTI=data[backGTI]
 
-    cellCenterPVM, stdpl, cellsx, cellsy = bifacialvf.analysis.setupforPVMismatch(portraitorlandscape=portraitorlandscape, sensorsy=sensorsy)
+    stdpl, cellsx, cellsy = bifacialvf.analysis.setupforPVMismatch(portraitorlandscape=portraitorlandscape, sensorsy=sensorsy, numcells=numcells)
 
     PowerAveraged_all=[]
     PowerDetailed_all=[]
-    
+    PowerAveraged_FrontOnly_all=[]
+    PowerDetailed_FrontOnly_all=[]    
     for i in range (0,len(frontGTI)):
-        PowerAveraged, PowerDetailed = bifacialvf.analysis.calculateVFPVMismatch(cellCenterPVM=cellCenterPVM, stdpl=stdpl, cellsx=cellsx, cellsy=cellsy, sensorsy=sensorsy, frontGTIrow=frontGTI.iloc[i], backGTIrow=backGTI.iloc[i], bififactor=bififactor)
+        PowerAveraged, PowerDetailed = bifacialvf.analysis.calculateVFPVMismatch(stdpl=stdpl, cellsx=cellsx, cellsy=cellsy, sensorsy=sensorsy, frontGTIrow=frontGTI.iloc[i], backGTIrow=backGTI.iloc[i], bififactor=bififactor)
+        PowerAveraged_FrontOnly, PowerDetailed_FrontOnly = bifacialvf.analysis.calculateVFPVMismatch(stdpl=stdpl, cellsx=cellsx, cellsy=cellsy, sensorsy=sensorsy, frontGTIrow=frontGTI.iloc[i], backGTIrow=np.zeros(len(frontGTI.iloc[i])), bififactor=bififactor)
         PowerAveraged_all.append(PowerAveraged)
         PowerDetailed_all.append(PowerDetailed)
+        PowerAveraged_FrontOnly_all.append(PowerAveraged_FrontOnly)
+        PowerDetailed_FrontOnly_all.append(PowerDetailed_FrontOnly)
     
-    data['PVMismatch PowerAveraged']=PowerAveraged_all
-    data['PVMismatch PowerDetailed']=PowerDetailed_all
+    data['PVMismatch FRONT + BACK (Averaged) PmaxIdeal [W]']=PowerAveraged_all
+    data['PVMismatch FRONT + BACK (Detailed) PmaxUnmatched [W]']=PowerDetailed_all
+    data['PVMismatch FRONT ONLY (Averaged) PmaxIdeal [W]']=PowerAveraged_FrontOnly_all
+    data['PVMismatch FRONT ONLY (Detailed) PmaxUnmatched [W]']=PowerDetailed_FrontOnly_all
 
-    metadata['Orientation'] = portraitorlandscape
+    metadata['NumCellsinPanel'] = cellsx*cellsy # saving type of PVMismatch module used.
+    metadata['Bififactor'] = bififactor # saving type of PVMismatch module used.
     metadata2=pd.Series(metadata).to_frame().T
     
     writefilename=(os.path.splitext(filename)[0])+'_PVMismatch.csv'

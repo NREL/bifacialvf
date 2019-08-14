@@ -44,7 +44,8 @@ def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180,
              pitch=None, rowType='interior', transFactor=0.01, sensorsy=6, 
              PVfrontSurface='glass', PVbackSurface='glass', albedo=0.2,  
              tracking=False, backtrack=True, limit_angle=45,
-             calculatePVMismatch=False, portraitorlandscape='NA',
+             calculatePVMismatch=False, cellsnum= 72, 
+             portraitorlandscape='NA', bififactor = 1.0,
              calculateBilInterpol=False, BilInterpolParams=None):
 
         '''
@@ -169,13 +170,13 @@ def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180,
                          'PV Azimuth(deg)',heightlabel, 'Pitch', 'RowType(first interior last single)',
                          'TransmissionFactor(open area fraction)','sensorsy(# hor rows in panel)', 
                          'PVfrontSurface(glass or ARglass)', 'PVbackSurface(glass or ARglass)',
-                         'Albedo',  'Tracking', 'backtracking', 'CalculatePVOutput (Bilinear Interpol)','CalculatePVOutput (PVMismatch)', 'PortraitorLandscape']
+                         'Albedo',  'Tracking', 'backtracking', 'CalculatePVOutput (Bilinear Interpol)','CalculatePVOutput (PVMismatch)', 'PortraitorLandscape', 'NumCellsinPanel', 'Bififactor']
             outputheadervars=[lat, lng, tz, tilt, sazm, clearance_height, pitch, rowType, transFactor, sensorsy, PVfrontSurface,
-                             PVbackSurface, albedo, tracking, backtrack, calculateBilInterpol, calculatePVMismatch, portraitorlandscape]
+                             PVbackSurface, albedo, tracking, backtrack, calculateBilInterpol, calculatePVMismatch, portraitorlandscape, cellsnum, bififactor]
             
                                             
             if calculatePVMismatch == True:
-                cellCenterPVM, stdpl, cellsx, cellsy = setupforPVMismatch(portraitorlandscape=portraitorlandscape, sensorsy=sensorsy)
+                stdpl, cellsx, cellsy = setupforPVMismatch(portraitorlandscape=portraitorlandscape, sensorsy=sensorsy)
 
             if calculateBilInterpol==True:              
                 cellCenterBI, interpolA, IVArray, beta_voc_all, m_all, bee_all = setupforBilinearInterpolation(portraitorlandscape=portraitorlandscape, sensorsy=sensorsy, BilInterpolParams=BilInterpolParams)
@@ -210,7 +211,8 @@ def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180,
             if calculatePVMismatch == True:
                 outputtitles+=['PVMismatch FRONT + BACK (Averaged) PmaxIdeal [W]']
                 outputtitles+=['PVMismatch FRONT + BACK (Detailed) PmaxUnmatched [W]']
-                
+                outputtitles+=['PVMismatch FRONT ONLY (Averaged) PmaxIdeal [W]']
+                outputtitles+=['PVMismatch FRONT ONLY (Detailed) PmaxUnmatched [W]']                
             sw.writerow(outputtitles)
             
             ## Loop through file.  TODO: replace this with for loop.
@@ -357,10 +359,12 @@ def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180,
                         outputvalues.append(PowerDetailed)
 
                     if calculatePVMismatch==True:
-                        PowerAveraged, PowerDetailed = calculateVFPVMismatch(cellCenterPVM, stdpl, cellsx, cellsy, sensorsy, frontGTIrow, backGTIrow)
+                        PowerAveraged, PowerDetailed = calculateVFPVMismatch(stdpl=stdpl, cellsx=cellsx, cellsy=cellsy, sensorsy=sensorsy, frontGTIrow=frontGTIrow, backGTIrow=backGTIrow, bififactor=bififactor)
+                        PowerAveraged_FrontOnly, PowerDetailed_FrontOnly = calculateVFPVMismatch(stdpl=stdpl, cellsx=cellsx, cellsy=cellsy, sensorsy=sensorsy, frontGTIrow=frontGTIrow, backGTIrow=np.zeros(len(frontGTIrow)), bififactor=bififactor)        
                         outputvalues.append(PowerAveraged)     
                         outputvalues.append(PowerDetailed)
-                                         
+                        outputvalues.append(PowerAveraged_FrontOnly)     
+                        outputvalues.append(PowerDetailed_FrontOnly)
                     sw.writerow(outputvalues)
     
         	# End of daylight if loop 
@@ -390,11 +394,13 @@ if __name__ == "__main__":
     sensorsy = 6                # sensorsy(# hor rows in panel)   <--> THIS ASSUMES LANDSCAPE ORIENTATION 
     PVfrontSurface = "glass"    # PVfrontSurface(glass or ARglass)
     PVbackSurface = "glass"     # PVbackSurface(glass or ARglass)
-
+    
      # Calculate PV Output Through Various Methods    
     calculateBilInterpol = True   # Only works with landscape at the moment.
     calculatePVMismatch = True
     portraitorlandscape='landscape'   # portrait or landscape
+    cellsnum = 72
+    bififactor = 1.0
     
     # Tracking instructions
     tracking=False
@@ -408,9 +414,10 @@ if __name__ == "__main__":
              PVfrontSurface=PVfrontSurface, PVbackSurface=PVbackSurface, 
              albedo=albedo, tracking=tracking, backtrack=backtrack, 
              limit_angle=limit_angle, calculatePVMismatch=calculatePVMismatch,
+             cellsnum = cellsnum, bififactor=bififactor,
              calculateBilInterpol=calculateBilInterpol,
              portraitorlandscape=portraitorlandscape)
-                
+                                        
     #Load the results from the resultfile
     from loadVFresults import loadVFresults
     (data, metadata) = loadVFresults(writefiletitle)

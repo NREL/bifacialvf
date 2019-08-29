@@ -109,7 +109,7 @@ def setupforPVMismatch(portraitorlandscape, sensorsy, numcells=72):
     return stdpl, cellsx, cellsy
 
 
-def calculateVFPVMismatch(stdpl, cellsx, cellsy, sensorsy, frontGTIrow, backGTIrow, bififactor=1.0, debug=False):
+def calculateVFPVMismatch(stdpl, cellsx, cellsy, sensorsy, frontGTIrow, backGTIrow, bififactor=1.0, debug=False, plotflag=False):
     r''' calls PVMismatch with all the pre-generated values on view factor.
     
     Inputs:
@@ -156,9 +156,15 @@ def calculateVFPVMismatch(stdpl, cellsx, cellsy, sensorsy, frontGTIrow, backGTIr
         pvsys.setSuns({0: {0: [array_avg, stdpl]}})
         PowerAveraged=pvsys.Pmp
         
+        if plotflag:
+            pvsys.plotSys()                         
+
         pvsys.setSuns({0: {0: [array_det, stdpl]}})
         PowerDetailed=pvsys.Pmp        
         
+        if plotflag:
+            pvsys.plotSys()   
+    
     if debug:          
         return PowerAveraged, PowerDetailed, array_avg, array_det
     else:

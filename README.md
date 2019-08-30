@@ -1,19 +1,32 @@
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 [![Build Status](https://travis-ci.org/NREL/bifacialvf.svg?branch=master)](https://travis-ci.org/NREL/bifacialvf)
 
-# bifacialvf - Bifacial PV View Factor model
-python, configuration factor model
+# bifacialvf_mismatch - Bifacial PV View Factor model with Mismatch routines
+python, configuration factor model, electrical model mismatch for bifacial modules.
 
+Original bilinear interpolation code by Sara MacAlpine
+Python translation & Updates by Silvana Ayala
+
+bifacialvf
 Original code by Bill Marion
 Python translation by Silvana Ayala
 Updates by Chris Deline
 
-Based on the publication: "A Practical Irradiance Model for Bifacial PV Modules"
-B. Marion, S. MacAlpine, C. Deline, A. Asgharzadeh, F. Toor, D. Riley, J. Stein, C. Hansen
-2017 IEEE Photovoltaic Specialists Conference, Washington DC, 2017
-URL: https://www.nrel.gov/docs/fy17osti/67847.pdf
+(Forthcoming) PVMismatch add-on
+Original code by PVMismatch
+For this version of bifacialvf_Mismach to work, PVMismatch must be installed (pip install pvmismatch)
+
+Based on the publication:
+Marion, B., MacAlpine, S., Deline, C., Asgharzadeh, A., Toor, F., Riley, D., … Hansen, C. (2017). A Practical Irradiance Model for Bifacial PV Modules: Preprint. In 44th IEEE Photovoltaic Specialists Conference. Washington, DC. https://www.nrel.gov/docs/fy17osti/67847.pdf. NREL/CP-5J00-67847
+
+Bilinear Interpolation based on the publication:
+De Soto, W., Klein, S. A., & Beckman, W. A. (2006). Improvement and validation of a model for photovoltaic array performance. Solar Energy, 80(1), 78–88. https://doi.org/10.1016/j.solener.2005.06.010
+
+Marion, B., Rummel, S., & Anderberg, A. (2004). Current--voltage curve translation by bilinear interpolation. Progress in Photovoltaics: Research and Applications, 12(8), 593–607.
+
 
 ## Introduction
+
 
 bifacialvf is a self-contained view factor (or configuration factor) model which
 replicates a 5-row PV system of infinite extent perpendicular to the module
@@ -22,6 +35,9 @@ row by default, but user interface options include `'first'`, `'interior'`,
 `'last'`, and `'single'`. Single-axis tracking is supported, and hourly output
 files based on TMY inputs are saved. Spatial nonuniformity is reported, with
 multiple rear-facing irradiances collected on the back of each module row.
+
+Bilinear interpolation code add-on to bifacialvf (description below) to pre-generate IV arrays and bifacial coefficients, and to examine the energy production with back side irradiance mismatch for either a portrait or landscape module.   
+Included are IV curves and bifacial info for a Yingli (standard) module. 
 
 ## Pre-requisites
 This software is written for Python 2 or 3. NREL recommends [Anaconda Python](https://www.anaconda.com/download/).
@@ -44,6 +60,7 @@ For those interested in contributing to bifacialvf:
 
     bifacialvf.simulate(inputTMY, outputfile, tilt, azm, clearance, rowspacing)
     (data, metadata) = bifacialvf.loadVFresults(outputfile)
+```
 
 For more usage examples, see the Jupyter notebooks in \docs\
 
@@ -61,6 +78,7 @@ For more usage examples, see the Jupyter notebooks in \docs\
         PVfrontSurface='glass', PVbackSurface='glass',  albedo=0.62,
         tracking=False, backtrack=False, r2r=1.5, Cv=0.05, offset=0)
 
+
 This is the main runfile.  Hourly TMY3 inputs are read, and an outputfile is saved with
 a number of irradiance points along the module chord specified by `cellRows`.
 
@@ -70,6 +88,12 @@ a number of irradiance points along the module chord specified by `cellRows`.
 read in saved file from `bifacialvf.simulate`.  If no filename is passed, a tkinter GUI opens for file selection
 
 ## Subroutines
+
+`LandscapeSingleHour.py`: 
+BilinearInterpolation calculation for landscape modules
+
+`PortraitSingleHour.py`: 
+BilinearInterpolation calculation for Portrait modules 
 
 `sun.py`: 
 Solar position and irradiance-related helper files including

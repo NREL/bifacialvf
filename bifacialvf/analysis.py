@@ -192,7 +192,7 @@ def calculateVFBilinearInterpolation(portraitorlandscape, sensorsy, interpolA, I
     return PmaxIdeal, PmaxUnmatched
 
 
-def analyseVFResultsBilInterpolFASTER(filename, portraitorlandscape='landscape', bififactor=1.0, BilInterpolParams=None, writefilename=None):
+def analyseVFResultsBilInterpol(filename, portraitorlandscape='landscape', bififactor=1.0, BilInterpolParams=None, writefilename=None):
     '''
     Opens a finished bifacialVF results file with the metadata and the irradiance
     results for Front and back in format "No_1_RowFrontGTI", detects how many
@@ -230,6 +230,8 @@ def analyseVFResultsBilInterpolFASTER(filename, portraitorlandscape='landscape',
     backGTI = [col for col in data if col.endswith('RowBackGTI')]
     sensorsy=len(frontGTI)
 
+    #2DO: Add reading of bififactor if it doesnt match what's on the file.
+    #2DO: Multiply by bififactor here ~
     #2DO: include resampling routnies here for frontGTI and backGTI so it matches cellsy
     
     frontGTI=data[frontGTI]
@@ -276,88 +278,6 @@ def analyseVFResultsBilInterpolFASTER(filename, portraitorlandscape='landscape',
 
 
 def analyseVFResultsPVMismatch(filename, portraitorlandscape='portrait', bififactor=1.0, numcells=72, writefilename=None):
-    '''
-    Opens a finished bifacialVF results file with the metadata and the irradiance
-    results for Front and back in format "No_1_RowFrontGTI", detects how many
-    points were sampled along the panel ('sensorsy' variable), and given if the
-    panel for PVMismatch is on portrait or landscape orientation it writes into
-    an outputfile.
-    
-    If no writefilename is passed it uses the same filename of input adding a 
-    '_PVMismatch.csv' ending
-    
-    Inputs:
-    bififactor: bifaciality factor of the module. Max 1.0. ALL Rear irradiance values saved include the bifi-factor.
-    portraitorlandscape: 'portrait' or 'landscape', for PVMismatch input
-                      which defines the electrical interconnects inside the module. 
-
-    Example:
-    analyseVFResultsPVMismatch(filename='Output\test.csv', 
-                               portraitorlandscape='portrait',
-                               writefiletitle='Output\test.csv') 
-                                #This will rewrite the input file!
-    '''
-    
-    (data, metadata) = bifacialvf.loadVFresults(filename)
-
-    import time
-
-    # Checking to see if PVMismatch has already been run:
-    if 'CalculatePVOutput (PVMismatch)' in metadata:
-        if metadata['CalculatePVOutput (PVMismatch)'] == True:
-            print("Warning: Selected File already has a PVMismatch Calculation in it. If writing column has same name it will be rewriten, or else new calculation might be appended at the end who knows.")
-        else:
-            metadata['CalculatePVOutput (PVMismatch)'] = 'True'
-    
-    metadata['PortraitorLandscape'] = portraitorlandscape
-
-    frontGTI = [col for col in data if col.endswith('RowFrontGTI')]
-    backGTI = [col for col in data if col.endswith('RowBackGTI')]
-    sensorsy=len(frontGTI)
-    
-    frontGTI=data[frontGTI]
-    backGTI=data[backGTI]
-
-    stdpl, cellsx, cellsy = bifacialvf.analysis.setupforPVMismatch(portraitorlandscape=portraitorlandscape, sensorsy=sensorsy, numcells=numcells)
-
-    #2DO: include resampling routnies here for frontGTI and backGTI so it matches cellsy
-
-    PowerAveraged_all=[]
-    PowerDetailed_all=[]
-    PowerAveraged_FrontOnly_all=[]
-    PowerDetailed_FrontOnly_all=[]  
-    
-    print("starting")
-    start = time.time()
-
-    for i in range (0,len(frontGTI)):
-        PowerAveraged, PowerDetailed = bifacialvf.analysis.calculateVFPVMismatch(stdpl=stdpl, cellsx=cellsx, cellsy=cellsy, sensorsy=sensorsy, frontGTIrow=frontGTI.iloc[i], backGTIrow=backGTI.iloc[i], bififactor=bififactor)
-        PowerAveraged_FrontOnly, PowerDetailed_FrontOnly = bifacialvf.analysis.calculateVFPVMismatch(stdpl=stdpl, cellsx=cellsx, cellsy=cellsy, sensorsy=sensorsy, frontGTIrow=frontGTI.iloc[i], backGTIrow=np.zeros(len(frontGTI.iloc[i])), bififactor=bififactor)
-        PowerAveraged_all.append(PowerAveraged)
-        PowerDetailed_all.append(PowerDetailed)
-        PowerAveraged_FrontOnly_all.append(PowerAveraged_FrontOnly)
-        PowerDetailed_FrontOnly_all.append(PowerDetailed_FrontOnly)
-    
-    end = time.time()
-    print ("Time elapsed for calculating PVMismatch Output ", end - start)
-    print("ending")
-    data['PVMismatch FRONT + BACK (Averaged) PmaxIdeal [W]']=PowerAveraged_all
-    data['PVMismatch FRONT + BACK (Detailed) PmaxUnmatched [W]']=PowerDetailed_all
-    data['PVMismatch FRONT ONLY (Averaged) PmaxIdeal [W]']=PowerAveraged_FrontOnly_all
-    data['PVMismatch FRONT ONLY (Detailed) PmaxUnmatched [W]']=PowerDetailed_FrontOnly_all
-
-    metadata['NumCellsinPanel'] = cellsx*cellsy # saving type of PVMismatch module used.
-    metadata['Bififactor'] = bififactor # saving type of PVMismatch module used.
-    metadata2=pd.Series(metadata).to_frame().T
-    
-    writefilename=(os.path.splitext(filename)[0])+'_PVMismatch.csv'
-    metadata2.to_csv(writefilename,index=False)
-    data.to_csv(writefilename, mode='a', index=False, header=True)
-    
-    print("The DC Power Mismatch loss for the year is of: {:.3f}%".format(100-data['PVMismatch FRONT + BACK (Detailed) PmaxUnmatched [W]'].sum()*100/data['PVMismatch FRONT + BACK (Averaged) PmaxIdeal [W]'].sum()))
-    
-
-def analyseVFResultsPVMismatchFASTER(filename, portraitorlandscape='portrait', bififactor=1.0, numcells=72, writefilename=None):
     '''
     Opens a finished bifacialVF results file with the metadata and the irradiance
     results for Front and back in format "No_1_RowFrontGTI", detects how many
@@ -484,3 +404,6 @@ def analyseVFResultsPVMismatchFASTER(filename, portraitorlandscape='portrait', b
     data.to_csv(writefilename, mode='a', index=False, header=True)
     
     print("The DC Power Mismatch loss for the year is of: {:.3f}%".format(100-data['PVMismatch FRONT + BACK (Detailed) PmaxUnmatched [W]'].sum()*100/data['PVMismatch FRONT + BACK (Averaged) PmaxIdeal [W]'].sum()))
+    print("The detailed irradiance power is: {:.1f} W".format(data['PVMismatch FRONT + BACK (Detailed) PmaxUnmatched [W]'].sum()))
+    print("The average irradinace power is: {:.1f} W".format(data['PVMismatch FRONT + BACK (Averaged) PmaxIdeal [W]'].sum()))
+

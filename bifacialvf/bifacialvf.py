@@ -45,7 +45,7 @@ def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180,
              PVfrontSurface='glass', PVbackSurface='glass', albedo=0.2,  
              tracking=False, backtrack=True, limit_angle=45,
              calculatePVMismatch=False, cellsnum= 72, 
-             portraitorlandscape='NA', bififactor = 1.0,
+             portraitorlandscape='landscape', bififactor = 1.0,
              calculateBilInterpol=False, BilInterpolParams=None):
 
         '''
@@ -170,17 +170,12 @@ def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180,
                          'PV Azimuth(deg)',heightlabel, 'Pitch', 'RowType(first interior last single)',
                          'TransmissionFactor(open area fraction)','sensorsy(# hor rows in panel)', 
                          'PVfrontSurface(glass or ARglass)', 'PVbackSurface(glass or ARglass)',
-                         'Albedo',  'Tracking', 'backtracking', 'CalculatePVOutput (Bilinear Interpol)','CalculatePVOutput (PVMismatch)', 'PortraitorLandscape', 'NumCellsinPanel', 'Bififactor']
+                         'Albedo',  'Tracking', 'backtracking']
             outputheadervars=[lat, lng, tz, tilt, sazm, clearance_height, pitch, rowType, transFactor, sensorsy, PVfrontSurface,
-                             PVbackSurface, albedo, tracking, backtrack, calculateBilInterpol, calculatePVMismatch, portraitorlandscape, cellsnum, bififactor]
+                             PVbackSurface, albedo, tracking, backtrack]
             
                                             
-            if calculatePVMismatch == True:
-                stdpl, cellsx, cellsy = setupforPVMismatch(portraitorlandscape=portraitorlandscape, sensorsy=sensorsy)
 
-            if calculateBilInterpol==True:              
-                cellCenterBI, interpolA, IVArray, beta_voc_all, m_all, bee_all = setupforBilinearInterpolation(portraitorlandscape=portraitorlandscape, sensorsy=sensorsy, BilInterpolParams=BilInterpolParams)
-              
             sw.writerow(outputheader)
             sw.writerow(outputheadervars)
             
@@ -203,16 +198,7 @@ def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180,
                 outputtitles+=['sazm']
                 outputtitles+=['height']
                 outputtitles+=['D']
-                    
-            if calculateBilInterpol==True:
-                outputtitles+=['BilInterpol FRONT + BACK (Averaged) PmaxIdeal [W]']
-                outputtitles+=['BilInterpol FRONT + BACK (Detailed) PmaxUnmatched [W]']
-
-            if calculatePVMismatch == True:
-                outputtitles+=['PVMismatch FRONT + BACK (Averaged) PmaxIdeal [W]']
-                outputtitles+=['PVMismatch FRONT + BACK (Detailed) PmaxUnmatched [W]']
-                outputtitles+=['PVMismatch FRONT ONLY (Averaged) PmaxIdeal [W]']
-                outputtitles+=['PVMismatch FRONT ONLY (Detailed) PmaxUnmatched [W]']                
+                           
             sw.writerow(outputtitles)
             
             ## Loop through file.  TODO: replace this with for loop.
@@ -353,18 +339,6 @@ def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180,
                         outputvalues.append(C)
                         outputvalues.append(D)
 
-                    if calculateBilInterpol==True:
-                        PowerAveraged, PowerDetailed = calculateVFBilinearInterpolation(portraitorlandscape, sensorsy, cellCenterBI, interpolA, IVArray, beta_voc_all, m_all, bee_all, frontGTIrow, backGTIrow, Tamb, VWind)
-                        outputvalues.append(PowerAveraged)
-                        outputvalues.append(PowerDetailed)
-
-                    if calculatePVMismatch==True:
-                        PowerAveraged, PowerDetailed = calculateVFPVMismatch(stdpl=stdpl, cellsx=cellsx, cellsy=cellsy, sensorsy=sensorsy, frontGTIrow=frontGTIrow, backGTIrow=backGTIrow, bififactor=bififactor)
-                        PowerAveraged_FrontOnly, PowerDetailed_FrontOnly = calculateVFPVMismatch(stdpl=stdpl, cellsx=cellsx, cellsy=cellsy, sensorsy=sensorsy, frontGTIrow=frontGTIrow, backGTIrow=np.zeros(len(frontGTIrow)), bififactor=bififactor)        
-                        outputvalues.append(PowerAveraged)     
-                        outputvalues.append(PowerDetailed)
-                        outputvalues.append(PowerAveraged_FrontOnly)     
-                        outputvalues.append(PowerDetailed_FrontOnly)
                     sw.writerow(outputvalues)
     
         	# End of daylight if loop 
@@ -372,6 +346,12 @@ def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180,
         #strLine = sr.ReadLine();        # Read next line of data
        # End of while strLine != null loop
        
+        if calculateBilInterpol==True:
+            analyseVFResultsPVMismatch(filename=writefiletitle, portraitorlandscape=portraitorlandscape, bififactor=bififactor, numcells=cellsnum)
+               
+        if calculatePVMismatch==True:
+            analyseVFResultsBilInterpolDELETE(filename=writefiletitle, portraitorlandscape=portraitorlandscape, bififactor=bififactor)
+         
      
         print( "Finished")
         

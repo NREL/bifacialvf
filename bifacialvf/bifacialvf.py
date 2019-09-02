@@ -26,6 +26,7 @@ import math
 import csv
 import pvlib
 import os
+from tqdm import tqdm
 
 from .vf import getBackSurfaceIrradiances, getFrontSurfaceIrradiances, getGroundShadeFactors
 from .vf import getSkyConfigurationFactors, trackingBFvaluescalculator, rowSpacing
@@ -34,7 +35,8 @@ import pandas as pd
 from .readepw import readepw
 
 
-def simulate(TMYtoread=None, writefiletitle=None,  beta = 0, sazm = 180, C = 0.5, D = None,
+
+def simulate(myTMY3, meta, writefiletitle=None,  beta = 0, sazm = 180, C = 0.5, D = None,
              rowType = 'interior', transFactor = 0.01, cellRows = 6, 
              PVfrontSurface = 'glass', PVbackSurface = 'glass',  albedo = 0.2,  
              tracking = False, backtrack = True, rtr = None,  max_angle = 45):
@@ -89,18 +91,19 @@ def simulate(TMYtoread=None, writefiletitle=None,  beta = 0, sazm = 180, C = 0.5
             writefiletitle = "data/Output/TEST.csv"
         
         ## Read TMY3 data and start loop ~  
-        if TMYtoread is None: # if no file passed in, the readtmy3 graphical file picker will open.
-            (myTMY3,meta)=pvlib.tmy.readtmy3(TMYtoread)        
-        elif TMYtoread.lower().endswith('.csv') :  
-            (myTMY3,meta)=pvlib.tmy.readtmy3(TMYtoread)
-        elif TMYtoread.lower().endswith('.epw') : 
-            (myTMY3,meta) = readepw(TMYtoread)
-            # rename different field parameters to match DNI, DHI, DryBulb, Wspd
-            myTMY3.rename(columns={'Direct normal radiation in Wh/m2':'DNI','Diffuse horizontal radiation in Wh/m2':'DHI','Dry bulb temperature in C':'DryBulb','Wind speed in m/s':'Wspd'}, inplace=True)
-        else:
-            raise Exception('Incorrect extension for TMYtoread. Either .csv (TMY3) .epw or None')
-            
+        # if TMYtoread is None: # if no file passed in, the readtmy3 graphical file picker will open.
+        #     (myTMY3,meta)=pvlib.tmy.readtmy3(TMYtoread)        
+        # elif TMYtoread.lower().endswith('.csv') :  
+        #     (myTMY3,meta)=pvlib.tmy.readtmy3(TMYtoread)
+        # elif TMYtoread.lower().endswith('.epw') : 
+        #     (myTMY3,meta) = readepw(TMYtoread)
+        #     # rename different field parameters to match DNI, DHI, DryBulb, Wspd
+        #     myTMY3.rename(columns={'Direct normal radiation in Wh/m2':'DNI','Diffuse horizontal radiation in Wh/m2':'DHI','Dry bulb temperature in C':'DryBulb','Wind speed in m/s':'Wspd'}, inplace=True)
+        # else:
+        #     raise Exception('Incorrect extension for TMYtoread. Either .csv (TMY3) .epw or None')
+        
         #myAxisTitles=myTMY3.axes
+        DTOR=math.pi/180
         noRows, noCols = myTMY3.shape
         lat = meta['latitude']; lng = meta['longitude']; tz = meta['TZ']
         name = meta['Name']
@@ -111,17 +114,12 @@ def simulate(TMYtoread=None, writefiletitle=None,  beta = 0, sazm = 180, C = 0.5
         ## Distance between rows for no shading on Dec 21 at 9 am
         print( " ")
         print( "********* ")
-        print( "Running Simulation for TMY3: ", TMYtoread)
+        print( "Running Simulation for TMY3: ", meta['Name'])
         print( "Location:  ", name)
         print( "Lat: ", lat, " Long: ", lng, " Tz ", tz)
         print( "Parameters: beta: ", beta, "  Sazm: ", sazm, "  Height: ", C, "  rtr separation: ", rtr, "  Row type: ", rowType, "  Albedo: ", albedo)
         print( "Saving into", writefiletitle)
         print( " ")
-        print( " ")
-        
-        DD = rowSpacing(beta, sazm, lat, lng, tz, 9, 0.0);          ## Distance between rows for no shading on Dec 21 at 9 am
-        print( "Distance between rows for no shading on Dec 21 at 9 am solar time = ", DD)
-        print( "Actual distance between rows = ", D  )
         print( " ")
     
         if tracking==False:        
@@ -164,7 +162,7 @@ def simulate(TMYtoread=None, writefiletitle=None,  beta = 0, sazm = 180, C = 0.5
             for k in range(0, cellRows):
                 allrowfronts.append("No_"+str(k+1)+"_RowFrontGTI")
                 allrowbacks.append("No_"+str(k+1)+"_RowBackGTI")      
-            outputtitles=['Year', 'Month', 'Day', 'Hour', 'Minute', 'DNI', 'DHI', 
+            outputtitles=['date','DNI', 'DHI', 
                          'decHRs', 'ghi', 'inc', 'zen', 'azm', 'pvFrontSH', 
                          'aveFrontGroundGHI', 'GTIfrontBroadBand', 'pvBackSH', 
                          'aveBackGroundGHI', 'GTIbackBroadBand', 'maxShadow', 'Tamb', 'Vwind']
@@ -177,40 +175,45 @@ def simulate(TMYtoread=None, writefiletitle=None,  beta = 0, sazm = 180, C = 0.5
                 outputtitles+=['sazm']
                 outputtitles+=['height']
                 outputtitles+=['D']
-                    
+                DTOR=math.pi/180
             sw.writerow(outputtitles)
             
             ## Loop through file.  TODO: replace this with for loop.
             rl = 0
             
-            while (rl < noRows):
+            for rl in tqdm(range(noRows)):
           
                 myTimestamp=myTMY3.index[rl]
-                year = myTimestamp.year
-                month = myTimestamp.month
-                day = myTimestamp.day
+                # year = myTimestamp.year
+                # month = myTimestamp.month
+                # day = myTimestamp.day
                 hour = myTimestamp.hour
                 minute = myTimestamp.minute
+
+                azm = myTMY3.azimuth[rl]*DTOR
+                zen = myTMY3.zenith[rl]*DTOR
+                elv = myTMY3.elevation[rl]*DTOR
+
                 dni = myTMY3.DNI[rl]#get_value(rl,5,"False")
                 dhi = myTMY3.DHI[rl]#get_value(rl,8,"False")
-                Tamb=myTMY3.DryBulb[rl]#get_value(rl,29,"False")
-                Vwind=myTMY3.Wspd[rl]#get_value(rl,44,"False")
-           #     
-                rl = rl+1   # increasing while count
+                Tamb=0
+                Vwind=0
+                # Tamb=myTMY3.DryBulb[rl]#get_value(rl,29,"False")
+                # Vwind=myTMY3.Wspd[rl]#get_value(rl,44,"False")
                             
-                azm = 9999.0; zen = 9999.0; elv = 9999.0;
-                if (dataInterval == 60):
-                    azm, zen, elv, dec, sunrise, sunset, Eo, tst, suntime = hrSolarPos(year, month, day, hour, lat, lng, tz)
+                # azm = 9999.0; zen = 9999.0; elv = 9999.0;
+                # if (dataInterval == 60):
+                #     azm, zen, elv, dec, sunrise, sunset, Eo, tst, suntime = hrSolarPos(year, month, day, hour, lat, lng, tz)
                     
-                elif (dataInterval == 1 or dataInterval == 5 or dataInterval == 15):
-                    azm, zen, elv, dec, sunrise, sunset, Eo, tst = solarPos(year, month, day, hour, minute - 0.5 * dataInterval, lat, lng, tz) 
-                else :  
-                    print("ERROR: data interval not 1, 5, 15, or 60 minutes.");
-            
-                #123 check abouve this for reading / printing functions
-            
-                if (zen < 0.5 * math.pi):    # If daylight hours
+                # elif (dataInterval == 1 or dataInterval == 5 or dataInterval == 15):
+                #     azm, zen, elv, dec, sunrise, sunset, Eo, tst = solarPos(year, month, day, hour, minute - 0.5 * dataInterval, lat, lng, tz) 
+                # else :  
+                #     print("ERROR: data interval not 1, 5, 15, or 60 minutes.");
                 
+                
+                #123 check abouve this for reading / printing functions
+                if (zen < 0.5 * math.pi):    # If daylight hours
+                    
                     # a. CALCULATE THE IRRADIANCE DISTRIBUTION ON THE GROUND *********************************************************************************************
                     #double[] rearGroundGHI = new double[100], frontGroundGHI = new double[100]; ;   # For global horizontal irradiance for each of 100 ground segments, to the rear and front of front of row edge         
                     # Determine where on the ground the direct beam is shaded for a sun elevation and azimuth
@@ -298,7 +301,7 @@ def simulate(TMYtoread=None, writefiletitle=None,  beta = 0, sazm = 180, C = 0.5
                     incd = save_inc * 180.0 / math.pi
                     zend = zen * 180.0 / math.pi
                     azmd = azm * 180.0 / math.pi
-                    outputvalues=[year, month, day, hour, minute, dni, dhi, decHRs, 
+                    outputvalues=[myTimestamp,  dni, dhi, decHRs, 
                                   ghi_calc, incd, zend, azmd, pvFrontSH, aveGroundGHI, 
                                   save_gtiAllpc, pvBackSH, aveGroundGHI, 
                                   gtiAllpc, maxShadow, Tamb, Vwind]
@@ -326,8 +329,7 @@ def simulate(TMYtoread=None, writefiletitle=None,  beta = 0, sazm = 180, C = 0.5
        
      
         print( "Finished")
-        
-        return;
+        return
         
 if __name__ == "__main__":    
     #import time

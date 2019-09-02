@@ -1475,7 +1475,7 @@ def getSkyConfigurationFactors(rowType, beta, C, D):
 # End of GetSkyConfigurationFactors
 
 
-def rowSpacing(beta, sazm, lat, lng, tz, hour, minute):
+def rowSpacing(C, beta, sazm, lat, lng, tz, hour, minute):
     """
     This method determines the horizontal distance D between rows of PV panels
     (in PV module/panel slope lengths) for no shading on December 21 (north
@@ -1523,9 +1523,9 @@ def rowSpacing(beta, sazm, lat, lng, tz, hour, minute):
         [azm, zen, elv, dec, sunrise, sunset, Eo, tst] = solarPos(2014, 12, 21, hour, minute, lat, lng, tz)
     else:
         [azm, zen, elv, dec, sunrise, sunset, Eo, tst] = solarPos(2014, 6, 21, hour, minute, lat, lng, tz)
-      
+    print(sazm, azm, beta, elv)
     # Console.WriteLine("tst = {0} azm = {1} elv = {2}", tst, azm * 180.0 / Math.PI, elv * 180.0 / Math.PI);
-    D = math.cos(sazm - azm) * math.sin(beta) / math.tan(elv)
+    D = math.cos(sazm - azm) *(C + math.sin(beta)) / math.tan(elv)
     return D
 # End of RowSpacing  
 

@@ -347,11 +347,11 @@ def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180,
        # End of while strLine != null loop
        
         if calculateBilInterpol==True:
-            analyseVFResultsPVMismatch(filename=writefiletitle, portraitorlandscape=portraitorlandscape, bififactor=bififactor, numcells=cellsnum)
-               
+            analyseVFResultsBilInterpol(filename=writefiletitle, portraitorlandscape=portraitorlandscape, bififactor=bififactor, writefilename=writefiletitle)
+
         if calculatePVMismatch==True:
-            analyseVFResultsBilInterpolDELETE(filename=writefiletitle, portraitorlandscape=portraitorlandscape, bififactor=bififactor)
-         
+            analyseVFResultsPVMismatch(filename=writefiletitle, portraitorlandscape=portraitorlandscape, bififactor=bififactor, numcells=cellsnum, writefilename=writefiletitle)
+
      
         print( "Finished")
         

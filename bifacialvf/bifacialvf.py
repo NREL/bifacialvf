@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
         #          This program calculates irradiances on the front and back surfaces of bifacial PV modules.
         #          Key dimensions and nomenclature:
@@ -27,11 +27,11 @@ import csv
 import pvlib
 import os
 from tqdm import tqdm
+import pandas as pd
 
 from .vf import getBackSurfaceIrradiances, getFrontSurfaceIrradiances, getGroundShadeFactors
 from .vf import getSkyConfigurationFactors, trackingBFvaluescalculator, rowSpacing
 from .sun import hrSolarPos, perezComp, solarPos, sunIncident
-import pandas as pd
 from .readepw import readepw
 
 
@@ -51,7 +51,7 @@ def read_tmy(TMYtoread):
 
 
 
-def simulate(TMYtoread, **kwargs):
+def simulate(TMYtoread, *args, **kwargs):
     TMY, meta = read_tmy(TMYtoread)
     simulate_inner(TMY, meta, **kwargs)
 

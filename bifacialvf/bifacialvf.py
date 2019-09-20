@@ -35,11 +35,30 @@ import pandas as pd
 from .readepw import readepw
 
 
+def read_tmy(TMYtoread):
+    'Helper function to read TMY file'
+    if TMYtoread is None: # if no file passed in, the readtmy3 graphical file picker will open.
+        (TMY3, meta) = pvlib.tmy.readtmy3(TMYtoread)        
+    elif TMYtoread.lower().endswith('.csv') :  
+        (TMY3, meta) = pvlib.tmy.readtmy3(TMYtoread)
+    elif TMYtoread.lower().endswith('.epw') : 
+        (TMY3, meta) = readepw(TMYtoread)
+        # rename different field parameters to match DNI, DHI, DryBulb, Wspd
+        TMY3.rename(columns={'Direct normal radiation in Wh/m2':'DNI','Diffuse horizontal radiation in Wh/m2':'DHI','Dry bulb temperature in C':'DryBulb','Wind speed in m/s':'Wspd'}, inplace=True)
+    else:
+        raise Exception('Incorrect extension for TMYtoread. Either .csv (TMY3) .epw or None')
+    return TMY3, meta
 
-def simulate(myTMY3, meta, writefiletitle=None,  beta = 0, sazm = 180, C = 0.5, D = None,
+
+
+def simulate(TMYtoread, **kwargs):
+    TMY, meta = read_tmy(TMYtoread)
+    simulate_inner(TMY, meta, **kwargs)
+
+def simulate_inner(myTMY3, meta, writefiletitle=None,  beta = 0, sazm = 180, C = 0.5, D = None,
              rowType = 'interior', transFactor = 0.01, cellRows = 6, 
              PVfrontSurface = 'glass', PVbackSurface = 'glass',  albedo = 0.2,  
-             tracking = False, backtrack = True, rtr = None,  max_angle = 45):
+             tracking = False, backtrack = True, rtr = None,  max_angle = 45, sam_header=True):
         '''
       
         Description
@@ -61,7 +80,7 @@ def simulate(myTMY3, meta, writefiletitle=None,  beta = 0, sazm = 180, C = 0.5, 
         cellRows:      Number of points along the module chord to return irradiance values.  Default 6 (1-up landscape module)
         max_angle:     1-axis tracking maximum limits of rotation
         tracking, backtrack:  boolean to enable 1-axis tracking and pvlib backtracking algorithm, respectively
-        
+        sam_header: Wirte output file header as (year, month, day, hour, minute) if True, else wirte timestamp
         
         Returns
         -------
@@ -90,17 +109,7 @@ def simulate(myTMY3, meta, writefiletitle=None,  beta = 0, sazm = 180, C = 0.5, 
         if writefiletitle == None:
             writefiletitle = "data/Output/TEST.csv"
         
-        ## Read TMY3 data and start loop ~  
-        # if TMYtoread is None: # if no file passed in, the readtmy3 graphical file picker will open.
-        #     (myTMY3,meta)=pvlib.tmy.readtmy3(TMYtoread)        
-        # elif TMYtoread.lower().endswith('.csv') :  
-        #     (myTMY3,meta)=pvlib.tmy.readtmy3(TMYtoread)
-        # elif TMYtoread.lower().endswith('.epw') : 
-        #     (myTMY3,meta) = readepw(TMYtoread)
-        #     # rename different field parameters to match DNI, DHI, DryBulb, Wspd
-        #     myTMY3.rename(columns={'Direct normal radiation in Wh/m2':'DNI','Diffuse horizontal radiation in Wh/m2':'DHI','Dry bulb temperature in C':'DryBulb','Wind speed in m/s':'Wspd'}, inplace=True)
-        # else:
-        #     raise Exception('Incorrect extension for TMYtoread. Either .csv (TMY3) .epw or None')
+
         
         #myAxisTitles=myTMY3.axes
         DTOR=math.pi/180
@@ -161,11 +170,16 @@ def simulate(myTMY3, meta, writefiletitle=None,  beta = 0, sazm = 180, C = 0.5, 
             allrowbacks=[]
             for k in range(0, cellRows):
                 allrowfronts.append("No_"+str(k+1)+"_RowFrontGTI")
-                allrowbacks.append("No_"+str(k+1)+"_RowBackGTI")      
-            outputtitles=['date','DNI', 'DHI', 
+                allrowbacks.append("No_"+str(k+1)+"_RowBackGTI") 
+            if sam_header:     
+            outputtitles=['DNI', 'DHI', 
                          'decHRs', 'ghi', 'inc', 'zen', 'azm', 'pvFrontSH', 
                          'aveFrontGroundGHI', 'GTIfrontBroadBand', 'pvBackSH', 
                          'aveBackGroundGHI', 'GTIbackBroadBand', 'maxShadow', 'Tamb', 'Vwind']
+            if sam_header: 
+                outputtitles = ['Year', 'Month', 'Day', 'Hour', 'Minute'] + outputtitles
+            else:
+                outputtitles = ['date'] + outputtitles
             outputtitles+=allrowfronts
             outputtitles+=allrowbacks
             if tracking == True:
@@ -178,15 +192,12 @@ def simulate(myTMY3, meta, writefiletitle=None,  beta = 0, sazm = 180, C = 0.5, 
                 DTOR=math.pi/180
             sw.writerow(outputtitles)
             
-            ## Loop through file.  TODO: replace this with for loop.
-            rl = 0
-            
             for rl in tqdm(range(noRows)):
           
-                myTimestamp=myTMY3.index[rl]
-                # year = myTimestamp.year
-                # month = myTimestamp.month
-                # day = myTimestamp.day
+                myTimestamp = myTMY3.index[rl]
+                year = myTimestamp.year
+                month = myTimestamp.month
+                day = myTimestamp.day
                 hour = myTimestamp.hour
                 minute = myTimestamp.minute
 
@@ -301,17 +312,21 @@ def simulate(myTMY3, meta, writefiletitle=None,  beta = 0, sazm = 180, C = 0.5, 
                     incd = save_inc * 180.0 / math.pi
                     zend = zen * 180.0 / math.pi
                     azmd = azm * 180.0 / math.pi
-                    outputvalues=[myTimestamp,  dni, dhi, decHRs, 
-                                  ghi_calc, incd, zend, azmd, pvFrontSH, aveGroundGHI, 
-                                  save_gtiAllpc, pvBackSH, aveGroundGHI, 
-                                  gtiAllpc, maxShadow, Tamb, Vwind]
+                    outputvalues = [dni, dhi, decHRs, 
+                                    ghi_calc, incd, zend, azmd, pvFrontSH, aveGroundGHI, 
+                                    save_gtiAllpc, pvBackSH, aveGroundGHI, 
+                                    gtiAllpc, maxShadow, Tamb, Vwind]
+                    if sam_headers: 
+                        outputvalues = [year, month, day, hour, minute] + outputvalues
+                    else:
+                        outputvalues = [myTimestamp] + outputvalues
                     frontGTIrow=[]
                     backGTIrow=[]
                     for k in range(0, cellRows):
                         frontGTIrow.append(frontGTI[k])
                         backGTIrow.append(backGTI[k])      
-                    outputvalues+=frontGTIrow
-                    outputvalues+=backGTIrow
+                    outputvalues += frontGTIrow
+                    outputvalues += backGTIrow
                     
                     
                     if tracking==True:

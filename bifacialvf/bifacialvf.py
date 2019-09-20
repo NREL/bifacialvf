@@ -123,7 +123,8 @@ def simulate_inner(myTMY3, meta, writefiletitle=None,  beta = 0, sazm = 180, C =
     #myAxisTitles=myTMY3.axes
     DTOR=math.pi/180
     noRows, noCols = myTMY3.shape
-    lat, lng = meta['latitude'], meta['longitude'] 
+    
+    lat, lng = meta['Latitude'], meta['Longitude'] 
     tz = meta['TZ']
     name = meta['Name']
     

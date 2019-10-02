@@ -79,7 +79,8 @@ setup(
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
     install_requires=['numpy',
-                      'pvlib >= 0.5.0'
+                      'pvlib >= 0.5.0',
+                      'tqdm >= 4.32.1'
                       ],
 
     # List additional groups of dependencies here (e.g. development

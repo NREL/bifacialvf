@@ -87,6 +87,9 @@ def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180,
                 print('Warning: hub_height passed and is being used as clearance_height for the fixed_tilt routine.')
         elif (clearance_height == None) & (hub_height == None):
             raise Exception('No row distance specified in either D or pitch') 
+        elif (clearance_height != None) & (hub_height == None): 
+            if tracking == True:
+                print('Warning: clearance_height passed nad is being used as hub_height for the tracking routine')
         else:
             print('Warning: clearance_height and hub_height passed in. Using ' + ('hub_height' if tracking else 'clearance_height') )
             if tracking == True:

@@ -42,7 +42,7 @@ from bifacialvf.analysis import *
 def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180, 
              clearance_height=None, hub_height = None, 
              pitch=None, rowType='interior', transFactor=0.01, sensorsy=6, 
-             PVfrontSurface='glass', PVbackSurface='glass', albedo=0.2,  
+             PVfrontSurface='glass', PVbackSurface='glass', albedo=None,  
              tracking=False, backtrack=True, limit_angle=45,
              calculatePVMismatch=False, cellsnum= 72, 
              portraitorlandscape='landscape', bififactor = 1.0,
@@ -68,7 +68,10 @@ def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180,
         sensorsy:      Number of points along the module chord to return irradiance values.  Default 6 (1-up landscape module)
         limit_angle:     1-axis tracking maximum limits of rotation
         tracking, backtrack:  boolean to enable 1-axis tracking and pvlib backtracking algorithm, respectively
-        
+        albedo:     If a value is passed, that value will be used for all the simulations.
+                    If None is passed (or albedo argument is not passed), program will search the 
+                    TMY file for the "Albe (unitless)" column and use those values
+
         New Parameters: 
         # Dictionary input example:
         # calculateBilInterpol = {'interpolA':0.005, 'IVArray':None, 'beta_voc_all':None, 'm_all':None, 'bee_all':None}
@@ -220,7 +223,16 @@ def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180,
                 Tamb=myTMY3.DryBulb[rl]#get_value(rl,29,"False")
                 VWind=myTMY3.Wspd[rl]#get_value(rl,44,"False")
                 
-           #     
+                if albedo == None:
+                    try:
+                        albedoval=myTMY3.Alb[rl]
+                    except:
+                        print("albedo value not passed, and TMY file does not contain",
+                              "The correct albedo column with values. Exiting simulation")
+                        return
+                else:
+                    albedoval = albedo
+                    
                 rl = rl+1   # increasing while count
                             
                 azm = 9999.0; zen = 9999.0; elv = 9999.0;
@@ -276,7 +288,7 @@ def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180,
             
                     # Sum the irradiance components for each of the ground segments, to the front and rear of the front of the PV row
                     #double iso_dif = 0.0, circ_dif = 0.0, horiz_dif = 0.0, grd_dif = 0.0, beam = 0.0;   # For calling PerezComp to break diffuse into components for zero tilt (horizontal)                           
-                    ghi, iso_dif, circ_dif, horiz_dif, grd_dif, beam = perezComp(dni, dhi, albedo, zen, 0.0, zen)
+                    ghi, iso_dif, circ_dif, horiz_dif, grd_dif, beam = perezComp(dni, dhi, albedoval, zen, 0.0, zen)
                     
                     
                     for k in range (0, 100):
@@ -297,12 +309,12 @@ def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180,
                     # b. CALCULATE THE AOI CORRECTED IRRADIANCE ON THE FRONT OF THE PV MODULE, AND IRRADIANCE REFLECTED FROM FRONT OF PV MODULE ***************************
                     #double[] frontGTI = new double[sensorsy], frontReflected = new double[sensorsy];
                     #double aveGroundGHI = 0.0;          # Average GHI on ground under PV array
-                    aveGroundGHI, frontGTI, frontReflected = getFrontSurfaceIrradiances(rowType, maxShadow, PVfrontSurface, tilt, sazm, dni, dhi, C, D, albedo, zen, azm, sensorsy, pvFrontSH, frontGroundGHI)
+                    aveGroundGHI, frontGTI, frontReflected = getFrontSurfaceIrradiances(rowType, maxShadow, PVfrontSurface, tilt, sazm, dni, dhi, C, D, albedoval, zen, azm, sensorsy, pvFrontSH, frontGroundGHI)
     
                     #double inc, tiltr, sazmr;
                     inc, tiltr, sazmr = sunIncident(0, tilt, sazm, 45.0, zen, azm)	    # For calling PerezComp to break diffuse into components for 
                     save_inc=inc
-                    gtiAllpc, iso_dif, circ_dif, horiz_dif, grd_dif, beam = perezComp(dni, dhi, albedo, inc, tiltr, zen)   # Call to get components for the tilt
+                    gtiAllpc, iso_dif, circ_dif, horiz_dif, grd_dif, beam = perezComp(dni, dhi, albedoval, inc, tiltr, zen)   # Call to get components for the tilt
                     save_gtiAllpc=gtiAllpc
                     #sw.Write(strLine);
                     #sw.Write(",{0,6:0.00}", hour - 0.5 * dataInterval / 60.0 + minute / 60.0);
@@ -311,10 +323,10 @@ def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180,
             
                     # CALCULATE THE AOI CORRECTED IRRADIANCE ON THE BACK OF THE PV MODULE,
                     #double[] backGTI = new double[sensorsy];
-                    backGTI, aveGroundGHI = getBackSurfaceIrradiances(rowType, maxShadow, PVbackSurface, tilt, sazm, dni, dhi, C, D, albedo, zen, azm, sensorsy, pvBackSH, rearGroundGHI, frontGroundGHI, frontReflected, offset=0)
+                    backGTI, aveGroundGHI = getBackSurfaceIrradiances(rowType, maxShadow, PVbackSurface, tilt, sazm, dni, dhi, C, D, albedoval, zen, azm, sensorsy, pvBackSH, rearGroundGHI, frontGroundGHI, frontReflected, offset=0)
                
                     inc, tiltr, sazmr = sunIncident(0, 180.0-tilt, sazm-180.0, 45.0, zen, azm)       # For calling PerezComp to break diffuse into components for 
-                    gtiAllpc, iso_dif, circ_dif, horiz_dif, grd_dif, beam = perezComp(dni, dhi, albedo, inc, tiltr, zen)   # Call to get components for the tilt
+                    gtiAllpc, iso_dif, circ_dif, horiz_dif, grd_dif, beam = perezComp(dni, dhi, albedoval, inc, tiltr, zen)   # Call to get components for the tilt
                     
                     
                     ## Write output

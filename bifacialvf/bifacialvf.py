@@ -81,20 +81,21 @@ def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180,
         -------
         none
         '''    
-        
-        metdata = TMYtoread
-        
+
         if (clearance_height == None) & (hub_height != None):
             clearance_height = hub_height
             if tracking == False:
-                print('Warning: hub_height passed and is being used as clearance_height for the fixed_tilt routine.')
+                print('Warning: hub_height passed and is being used as ',
+                      'clearance_height for the fixed_tilt routine.')
         elif (clearance_height == None) & (hub_height == None):
             raise Exception('No row distance specified in either D or pitch') 
         elif (clearance_height != None) & (hub_height == None): 
             if tracking == True:
-                print('Warning: clearance_height passed nad is being used as hub_height for the tracking routine')
+                print('Warning: clearance_height passed and is being used as ',
+                      'hub_height for the tracking routine')
         else:
-            print('Warning: clearance_height and hub_height passed in. Using ' + ('hub_height' if tracking else 'clearance_height') )
+            print('Warning: clearance_height and hub_height passed in. Using ' 
+                  + ('hub_height' if tracking else 'clearance_height') )
             if tracking == True:
                 clearance_height = hub_height
         
@@ -143,9 +144,9 @@ def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180,
         # Check what Albedo to se:
         if albedo == None:
             if 'Alb' in myTMY3:
-                print("Using albedo from TMY3 file.\n ")
+                print("Using albedo from TMY3 file.")
                 print("Note that at the moment, no validation check is done",
-                      "in the albedo data, so we assume it's correct and valid values.\n")
+                      "in the albedo data, so we assume it's correct and valid.\n")
                 useTMYalbedo = True
             else:
                 print("No albedo value set or included in TMY3 file", 
@@ -166,7 +167,9 @@ def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180,
         print( "Running Simulation for TMY3: ", TMYtoread)
         print( "Location:  ", name)
         print( "Lat: ", lat, " Long: ", lng, " Tz ", tz)
-        print( "Parameters: tilt: ", tilt, "  Sazm: ", sazm, "   ", heightlabel, ": ", C, "  Pitch: ", pitch, "  Row type: ", rowType, "  Albedo: ", albedo)
+        print( "Parameters: tilt: ", tilt, "  Sazm: ", sazm, "   ", 
+              heightlabel, ": ", C, "  Pitch: ", pitch, "  Row type: ", rowType, 
+              "  Albedo: ", albedo)
         print( "Saving into", writefiletitle)
         print( " ")
         print( " ")
@@ -191,19 +194,23 @@ def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180,
 
                     
         with open (writefiletitle,'w') as csvfile:
-            sw = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
+            sw = csv.writer(csvfile, delimiter=',', quotechar='|', 
+                            quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
             # Write Simulation Parameters (from setup file)
             
             
             if tracking==False and backtrack==True:
-                print("Warning: tracking=False, but backtrac=True. Setting backtrac=False because it doesn't make sense to backtrack on fixed tilt systems.")
+                print("Warning: tracking=False, but backtracking=True. ",
+                      "Setting backtracking=False because it doesn't make ",
+                      "sense to backtrack on fixed tilt systems.")
                 backtrack = False
             outputheader=['Latitude(deg)','Longitude(deg)', 'Time Zone','Tilt(deg)', 
                          'PV Azimuth(deg)',heightlabel, 'Pitch', 'RowType(first interior last single)',
                          'TransmissionFactor(open area fraction)','sensorsy(# hor rows in panel)', 
                          'PVfrontSurface(glass or ARglass)', 'PVbackSurface(glass or ARglass)',
                          'Albedo',  'Tracking', 'backtracking']
-            outputheadervars=[lat, lng, tz, tilt, sazm, clearance_height, pitch, rowType, transFactor, sensorsy, PVfrontSurface,
+            outputheadervars=[lat, lng, tz, tilt, sazm, clearance_height, pitch, 
+                              rowType, transFactor, sensorsy, PVfrontSurface,
                              PVbackSurface, albedo, tracking, backtrack]
             
                                             

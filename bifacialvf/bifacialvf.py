@@ -124,7 +124,11 @@ def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180,
         elif TMYtoread.lower().endswith('.epw') : 
             (myTMY3,meta) = pvlib.iotools.read_epw(TMYtoread)
             # rename different field parameters to match DNI, DHI, DryBulb, Wspd
-            myTMY3.rename(columns={'Direct normal radiation in Wh/m2':'DNI','Diffuse horizontal radiation in Wh/m2':'DHI','Dry bulb temperature in C':'DryBulb','Wind speed in m/s':'Wspd'}, inplace=True)
+            myTMY3.rename(columns={'Direct normal radiation in Wh/m2':'DNI',
+                                   'Diffuse horizontal radiation in Wh/m2':'DHI',
+                                   'Dry bulb temperature in C':'DryBulb',
+                                   'Wind speed in m/s':'Wspd',
+                                   'Alb (unitless)': 'Alb'}, inplace=True)
         else:
             raise Exception('Incorrect extension for TMYtoread. Either .csv (TMY3) .epw or None')
             
@@ -136,6 +140,26 @@ def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180,
         ## infer the data frequency in minutes
         dataInterval = (myTMY3.index[1]-myTMY3.index[0]).total_seconds()/60
     
+        # Check what Albedo to se:
+        if albedo == None:
+            if 'Alb' in myTMY3:
+                print("Using albedo from TMY3 file.\n ")
+                print("Note that at the moment, no validation check is done",
+                      "in the albedo data, so we assume it's correct and valid values.\n")
+                useTMYalbedo = True
+            else:
+                print("No albedo value set or included in TMY3 file", 
+                      "(TMY Column name 'Alb (unitless)' expected)",
+                      "Setting albedo default to 0.2\n ")
+                albedo = 0.2
+                useTMYalbedo=False
+        else:
+            if 'Alb' in myTMY3:
+                print("Albedo value passed, but also present in TMY3 file. ",
+                      "Using albedo value passed. To use the ones in TMY3 file",
+                      "re-run simulation with albedo=None\n")
+                useTMYalbedo=False
+                
         ## Distance between rows for no shading on Dec 21 at 9 am
         print( " ")
         print( "********* ")
@@ -164,6 +188,8 @@ def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180,
         if ( (not os.path.exists(savedirectory)) and (savedirectory is not '')):
             os.makedirs(savedirectory)
         
+
+                    
         with open (writefiletitle,'w') as csvfile:
             sw = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
             # Write Simulation Parameters (from setup file)
@@ -181,7 +207,6 @@ def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180,
                              PVbackSurface, albedo, tracking, backtrack]
             
                                             
-
             sw.writerow(outputheader)
             sw.writerow(outputheadervars)
             
@@ -192,7 +217,7 @@ def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180,
                 allrowfronts.append("No_"+str(k+1)+"_RowFrontGTI")
                 allrowbacks.append("No_"+str(k+1)+"_RowBackGTI")      
             outputtitles=['Year', 'Month', 'Day', 'Hour', 'Minute', 'DNI', 'DHI', 
-                         'decHRs', 'ghi', 'inc', 'zen', 'azm', 'pvFrontSH', 
+                          'albedo', 'decHRs', 'ghi', 'inc', 'zen', 'azm', 'pvFrontSH', 
                          'aveFrontGroundGHI', 'GTIfrontBroadBand', 'pvBackSH', 
                          'aveBackGroundGHI', 'GTIbackBroadBand', 'maxShadow', 'Tamb', 'VWind']
             outputtitles+=allrowfronts
@@ -210,6 +235,7 @@ def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180,
             ## Loop through file.  TODO: replace this with for loop.
             rl = 0
             
+            
             while (rl < noRows):
                 
                 myTimestamp=myTMY3.index[rl]
@@ -223,15 +249,8 @@ def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180,
                 Tamb=myTMY3.DryBulb[rl]#get_value(rl,29,"False")
                 VWind=myTMY3.Wspd[rl]#get_value(rl,44,"False")
                 
-                if albedo == None:
-                    try:
-                        albedoval=myTMY3.Alb[rl]
-                    except:
-                        print("albedo value not passed, and TMY file does not contain",
-                              "The correct albedo column with values. Exiting simulation")
-                        return
-                else:
-                    albedoval = albedo
+                if useTMYalbedo:
+                    albedo = myTMY3.Alb[rl]
                     
                 rl = rl+1   # increasing while count
                             
@@ -288,7 +307,7 @@ def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180,
             
                     # Sum the irradiance components for each of the ground segments, to the front and rear of the front of the PV row
                     #double iso_dif = 0.0, circ_dif = 0.0, horiz_dif = 0.0, grd_dif = 0.0, beam = 0.0;   # For calling PerezComp to break diffuse into components for zero tilt (horizontal)                           
-                    ghi, iso_dif, circ_dif, horiz_dif, grd_dif, beam = perezComp(dni, dhi, albedoval, zen, 0.0, zen)
+                    ghi, iso_dif, circ_dif, horiz_dif, grd_dif, beam = perezComp(dni, dhi, albedo, zen, 0.0, zen)
                     
                     
                     for k in range (0, 100):
@@ -309,12 +328,12 @@ def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180,
                     # b. CALCULATE THE AOI CORRECTED IRRADIANCE ON THE FRONT OF THE PV MODULE, AND IRRADIANCE REFLECTED FROM FRONT OF PV MODULE ***************************
                     #double[] frontGTI = new double[sensorsy], frontReflected = new double[sensorsy];
                     #double aveGroundGHI = 0.0;          # Average GHI on ground under PV array
-                    aveGroundGHI, frontGTI, frontReflected = getFrontSurfaceIrradiances(rowType, maxShadow, PVfrontSurface, tilt, sazm, dni, dhi, C, D, albedoval, zen, azm, sensorsy, pvFrontSH, frontGroundGHI)
+                    aveGroundGHI, frontGTI, frontReflected = getFrontSurfaceIrradiances(rowType, maxShadow, PVfrontSurface, tilt, sazm, dni, dhi, C, D, albedo, zen, azm, sensorsy, pvFrontSH, frontGroundGHI)
     
                     #double inc, tiltr, sazmr;
                     inc, tiltr, sazmr = sunIncident(0, tilt, sazm, 45.0, zen, azm)	    # For calling PerezComp to break diffuse into components for 
                     save_inc=inc
-                    gtiAllpc, iso_dif, circ_dif, horiz_dif, grd_dif, beam = perezComp(dni, dhi, albedoval, inc, tiltr, zen)   # Call to get components for the tilt
+                    gtiAllpc, iso_dif, circ_dif, horiz_dif, grd_dif, beam = perezComp(dni, dhi, albedo, inc, tiltr, zen)   # Call to get components for the tilt
                     save_gtiAllpc=gtiAllpc
                     #sw.Write(strLine);
                     #sw.Write(",{0,6:0.00}", hour - 0.5 * dataInterval / 60.0 + minute / 60.0);
@@ -323,10 +342,10 @@ def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180,
             
                     # CALCULATE THE AOI CORRECTED IRRADIANCE ON THE BACK OF THE PV MODULE,
                     #double[] backGTI = new double[sensorsy];
-                    backGTI, aveGroundGHI = getBackSurfaceIrradiances(rowType, maxShadow, PVbackSurface, tilt, sazm, dni, dhi, C, D, albedoval, zen, azm, sensorsy, pvBackSH, rearGroundGHI, frontGroundGHI, frontReflected, offset=0)
+                    backGTI, aveGroundGHI = getBackSurfaceIrradiances(rowType, maxShadow, PVbackSurface, tilt, sazm, dni, dhi, C, D, albedo, zen, azm, sensorsy, pvBackSH, rearGroundGHI, frontGroundGHI, frontReflected, offset=0)
                
                     inc, tiltr, sazmr = sunIncident(0, 180.0-tilt, sazm-180.0, 45.0, zen, azm)       # For calling PerezComp to break diffuse into components for 
-                    gtiAllpc, iso_dif, circ_dif, horiz_dif, grd_dif, beam = perezComp(dni, dhi, albedoval, inc, tiltr, zen)   # Call to get components for the tilt
+                    gtiAllpc, iso_dif, circ_dif, horiz_dif, grd_dif, beam = perezComp(dni, dhi, albedo, inc, tiltr, zen)   # Call to get components for the tilt
                     
                     
                     ## Write output
@@ -335,7 +354,7 @@ def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180,
                     incd = save_inc * 180.0 / math.pi
                     zend = zen * 180.0 / math.pi
                     azmd = azm * 180.0 / math.pi
-                    outputvalues=[year, month, day, hour, minute, dni, dhi, decHRs, 
+                    outputvalues=[year, month, day, hour, minute, dni, dhi, albedo, decHRs, 
                                   ghi_calc, incd, zend, azmd, pvFrontSH, aveGroundGHI, 
                                   save_gtiAllpc, pvBackSH, aveGroundGHI, 
                                   gtiAllpc, maxShadow, Tamb, VWind]

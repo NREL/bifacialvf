@@ -662,3 +662,87 @@ def sunIncident(mode, tilt, sazm, rlim, zen, azm):
 					sazmr=sazm;
 					return inc, tiltr, sazmr;
          # End of sunIncident method
+
+
+def sunrisecorrectedsunposition(myTMY3, metdata, deltastyle = 'exact'):
+    '''
+    
+    Calculate sun position, and correct for sunrise/sunset (for 1H interval data)
+
+    deltastyle = 'SAM'   12 sets solpos to 12:30     
+    deltastyle = 'PVSyst'  12 sets  solpos  to 12:30
+    deltastyle = 'TMY3'   12 sets solpos to 11:30    
+    deltastyle = exact      12 sets solpos to 12           
+    
+    
+    Sunrise/Sunset Handing:
+    ~~~~~~~~~~~~~~~~~~~~~~
+    SAM/PVsyst:
+        Sunrise at 7:24 AM, then sunposition will be set at 7:42 AM for the 7AM timestamp.
+        Sunset at 7:24 PM, then sunposition wlil be set at 7:12 PM for the 7PM timestamp.
+    TMY3
+        Sunrise at 7:24 AM, then sunposition will be set at 7:42 AM for the 8 AM timestamp.
+        Sunset at 7:24 PM, then sunposition will be set at 7:12 PM for the 8 PM timestamp.
+
+    '''
+
+    lat = metdata['latitude']; lng = metdata['longitude']; tz = metdata['TZ']
+    elev = metdata['altitude']
+    
+     #   Since myTMY3 is imported with pvlib from TMY3 files, it's usually already 
+    #   self aware. Just in case, checking for self awarenezz.
+    datetimetz = pd.DatetimeIndex(myTMY3.index)
+    try:  # make sure the data is tz-localized.
+        datetimetz = datetimetz.tz_localize(pytz.FixedOffset(tz*60))#  use pytz.FixedOffset (in minutes)
+    except TypeError:  # data is tz-localized already. Just put it in local time.
+        datetimetz = datetimetz.tz_convert(pytz.FixedOffset(tz*60))
+        
+    #check for data interval. default 1h.
+    try:
+        interval = datetimetz[1]-datetimetz[0]
+    except IndexError:
+        interval = pd.Timedelta('1h') # ISSUE: if 1 datapoint is passed, are we sure it's hourly data?
+        print ("TMY interval was unable to be defined, so setting it to 1h.")
+
+    if deltastyle == exact:
+        solpos = pvlib.irradiance.solarposition.get_solarposition(datetimetz,lat, lng, elev)
+        sunup = None
+        return solpos
+    else: 
+        if interval== pd.Timedelta('1h'):
+            if deltastyle == 'TMY3':
+                sunup= pvlib.irradiance.solarposition.sun_rise_set_transit_spa(datetimetz, lat, lng) 
+    
+                sunup['minutedelta']= int(interval.seconds/2/60) # default sun angle 30 minutes before timestamp
+                # vector update of minutedelta at sunrise
+                sunrisemask = sunup.index.hour-1==sunup['sunrise'].dt.hour
+                sunup['minutedelta'].mask(sunrisemask,np.floor((60-(sunup['sunrise'].dt.minute))/2),inplace=True)
+                # vector update of minutedelta at sunset
+                sunsetmask = sunup.index.hour-1==sunup['sunset'].dt.hour
+                sunup['minutedelta'].mask(sunsetmask,np.floor(((sunup['sunset'].dt.minute)/2-60)),inplace=True)
+                # save corrected timestamp
+                sunup['corrected_timestamp'] = sunup.index+pd.to_timedelta(sunup['minutedelta'], unit='m')
+        
+            elif deltatsyle == ('PVSyst' | 'SAM'):
+                sunup= pvlib.irradiance.solarposition.sun_rise_set_transit_spa(datetimetz, lat, lng) 
+        
+                sunup['minutedelta']= int(interval.seconds/2/60) # default sun angle 30 minutes after timestamp
+                # vector update of minutedelta at sunrise
+                sunrisemask = sunup.index.hour==sunup['sunrise'].dt.hour
+                sunup['minutedelta'].mask(sunrisemask,np.floor((60-(sunup['sunrise'].dt.minute))/2+(sunup['sunrise'].dt.minute)),inplace=True)
+                # vector update of minutedelta at sunset
+                sunsetmask = sunup.index.hour==sunup['sunset'].dt.hour
+                sunup['minutedelta'].mask(sunsetmask,np.floor((sunup['sunset'].dt.minute)/2),inplace=True)
+                # save corrected timestamp
+                sunup['corrected_timestamp'] = sunup.index+pd.to_timedelta(sunup['minutedelta'], unit='m')
+            
+        else:
+            minutedelta = int(interval.seconds/2/60)
+            #datetimetz=datetimetz-pd.Timedelta(minutes = minutedelta)   # This doesn't check for Sunrise or Sunset
+            #sunup= pvlib.irradiance.solarposition.get_sun_rise_set_transit(datetimetz, lat, lon) # deprecated in pvlib 0.6.1
+            sunup= pvlib.irradiance.solarposition.sun_rise_set_transit_spa(datetimetz, lat, lon) #new for pvlib >= 0.6.1
+            sunup['corrected_timestamp'] = sunup.index-pd.Timedelta(minutes = minutedelta)
+
+        solpos = pvlib.irradiance.solarposition.get_solarposition(sunup['corrected_timestamp'],lat,lon,elev)   
+        
+        return solpos, sunup

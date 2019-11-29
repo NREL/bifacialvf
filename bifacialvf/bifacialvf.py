@@ -27,10 +27,11 @@ import csv
 import pvlib
 import os
 import sys
+import pytz
 
 from bifacialvf.vf import getBackSurfaceIrradiances, getFrontSurfaceIrradiances, getGroundShadeFactors
 from bifacialvf.vf import getSkyConfigurationFactors, trackingBFvaluescalculator, rowSpacing
-from bifacialvf.sun import hrSolarPos, perezComp, solarPos, sunIncident
+from bifacialvf.sun import hrSolarPos, perezComp, solarPos, sunIncident, sunrisecorrectedsunposition
 import pandas as pd
 from bifacialvf.readepw import readepw
 
@@ -46,7 +47,8 @@ def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180,
              tracking=False, backtrack=True, limit_angle=45,
              calculatePVMismatch=False, cellsnum= 72, 
              portraitorlandscape='landscape', bififactor = 1.0,
-             calculateBilInterpol=False, BilInterpolParams=None):
+             calculateBilInterpol=False, BilInterpolParams=None,
+             deltastyle='SAM'):
 
         '''
       
@@ -141,6 +143,11 @@ def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180,
         ## infer the data frequency in minutes
         dataInterval = (myTMY3.index[1]-myTMY3.index[0]).total_seconds()/60
     
+        solpos, sunup = sunrisecorrectedsunposition(myTMY3, meta, deltastyle = deltastyle)
+        solpos['zenith_rad']=np.radians(solpos['zenith'])
+        solpos['azimuth_rad']=np.radians(solpos['azimuth'])
+        solpos['elevation_rad']=np.radians(solpos['elevation'])
+        
         # Check what Albedo to se:
         if albedo == None:
             if 'Alb' in myTMY3:
@@ -262,17 +269,12 @@ def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180,
                 rl = rl+1   # increasing while count
                             
                 azm = 9999.0; zen = 9999.0; elv = 9999.0;
-                if (dataInterval == 60):
-                    azm, zen, elv, dec, sunrise, sunset, Eo, tst, suntime = hrSolarPos(year, month, day, hour, lat, lng, tz)
-                    
-                elif (dataInterval == 1 or dataInterval == 5 or dataInterval == 15):
-                    azm, zen, elv, dec, sunrise, sunset, Eo, tst = solarPos(year, month, day, hour, minute - 0.5 * dataInterval, lat, lng, tz) 
-                else :  
-                    print("ERROR: data interval not 1, 5, 15, or 60 minutes.");
-            
-                #123 check abouve this for reading / printing functions
-            
-                if (zen < 0.5 * math.pi):    # If daylight hours
+                
+                zen = solpos['zenith_rad'][rl]
+                azm = solpos['azimuth_rad'][rl]
+                elv = solpos['elevation_rad'][rl]
+    
+                if (zen < 90):    # If daylight hours
                 
                     # a. CALCULATE THE IRRADIANCE DISTRIBUTION ON THE GROUND *********************************************************************************************
                     #double[] rearGroundGHI = new double[100], frontGroundGHI = new double[100]; ;   # For global horizontal irradiance for each of 100 ground segments, to the rear and front of front of row edge         

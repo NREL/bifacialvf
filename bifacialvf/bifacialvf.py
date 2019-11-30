@@ -180,7 +180,11 @@ def simulate(myTMY3, meta, writefiletitle=None, tilt=0, sazm=180,
                 trackingdata.surface_tilt.fillna(stowingangle, inplace=True)
                 myTMY3['trackingdata_surface_tilt'] = trackingdata['surface_tilt']         
                 myTMY3['trackingdata_surface_azimuth'] = trackingdata['surface_azimuth']      
-        
+            
+            [C, D] = trackingBFvaluescalculator(myTMY3['trackingdata_surface_tilt'], hub_height, pitch)
+            myTMY3['C'] = C
+            myTMY3['D'] = D
+                
         # Check what Albedo to se:
         if albedo == None:
             if 'Alb' in myTMY3:
@@ -320,8 +324,9 @@ def simulate(myTMY3, meta, writefiletitle=None, tilt=0, sazm=180,
                     if tracking == True:                                   
                         tilt = myTMY3['trackingdata_surface_tilt'][rl]
                         sazm = myTMY3['trackingdata_surface_azimuth'][rl]
+                        C = myTMY3['C'][rl]                        
+                        D = myTMY3['D'][rl]
                         
-                        [C, D] = trackingBFvaluescalculator(tilt, hub_height, pitch)
                         [rearSkyConfigFactors, frontSkyConfigFactors] = getSkyConfigurationFactors(rowType, tilt, C, D)       ## Sky configuration factors are the same for all times, only based on geometry and row type
 
                     rearGroundGHI=[]

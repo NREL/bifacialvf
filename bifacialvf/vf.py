@@ -1536,7 +1536,7 @@ def trackingBFvaluescalculator(beta, hub_height, r2r):
 
     Parameters
     ----------
-    beta : float
+    beta : series of floats, or float 
         Tilt from horizontal of the PV modules/panels, in radians
     hub_height : float
         tracker hub height
@@ -1550,15 +1550,24 @@ def trackingBFvaluescalculator(beta, hub_height, r2r):
     D : float
         row-to-row distance (each in PV panel slope lengths)
     '''
-    # Created on Tue Jun 13 08:01:56 2017
-    # @author: sayala
 
+    
     beta = beta * DTOR  # Tilt from horizontal of the PV modules/panels, in radians
-    x1 = math.cos(beta);         # Horizontal distance from front of panel to rear of panel (in PV panel slope lengths)
-    #rtr = D + x1;                # Row-to-row distance (in PV panel slope lengths)
-    D = r2r - x1;                # Calculates D DistanceBetweenRows(panel slope lengths)
-    hm = 0.5*math.sin(beta);        # vertical distance from bottom of panel to top of panel (in PV panel slope lengths)
-    #C = 0.5+Cv-hm               # Ground clearance of PV panel (in PV panel slope lengths). 
-    C = hub_height - hm          #Adding a 0.5 for half a panel slope length, since it is assumed the panel is rotating around its middle axis 
+
+    try:
+        x1 = beta.apply(math.cos)   # Horizontal distance from front of panel to rear of panel (in PV panel slope lengths)
+        D = r2r - x1                # Calculates D DistanceBetweenRows(panel slope lengths)
+        hm = beta.apply(math.sin)*0.5        # vertical distance from bottom of panel to top of panel (in PV panel slope lengths)
+        #C = 0.5+Cv-hm               # Ground clearance of PV panel (in PV panel slope lengths). 
+        C = hub_height - hm          #Adding a 0.5 for half a panel slope length, since it is assumed the panel is rotating around its middle axis 
+    except: # in case only one value is passed
+        x1 = math.cos(beta);         # Horizontal distance from front of panel to rear of panel (in PV panel slope lengths)
+        #rtr = D + x1;                # Row-to-row distance (in PV panel slope lengths)
+        D = r2r - x1;                # Calculates D DistanceBetweenRows(panel slope lengths)
+        hm = 0.5*math.sin(beta);        # vertical distance from bottom of panel to top of panel (in PV panel slope lengths)
+        #C = 0.5+Cv-hm               # Ground clearance of PV panel (in PV panel slope lengths). 
+        C = hub_height - hm          #Adding a 0.5 for half a panel slope length, since it is assumed the panel is rotating around its middle axis 
 
     return C, D
+
+

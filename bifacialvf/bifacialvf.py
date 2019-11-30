@@ -284,9 +284,7 @@ def simulate(myTMY3, meta, writefiletitle=None, tilt=0, sazm=180,
                 
                 if useTMYalbedo:
                     albedo = myTMY3.Alb[rl]
-                    
-                rl = rl+1   # increasing while count
-                                           
+                                                              
                 zen = myTMY3['zenith'][rl]
                 azm = myTMY3['azimuth'][rl]
                 elv = myTMY3['elevation'][rl]

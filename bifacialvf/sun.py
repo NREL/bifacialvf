@@ -708,12 +708,14 @@ def sunrisecorrectedsunposition(myTMY3, metdata, deltastyle = 'exact'):
         print ("TMY interval was unable to be defined, so setting it to 1h.")
 
     if deltastyle == 'exact':
+        print("Calculating Sun position with no delta, for exact timestamp in input Weather File")
         solpos = pvlib.irradiance.solarposition.get_solarposition(datetimetz,lat, lng, elev)
         sunup = None
         return solpos
     else: 
         if interval== pd.Timedelta('1h'):
             if deltastyle == 'TMY3':
+                print("Calculating Sun position with a delta of -30 mins. i.e. 12 is 11:30 sunpos")
                 sunup= pvlib.irradiance.solarposition.sun_rise_set_transit_spa(datetimetz, lat, lng) 
     
                 sunup['minutedelta']= int(interval.seconds/2/60) # default sun angle 30 minutes before timestamp
@@ -727,6 +729,7 @@ def sunrisecorrectedsunposition(myTMY3, metdata, deltastyle = 'exact'):
                 sunup['corrected_timestamp'] = sunup.index-pd.to_timedelta(sunup['minutedelta'], unit='m')
         
             elif deltastyle == 'PVSyst' or 'SAM':
+                print("Calculating Sun position with a delta of +30 mins. i.e. 12 is 12:30 sunpos")
                 sunup= pvlib.irradiance.solarposition.sun_rise_set_transit_spa(datetimetz, lat, lng) 
         
                 sunup['minutedelta']= int(interval.seconds/2/60) # default sun angle 30 minutes after timestamp
@@ -741,6 +744,8 @@ def sunrisecorrectedsunposition(myTMY3, metdata, deltastyle = 'exact'):
             
         else:
             minutedelta = int(interval.seconds/2/60)
+            print("Interval in weather data is less than 1 hr, calculating Sun position with a delta of -",minutedelta)
+            print("If you want no delta for sunposition, run simulation with input variable deltastyle='exact'")
             #datetimetz=datetimetz-pd.Timedelta(minutes = minutedelta)   # This doesn't check for Sunrise or Sunset
             #sunup= pvlib.irradiance.solarposition.get_sun_rise_set_transit(datetimetz, lat, lon) # deprecated in pvlib 0.6.1
             sunup= pvlib.irradiance.solarposition.sun_rise_set_transit_spa(datetimetz, lat, lng) #new for pvlib >= 0.6.1

@@ -672,7 +672,7 @@ def sunrisecorrectedsunposition(myTMY3, metdata, deltastyle = 'exact'):
     deltastyle = 'SAM'   12 sets solpos to 12:30     
     deltastyle = 'PVSyst'  12 sets  solpos  to 12:30
     deltastyle = 'TMY3'   12 sets solpos to 11:30    
-    deltastyle = exact      12 sets solpos to 12           
+    deltastyle = 'exact'      12 sets solpos to 12           
     
     
     Sunrise/Sunset Handing:
@@ -704,7 +704,7 @@ def sunrisecorrectedsunposition(myTMY3, metdata, deltastyle = 'exact'):
         interval = pd.Timedelta('1h') # ISSUE: if 1 datapoint is passed, are we sure it's hourly data?
         print ("TMY interval was unable to be defined, so setting it to 1h.")
 
-    if deltastyle == exact:
+    if deltastyle == 'exact':
         solpos = pvlib.irradiance.solarposition.get_solarposition(datetimetz,lat, lng, elev)
         sunup = None
         return solpos
@@ -723,7 +723,7 @@ def sunrisecorrectedsunposition(myTMY3, metdata, deltastyle = 'exact'):
                 # save corrected timestamp
                 sunup['corrected_timestamp'] = sunup.index+pd.to_timedelta(sunup['minutedelta'], unit='m')
         
-            elif deltatsyle == ('PVSyst' | 'SAM'):
+            elif deltastyle == 'PVSyst' or 'SAM':
                 sunup= pvlib.irradiance.solarposition.sun_rise_set_transit_spa(datetimetz, lat, lng) 
         
                 sunup['minutedelta']= int(interval.seconds/2/60) # default sun angle 30 minutes after timestamp
@@ -740,9 +740,9 @@ def sunrisecorrectedsunposition(myTMY3, metdata, deltastyle = 'exact'):
             minutedelta = int(interval.seconds/2/60)
             #datetimetz=datetimetz-pd.Timedelta(minutes = minutedelta)   # This doesn't check for Sunrise or Sunset
             #sunup= pvlib.irradiance.solarposition.get_sun_rise_set_transit(datetimetz, lat, lon) # deprecated in pvlib 0.6.1
-            sunup= pvlib.irradiance.solarposition.sun_rise_set_transit_spa(datetimetz, lat, lon) #new for pvlib >= 0.6.1
+            sunup= pvlib.irradiance.solarposition.sun_rise_set_transit_spa(datetimetz, lat, lng) #new for pvlib >= 0.6.1
             sunup['corrected_timestamp'] = sunup.index-pd.Timedelta(minutes = minutedelta)
 
-        solpos = pvlib.irradiance.solarposition.get_solarposition(sunup['corrected_timestamp'],lat,lon,elev)   
+        solpos = pvlib.irradiance.solarposition.get_solarposition(sunup['corrected_timestamp'],lat,lng,elev)   
         
         return solpos, sunup

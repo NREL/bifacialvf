@@ -28,11 +28,13 @@ import pvlib
 import os
 import sys
 import pytz
+import pandas as pd
+from tqdm import tqdm
 
 from bifacialvf.vf import getBackSurfaceIrradiances, getFrontSurfaceIrradiances, getGroundShadeFactors
 from bifacialvf.vf import getSkyConfigurationFactors, trackingBFvaluescalculator, rowSpacing
 from bifacialvf.sun import hrSolarPos, perezComp, solarPos, sunIncident, sunrisecorrectedsunposition
-import pandas as pd
+
 from bifacialvf.readepw import readepw
 
 # Electrical Mismatch Calculation 
@@ -40,7 +42,38 @@ import numpy as np
 from bifacialvf.analysis import *
 #import bifacialvf.analysis as analysis
 
-def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180, 
+def readInputTMY(TMYtoread):
+    '''
+    ## Read TMY3 data and start loop ~  
+    
+    Parameters
+    ----------
+    TMYtoread: TMY3 .csv weather file, which can be downloaded at http://rredc.nrel.gov/solar/old_data/nsrdb/1991-2005/tmy3/by_state_and_city.html
+                   Also .epw weather files, which can be downloaded here: https://energyplus.net/weather and here: http://re.jrc.ec.europa.eu/pvg_tools/en/tools.html#TMY
+    
+    Returns
+    dataframe, meta
+        
+    '''
+    if TMYtoread is None: # if no file passed in, the readtmy3 graphical file picker will open.
+        (myTMY3,meta)=pvlib.iotools.read_tmy3(TMYtoread)        
+    elif TMYtoread.lower().endswith('.csv') :  
+        (myTMY3,meta)=pvlib.iotools.read_tmy3(TMYtoread)        
+    elif TMYtoread.lower().endswith('.epw') : 
+        (myTMY3,meta) = pvlib.iotools.read_epw(TMYtoread)
+        # rename different field parameters to match DNI, DHI, DryBulb, Wspd
+        myTMY3.rename(columns={'Direct normal radiation in Wh/m2':'DNI',
+                               'Diffuse horizontal radiation in Wh/m2':'DHI',
+                               'Dry bulb temperature in C':'DryBulb',
+                               'Wind speed in m/s':'Wspd',
+                               'Alb (unitless)': 'Alb'}, inplace=True)
+    else:
+        raise Exception('Incorrect extension for TMYtoread. Either .csv (TMY3) .epw or None')
+        
+    return myTMY3, meta
+
+
+def simulate(myTMY3, meta, writefiletitle=None, tilt=0, sazm=180, 
              clearance_height=None, hub_height = None, 
              pitch=None, rowType='interior', transFactor=0.01, sensorsy=6, 
              PVfrontSurface='glass', PVbackSurface='glass', albedo=None,  
@@ -57,10 +90,10 @@ def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180,
         Main function to run the bifacialvf routines 
     
         Parameters
-        ----------
-        TMYtoread: TMY3 .csv weather file, which can be downloaded at http://rredc.nrel.gov/solar/old_data/nsrdb/1991-2005/tmy3/by_state_and_city.html
-                   Also .epw weather files, which can be downloaded here: https://energyplus.net/weather and here: http://re.jrc.ec.europa.eu/pvg_tools/en/tools.html#TMY
-                 
+        ---------- 
+        myTMY3 (pd.DataFrame): A pandas DataaFrame containing for each timestep columns:
+            DNI, DHI, it can also have DryBulb, Wspd, zenith, azimuth,
+        meta (dict): A dictionary conatining keys: 'latitude', 'longitude', 'TZ', 'Name'
         writefiletitle:  name of output file
         tilt:    tilt angle in degrees.  Not used for tracking
         sazm:    surface azimuth orientation in degrees east of north. For tracking this is the tracker axis orientation
@@ -119,23 +152,7 @@ def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180,
         if writefiletitle == None:
             writefiletitle = "data/Output/TEST.csv"
         
-        ## Read TMY3 data and start loop ~  
-        if TMYtoread is None: # if no file passed in, the readtmy3 graphical file picker will open.
-            (myTMY3,meta)=pvlib.iotools.read_tmy3(TMYtoread)        
-        elif TMYtoread.lower().endswith('.csv') :  
-            (myTMY3,meta)=pvlib.iotools.read_tmy3(TMYtoread)        
-        elif TMYtoread.lower().endswith('.epw') : 
-            (myTMY3,meta) = pvlib.iotools.read_epw(TMYtoread)
-            # rename different field parameters to match DNI, DHI, DryBulb, Wspd
-            myTMY3.rename(columns={'Direct normal radiation in Wh/m2':'DNI',
-                                   'Diffuse horizontal radiation in Wh/m2':'DHI',
-                                   'Dry bulb temperature in C':'DryBulb',
-                                   'Wind speed in m/s':'Wspd',
-                                   'Alb (unitless)': 'Alb'}, inplace=True)
-        else:
-            raise Exception('Incorrect extension for TMYtoread. Either .csv (TMY3) .epw or None')
-            
-        #myAxisTitles=myTMY3.axes
+
         noRows, noCols = myTMY3.shape
         lat = meta['latitude']; lng = meta['longitude']; tz = meta['TZ']
         name = meta['Name']
@@ -143,10 +160,11 @@ def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180,
         ## infer the data frequency in minutes
         dataInterval = (myTMY3.index[1]-myTMY3.index[0]).total_seconds()/60
     
-        solpos, sunup = sunrisecorrectedsunposition(myTMY3, meta, deltastyle = deltastyle)
-        solpos['zenith_rad']=np.radians(solpos['zenith'])
-        solpos['azimuth_rad']=np.radians(solpos['azimuth'])
-        solpos['elevation_rad']=np.radians(solpos['elevation'])
+        if not (('azimuth' in myTMY3) and ('zenith' in myTMY3) and ('elevation' in myTMY3)):
+            solpos, sunup = sunrisecorrectedsunposition(myTMY3, meta, deltastyle = deltastyle)
+            myTMY3['zenith'] = np.radians(solpos['zenith'])
+            myTMY3['azimuth'] = np.radians(solpos['azimuth'])
+            myTMY3['elevation']=np.radians(solpos['elevation'])
         
         # Check what Albedo to se:
         if albedo == None:
@@ -171,7 +189,7 @@ def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180,
         ## Distance between rows for no shading on Dec 21 at 9 am
         print( " ")
         print( "********* ")
-        print( "Running Simulation for TMY3: ", TMYtoread)
+        print( "Running Simulation for TMY3: ", meta['Name'])
         print( "Location:  ", name)
         print( "Lat: ", lat, " Long: ", lng, " Tz ", tz)
         print( "Parameters: tilt: ", tilt, "  Sazm: ", sazm, "   ", 
@@ -188,7 +206,7 @@ def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180,
     
         if tracking==False:        
             ## Sky configuration factors are the same for all times, only based on geometry and row type
-            [rearSkyConfigFactors, frontSkyConfigFactors] = getSkyConfigurationFactors(rowType, tilt, C, D);       ## Sky configuration factors are the same for all times, only based on geometry and row type
+            [rearSkyConfigFactors, frontSkyConfigFactors] = getSkyConfigurationFactors(rowType, tilt, C, D)       ## Sky configuration factors are the same for all times, only based on geometry and row type
     
      
         ## Create WriteFile and write labels at this time
@@ -230,7 +248,7 @@ def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180,
             for k in range(0, sensorsy):
                 allrowfronts.append("No_"+str(k+1)+"_RowFrontGTI")
                 allrowbacks.append("No_"+str(k+1)+"_RowBackGTI")      
-            outputtitles=['Year', 'Month', 'Day', 'Hour', 'Minute', 'DNI', 'DHI', 
+            outputtitles=['date', 'DNI', 'DHI', 
                           'albedo', 'decHRs', 'ghi', 'inc', 'zen', 'azm', 'pvFrontSH', 
                          'aveFrontGroundGHI', 'GTIfrontBroadBand', 'pvBackSH', 
                          'aveBackGroundGHI', 'GTIbackBroadBand', 'maxShadow', 'Tamb', 'VWind']
@@ -250,37 +268,40 @@ def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180,
             rl = 0
             
             
-            while (rl < noRows):
+            for rl in tqdm(range(noRows)):
                 
                 myTimestamp=myTMY3.index[rl]
-                year = myTimestamp.year
-                month = myTimestamp.month
-                day = myTimestamp.day
                 hour = myTimestamp.hour
                 minute = myTimestamp.minute
                 dni = myTMY3.DNI[rl]#get_value(rl,5,"False")
                 dhi = myTMY3.DHI[rl]#get_value(rl,8,"False")
-                Tamb=myTMY3.DryBulb[rl]#get_value(rl,29,"False")
-                VWind=myTMY3.Wspd[rl]#get_value(rl,44,"False")
+                if 'DryBulb' in myTMY3: Tamb=myTMY3.DryBulb[rl]
+                else: Tamb=0	            
+                if 'Wspd' in myTMY3: VWind = myTMY3.Wspd[rl]	           
+                else: VWind=0
+                
+
                 
                 if useTMYalbedo:
                     albedo = myTMY3.Alb[rl]
                     
                 rl = rl+1   # increasing while count
-                            
-                azm = 9999.0; zen = 9999.0; elv = 9999.0;
-                
-                zen = solpos['zenith_rad'][rl]
-                azm = solpos['azimuth_rad'][rl]
-                elv = solpos['elevation_rad'][rl]
+                                           
+                zen = myTMY3['zenith'][rl]
+                azm = myTMY3['azimuth'][rl]
+                elv = myTMY3['elevation'][rl]
     
-                if (zen < 90):    # If daylight hours
+                if (zen < 0.5 * math.pi):    # If daylight hours
                 
-                    # a. CALCULATE THE IRRADIANCE DISTRIBUTION ON THE GROUND *********************************************************************************************
-                    #double[] rearGroundGHI = new double[100], frontGroundGHI = new double[100]; ;   # For global horizontal irradiance for each of 100 ground segments, to the rear and front of front of row edge         
+                    # a. CALCULATE THE IRRADIANCE DISTRIBUTION ON THE GROUND 
+                    #********************************************************
+                    #double[] rearGroundGHI = new double[100], frontGroundGHI = new double[100]
+                    # For global horizontal irradiance for each of 100 ground segments, to the rear and front of front of row edge         
                     # Determine where on the ground the direct beam is shaded for a sun elevation and azimuth
-                    #int[] rearGroundSH = new int[100], frontGroundSH = new int[100]; # Front and rear row-to-row spacing divided into 100 segments, (later becomes 1 if direct beam is shaded, 0 if not shaded)
-                    #double pvFrontSH = 0.0, pvBackSH = 0.0, maxShadow;     # Initialize fraction of PV module front and back surfaces that are shaded to zero (not shaded), and maximum shadow projected from front of row.
+                    #int[] rearGroundSH = new int[100], frontGroundSH = new int[100]
+                    # Front and rear row-to-row spacing divided into 100 segments, (later becomes 1 if direct beam is shaded, 0 if not shaded)
+                    #double pvFrontSH = 0.0, pvBackSH = 0.0, maxShadow    
+                    # Initialize fraction of PV module front and back surfaces that are shaded to zero (not shaded), and maximum shadow projected from front of row.
                     
                     # TRACKING ROUTINE CALULATING GETSKYCONFIGURATION FACTORS
                     if tracking == True:        
@@ -306,7 +327,7 @@ def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180,
                             tilt = -tilt;
                             
                         [C, D] = trackingBFvaluescalculator(tilt, hub_height, pitch)
-                        [rearSkyConfigFactors, frontSkyConfigFactors] = getSkyConfigurationFactors(rowType, tilt, C, D);       ## Sky configuration factors are the same for all times, only based on geometry and row type
+                        [rearSkyConfigFactors, frontSkyConfigFactors] = getSkyConfigurationFactors(rowType, tilt, C, D)       ## Sky configuration factors are the same for all times, only based on geometry and row type
     
     
     
@@ -315,42 +336,42 @@ def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180,
                     pvFrontSH, pvBackSH, maxShadow, rearGroundSH, frontGroundSH = getGroundShadeFactors (rowType, tilt, C, D, elv, azm, sazm)
             
                     # Sum the irradiance components for each of the ground segments, to the front and rear of the front of the PV row
-                    #double iso_dif = 0.0, circ_dif = 0.0, horiz_dif = 0.0, grd_dif = 0.0, beam = 0.0;   # For calling PerezComp to break diffuse into components for zero tilt (horizontal)                           
+                    #double iso_dif = 0.0, circ_dif = 0.0, horiz_dif = 0.0, grd_dif = 0.0, beam = 0.0   # For calling PerezComp to break diffuse into components for zero tilt (horizontal)                           
                     ghi, iso_dif, circ_dif, horiz_dif, grd_dif, beam = perezComp(dni, dhi, albedo, zen, 0.0, zen)
                     
                     
                     for k in range (0, 100):
                     
-                        rearGroundGHI.append(iso_dif * rearSkyConfigFactors[k]);       # Add diffuse sky component viewed by ground
+                        rearGroundGHI.append(iso_dif * rearSkyConfigFactors[k])       # Add diffuse sky component viewed by ground
                         if (rearGroundSH[k] == 0):
-                            rearGroundGHI[k] += beam + circ_dif;                    # Add beam and circumsolar component if not shaded
+                            rearGroundGHI[k] += beam + circ_dif                    # Add beam and circumsolar component if not shaded
                         else:
-                            rearGroundGHI[k] += (beam + circ_dif) * transFactor;    # Add beam and circumsolar component transmitted thru module spacing if shaded
+                            rearGroundGHI[k] += (beam + circ_dif) * transFactor    # Add beam and circumsolar component transmitted thru module spacing if shaded
             
-                        frontGroundGHI.append(iso_dif * frontSkyConfigFactors[k]);     # Add diffuse sky component viewed by ground
+                        frontGroundGHI.append(iso_dif * frontSkyConfigFactors[k])     # Add diffuse sky component viewed by ground
                         if (frontGroundSH[k] == 0):
-                            frontGroundGHI[k] += beam + circ_dif;                   # Add beam and circumsolar component if not shaded 
+                            frontGroundGHI[k] += beam + circ_dif                   # Add beam and circumsolar component if not shaded 
                         else:
-                            frontGroundGHI[k] += (beam + circ_dif) * transFactor;   # Add beam and circumsolar component transmitted thru module spacing if shaded
+                            frontGroundGHI[k] += (beam + circ_dif) * transFactor   # Add beam and circumsolar component transmitted thru module spacing if shaded
                     
             
                     # b. CALCULATE THE AOI CORRECTED IRRADIANCE ON THE FRONT OF THE PV MODULE, AND IRRADIANCE REFLECTED FROM FRONT OF PV MODULE ***************************
-                    #double[] frontGTI = new double[sensorsy], frontReflected = new double[sensorsy];
-                    #double aveGroundGHI = 0.0;          # Average GHI on ground under PV array
+                    #double[] frontGTI = new double[sensorsy], frontReflected = new double[sensorsy]
+                    #double aveGroundGHI = 0.0          # Average GHI on ground under PV array
                     aveGroundGHI, frontGTI, frontReflected = getFrontSurfaceIrradiances(rowType, maxShadow, PVfrontSurface, tilt, sazm, dni, dhi, C, D, albedo, zen, azm, sensorsy, pvFrontSH, frontGroundGHI)
     
-                    #double inc, tiltr, sazmr;
+                    #double inc, tiltr, sazmr
                     inc, tiltr, sazmr = sunIncident(0, tilt, sazm, 45.0, zen, azm)	    # For calling PerezComp to break diffuse into components for 
                     save_inc=inc
                     gtiAllpc, iso_dif, circ_dif, horiz_dif, grd_dif, beam = perezComp(dni, dhi, albedo, inc, tiltr, zen)   # Call to get components for the tilt
                     save_gtiAllpc=gtiAllpc
-                    #sw.Write(strLine);
-                    #sw.Write(",{0,6:0.00}", hour - 0.5 * dataInterval / 60.0 + minute / 60.0);
+                    #sw.Write(strLine)
+                    #sw.Write(",{0,6:0.00}", hour - 0.5 * dataInterval / 60.0 + minute / 60.0)
                     #sw.Write(",{0,6:0.0},{1,5:0.0},{2,5:0.0},{3,5:0.0},{4,4:0.00},{5,6:0.0},{6,6:0.0}",
-                        #dni * Math.Cos(zen) + dhi, inc * 180.0 / Math.PI, zen * 180.0 / Math.PI, azm * 180.0 / Math.PI, pvFrontSH, aveGroundGHI, gtiAllpc);
+                        #dni * Math.Cos(zen) + dhi, inc * 180.0 / Math.PI, zen * 180.0 / Math.PI, azm * 180.0 / Math.PI, pvFrontSH, aveGroundGHI, gtiAllpc)
             
-                    # CALCULATE THE AOI CORRECTED IRRADIANCE ON THE BACK OF THE PV MODULE,
-                    #double[] backGTI = new double[sensorsy];
+                    # CALCULATE THE AOI CORRECTED IRRADIANCE ON THE BACK OF THE PV MODULE
+                    #double[] backGTI = new double[sensorsy]
                     backGTI, aveGroundGHI = getBackSurfaceIrradiances(rowType, maxShadow, PVbackSurface, tilt, sazm, dni, dhi, C, D, albedo, zen, azm, sensorsy, pvBackSH, rearGroundGHI, frontGroundGHI, frontReflected, offset=0)
                
                     inc, tiltr, sazmr = sunIncident(0, 180.0-tilt, sazm-180.0, 45.0, zen, azm)       # For calling PerezComp to break diffuse into components for 
@@ -363,7 +384,7 @@ def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180,
                     incd = save_inc * 180.0 / math.pi
                     zend = zen * 180.0 / math.pi
                     azmd = azm * 180.0 / math.pi
-                    outputvalues=[year, month, day, hour, minute, dni, dhi, albedo, decHRs, 
+                    outputvalues=[myTimestamp, dni, dhi, albedo, decHRs, 
                                   ghi_calc, incd, zend, azmd, pvFrontSH, aveGroundGHI, 
                                   save_gtiAllpc, pvBackSH, aveGroundGHI, 
                                   gtiAllpc, maxShadow, Tamb, VWind]
@@ -386,8 +407,7 @@ def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180,
     
         	# End of daylight if loop 
     
-        #strLine = sr.ReadLine();        # Read next line of data
-       # End of while strLine != null loop
+       # End of myTMY3 rows of data
        
         if calculateBilInterpol==True:
             analyseVFResultsBilInterpol(filename=writefiletitle, portraitorlandscape=portraitorlandscape, bififactor=bififactor, writefilename=writefiletitle)
@@ -398,7 +418,7 @@ def simulate(TMYtoread=None, writefiletitle=None, tilt=0, sazm=180,
      
         print( "Finished")
         
-        return;
+        return
         
 if __name__ == "__main__":    
 

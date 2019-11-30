@@ -143,6 +143,7 @@ def simulate(myTMY3, meta, writefiletitle=None, tilt=0, sazm=180,
             axis_azimuth=sazm    # axis_azimuth is degrees east of North
             tilt = 0            # start with tracker tilt = 0
             hub_height = C      # Ground clearance at tilt = 0.  C >= 0.5
+            stowingangle = 90
             if hub_height < 0.5:
                 print('Warning: tracker hub height C < 0.5 may result in ground clearance errors')
             heightlabel = 'Hub_Height'
@@ -165,6 +166,20 @@ def simulate(myTMY3, meta, writefiletitle=None, tilt=0, sazm=180,
             myTMY3['zenith'] = np.radians(solpos['zenith'])
             myTMY3['azimuth'] = np.radians(solpos['azimuth'])
             myTMY3['elevation']=np.radians(solpos['elevation'])
+        
+        
+        if tracking == True:        
+                        
+            if not (('trackingdata_surface_tilt' in myTMY3) and ('trackingdata_surface_azimuth' in myTMY3)):
+                gcr=1/pitch  
+                trackingdata = pvlib.tracking.singleaxis(np.degrees(myTMY3['zenith']), 
+                                                         np.degrees(myTMY3['azimuth']),
+                                                         axis_tilt, axis_azimuth, 
+                                                         limit_angle, backtrack, gcr)
+                
+                trackingdata.surface_tilt.fillna(stowingangle, inplace=True)
+                myTMY3['trackingdata_surface_tilt'] = trackingdata['surface_tilt']         
+                myTMY3['trackingdata_surface_azimuth'] = trackingdata['surface_azimuth']      
         
         # Check what Albedo to se:
         if albedo == None:
@@ -302,33 +317,13 @@ def simulate(myTMY3, meta, writefiletitle=None, tilt=0, sazm=180,
                     # Initialize fraction of PV module front and back surfaces that are shaded to zero (not shaded), and maximum shadow projected from front of row.
                     
                     # TRACKING ROUTINE CALULATING GETSKYCONFIGURATION FACTORS
-                    if tracking == True:        
+                    if tracking == True:                                   
+                        tilt = myTMY3['trackingdata_surface_tilt'][rl]
+                        sazm = myTMY3['trackingdata_surface_azimuth'][rl]
                         
-                        #solpos = pvlib.solarposition.get_solarposition(myTimestamp, lat, lng)
-                        #aazi= solpos['azimuth']
-                        #azen= solpos['zenith']
-                        aazi = pd.Series([azm*180.0/math.pi], index =[myTimestamp])                        
-                        azen = pd.Series([zen*180.0/math.pi], index =[myTimestamp])
-
-                        
-                        gcr=1/pitch  
-                        trackingdata = pvlib.tracking.singleaxis(azen, aazi, axis_tilt, axis_azimuth, limit_angle, backtrack, gcr)
-                                 ## Sky configuration factors are not the same for all times, since the geometry is changing with the tracking.
-                        tilt=trackingdata['surface_tilt'][0] # Trackingdata tracker_theta
-                        sazm = trackingdata['surface_azimuth'][0]
-                        if math.isnan(tilt):
-                            tilt=90
-    
-                        # Rotate system if past sun's zenith ~ #123 Check if system breaks withot doing this.
-                        if tilt<0:
-                            #sazm = sazm+180    # Rotate detectors
-                            tilt = -tilt;
-                            
                         [C, D] = trackingBFvaluescalculator(tilt, hub_height, pitch)
                         [rearSkyConfigFactors, frontSkyConfigFactors] = getSkyConfigurationFactors(rowType, tilt, C, D)       ## Sky configuration factors are the same for all times, only based on geometry and row type
-    
-    
-    
+
                     rearGroundGHI=[]
                     frontGroundGHI=[]
                     pvFrontSH, pvBackSH, maxShadow, rearGroundSH, frontGroundSH = getGroundShadeFactors (rowType, tilt, C, D, elv, azm, sazm)

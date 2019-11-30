@@ -724,7 +724,7 @@ def sunrisecorrectedsunposition(myTMY3, metdata, deltastyle = 'exact'):
                 sunsetmask = sunup.index.hour-1==sunup['sunset'].dt.hour
                 sunup['minutedelta'].mask(sunsetmask,np.floor(((sunup['sunset'].dt.minute)/2-60)),inplace=True)
                 # save corrected timestamp
-                sunup['corrected_timestamp'] = sunup.index+pd.to_timedelta(sunup['minutedelta'], unit='m')
+                sunup['corrected_timestamp'] = sunup.index-pd.to_timedelta(sunup['minutedelta'], unit='m')
         
             elif deltastyle == 'PVSyst' or 'SAM':
                 sunup= pvlib.irradiance.solarposition.sun_rise_set_transit_spa(datetimetz, lat, lng) 
@@ -747,5 +747,7 @@ def sunrisecorrectedsunposition(myTMY3, metdata, deltastyle = 'exact'):
             sunup['corrected_timestamp'] = sunup.index-pd.Timedelta(minutes = minutedelta)
 
         solpos = pvlib.irradiance.solarposition.get_solarposition(sunup['corrected_timestamp'],lat,lng,elev)   
-        
+        solpos['Sun position time'] = solpos.index
+        solpos.index = datetimetz  #this has the original time data in it
+
         return solpos, sunup

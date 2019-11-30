@@ -28,6 +28,7 @@ import pvlib
 import os
 import sys
 import pytz
+import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
@@ -38,7 +39,6 @@ from bifacialvf.sun import hrSolarPos, perezComp, solarPos, sunIncident, sunrise
 from bifacialvf.readepw import readepw
 
 # Electrical Mismatch Calculation 
-import numpy as np
 from bifacialvf.analysis import *
 #import bifacialvf.analysis as analysis
 
@@ -448,6 +448,9 @@ if __name__ == "__main__":
     backtrack=True
     limit_angle = 60
 
+    # read input
+    myTMY3, meta = readInputTMY(TMYtoread)
+    deltastyle = 'TMY3'
     # Function
     simulate(TMYtoread, writefiletitle=writefiletitle, 
              tilt=tilt, sazm=sazm, pitch=pitch, clearance_height=clearance_height, 
@@ -457,7 +460,7 @@ if __name__ == "__main__":
              limit_angle=limit_angle, calculatePVMismatch=calculatePVMismatch,
              cellsnum = cellsnum, bififactor=bififactor,
              calculateBilInterpol=calculateBilInterpol,
-             portraitorlandscape=portraitorlandscape)
+             portraitorlandscape=portraitorlandscape, deltastyle=deltastyle)
                                         
     #Load the results from the resultfile
     from loadVFresults import loadVFresults

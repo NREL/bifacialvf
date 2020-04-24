@@ -1,4 +1,4 @@
-.. image:: ../../images_wiki/bifacialvf.png
+.. image:: ../../images_wiki/bifacialVF.png
   :width: 600
 
 Welcome to bifacialvf's documentation!

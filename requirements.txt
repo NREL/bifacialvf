@@ -1,14 +1,14 @@
 #colorama==0.4.1
 cycler==0.10.0
-kiwisolver==1.1.0
-matplotlib == 2.2.5
-numpy==1.16.6
+kiwisolver==1.2.0
+matplotlib == 3.2.1
+numpy==1.17.3
 pvlib==0.6.1
-pandas==0.24.2
+pandas==0.25.2
 pvmismatch==4.1
-#py==1.8.0
+py==1.8.0
 pyparsing==2.4.7
-pytest==4.1.1
+pytest==5.4.1
 python-dateutil==2.8.0
 pytz==2019.1
 six==1.14.0

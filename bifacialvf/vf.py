@@ -11,7 +11,7 @@ ViewFactor module - VF calculation helper files for bifacial-viewfactor
 from __future__ import division, print_function, absolute_import
 import math
 import numpy as np
-from .sun import solarPos, sunIncident, perezComp, aOIcorrection
+from bifacialvf.sun import solarPos, sunIncident, perezComp, aOIcorrection
 import logging
 
 # TODO: set level or add formatters if more advanced logging required

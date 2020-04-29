@@ -26,20 +26,20 @@ import math
 import csv
 import pvlib
 import os
-import sys
-import pytz
+#import sys
+#import pytz
 import numpy as np
-import pandas as pd
+#import pandas as pd
 from tqdm import tqdm
 
 from bifacialvf.vf import getBackSurfaceIrradiances, getFrontSurfaceIrradiances, getGroundShadeFactors
 from bifacialvf.vf import getSkyConfigurationFactors, trackingBFvaluescalculator, rowSpacing
-from bifacialvf.sun import hrSolarPos, perezComp, solarPos, sunIncident, sunrisecorrectedsunposition
+from bifacialvf.sun import  perezComp,  sunIncident, sunrisecorrectedsunposition #, hrSolarPos, solarPos,
 
-from bifacialvf.readepw import readepw
+#from bifacialvf.readepw import readepw
 
 # Electrical Mismatch Calculation 
-from bifacialvf.analysis import *
+from bifacialvf.analysis import analyseVFResultsBilInterpol, analyseVFResultsPVMismatch
 #import bifacialvf.analysis as analysis
 
 def readInputTMY(TMYtoread):
@@ -232,7 +232,7 @@ def simulate(myTMY3, meta, writefiletitle=None, tilt=0, sazm=180,
         
         #check that the save directory exists, unless it's in root
         savedirectory = os.path.dirname(writefiletitle)
-        if ( (not os.path.exists(savedirectory)) and (savedirectory is not '')):
+        if ( (not os.path.exists(savedirectory)) and (savedirectory != '')):
             os.makedirs(savedirectory)
         
 
@@ -452,7 +452,7 @@ if __name__ == "__main__":
     myTMY3, meta = readInputTMY(TMYtoread)
     deltastyle = 'TMY3'
     # Function
-    simulate(TMYtoread, writefiletitle=writefiletitle, 
+    simulate(TMYtoread, meta, writefiletitle=writefiletitle, 
              tilt=tilt, sazm=sazm, pitch=pitch, clearance_height=clearance_height, 
              rowType=rowType, transFactor=transFactor, sensorsy=sensorsy, 
              PVfrontSurface=PVfrontSurface, PVbackSurface=PVbackSurface, 

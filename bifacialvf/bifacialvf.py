@@ -60,7 +60,7 @@ def readInputTMY(TMYtoread):
     elif TMYtoread.lower().endswith('.csv') :  
         (myTMY3,meta)=pvlib.iotools.read_tmy3(TMYtoread)        
     elif TMYtoread.lower().endswith('.epw') : 
-        (myTMY3,meta) = pvlib.iotools.read_epw(TMYtoread)
+        (myTMY3,meta) = pvlib.iotools.read_epw(TMYtoread) # requires pvlib > 0.7.0
         # rename different field parameters to match DNI, DHI, DryBulb, Wspd
         myTMY3.rename(columns={'Direct normal radiation in Wh/m2':'DNI',
                                'Diffuse horizontal radiation in Wh/m2':'DHI',
@@ -452,7 +452,7 @@ if __name__ == "__main__":
     myTMY3, meta = readInputTMY(TMYtoread)
     deltastyle = 'TMY3'
     # Function
-    simulate(TMYtoread, meta, writefiletitle=writefiletitle, 
+    simulate(myTMY3, meta, writefiletitle=writefiletitle, 
              tilt=tilt, sazm=sazm, pitch=pitch, clearance_height=clearance_height, 
              rowType=rowType, transFactor=transFactor, sensorsy=sensorsy, 
              PVfrontSurface=PVfrontSurface, PVbackSurface=PVbackSurface, 

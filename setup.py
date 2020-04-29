@@ -80,7 +80,7 @@ setup(
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
     install_requires=['numpy',
-                      'pvlib >= 0.6.1',
+                      'pvlib >= 0.7.0',
                       'pvmismatch',
                       'tqdm >= 4.32.1'		
                       ],

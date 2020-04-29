@@ -1,5 +1,6 @@
 """
-Tests of the view factors module
+Tests of the view factors module.  
+py.test --cov-report term-missing --cov=bifacialvf
 """
 import pytest
 import numpy as np

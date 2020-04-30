@@ -144,7 +144,7 @@ def test_1axis_endtoend():
 def test_bilininterpol():
     import pandas as pd
     inputfile = os.path.join(TESTDIR, "Test_RICHMOND_mismatch.csv")
-    outputfile = os.path.join(TESTDIR, "Test_RICHMOND_mismatch_Bilinterpol.csv")
+    outputfile = os.path.join(TESTDIR, "Test_RICHMOND_mismatch_BilInterpol.csv")
     portraitorlandscape='landscape'   # portrait or landscape
     bififactor = 1.0
     

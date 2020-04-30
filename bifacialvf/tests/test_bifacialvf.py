@@ -5,21 +5,27 @@ to run coverage test, py.test --cov-report term-missing --cov=bifacialvf
 """
 import pytest
 import numpy as np
+import os
 import bifacialvf
 from bifacialvf.tests import (
     FIXED_ENDTOEND_GTIFRONT, FIXED_ENDTOEND_GTIBACK,
     TRACKED_ENDTOEND_GTIFRONT, TRACKED_ENDTOEND_GTIBACK)
 
+TESTDIR = os.path.dirname(__file__)  # this folder
+DATADIR = os.path.abspath(os.path.join(TESTDIR,'..','data'))
+print(TESTDIR)
+print(DATADIR)
+#os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', 'templates'))
 def test_readInputTMY():
     ''' 
     read in 724010TYA.csv and USA_VA_Richmond.Intl.AP.724010_TMY.epw
     6/22 GHI is 909, sunup, sunrise at 7:00 and 18:00 on 12/31
     '''
-    (myTMY3, meta) = bifacialvf.bifacialvf.readInputTMY("bifacialvf/data/724010TYA.csv")
+    (myTMY3, meta) = bifacialvf.bifacialvf.readInputTMY(os.path.join(DATADIR,"724010TYA.csv"))
     assert myTMY3.loc['1985-06-22 12:0:0'].GHI.to_numpy() == 909
     assert np.allclose(myTMY3[myTMY3.index.isin(['1978-12-31 7:0:0-5:00','1978-12-31 18:0:0-5:00'])].GHI.to_numpy(), np.array([0,0]) )
 
-    (myEPW, metaEPW) = bifacialvf.bifacialvf.readInputTMY("bifacialvf/data/USA_VA_Richmond.Intl.AP.724010_TMY.epw")
+    (myEPW, metaEPW) = bifacialvf.bifacialvf.readInputTMY(os.path.join(DATADIR,"USA_VA_Richmond.Intl.AP.724010_TMY.epw"))
     assert myEPW.loc['1963-06-22 12:0:0'].GHI.to_numpy() == 858
     assert np.allclose(myTMY3[myEPW.index.isin(['1959-12-31 7:0:0-5:00','1959-12-31 18:0:0-5:00'])].GHI.to_numpy(), np.array([0,0]) )
    
@@ -31,8 +37,8 @@ def test_endtoend():
     #TODO:  consolidate and improve this
     
     # IO Files
-    TMYtoread="bifacialvf/data/724010TYA.csv"   # VA Richmond 724010TYA.csv
-    writefiletitle="bifacialvf/tests/_RICHMOND_1.0.csv"
+    TMYtoread=os.path.join(DATADIR,"724010TYA.csv")   # VA Richmond 724010TYA.csv
+    writefiletitle=os.path.join(DATADIR,"_RICHMOND_1.0.csv")
     
     # Variables
     tilt = 10                   # PV tilt (deg)
@@ -89,8 +95,8 @@ def test_1axis_endtoend():
     #TODO:  consolidate and improve this
     
     # IO Files
-    TMYtoread="bifacialvf/data/USA_VA_Richmond.Intl.AP.724010_TMY.epw"   # VA Richmond EPW
-    writefiletitle="bifacialvf/tests/_RICHMOND_1axis.csv"
+    TMYtoread=os.path.join(DATADIR, "USA_VA_Richmond.Intl.AP.724010_TMY.epw")   # VA Richmond EPW
+    writefiletitle=os.path.join(TESTDIR, "_RICHMOND_1axis.csv")
     
     # Variables
     tilt = 0                   # PV tilt (deg)
@@ -137,8 +143,8 @@ def test_1axis_endtoend():
 
 def test_bilininterpol():
     import pandas as pd
-    inputfile = "bifacialvf/tests/Test_RICHMOND_mismatch.csv"
-    outputfile = "bifacialvf/tests/Test_RICHMOND_mismatch_Bilinterpol.csv"
+    inputfile = os.path.join(TESTDIR, "Test_RICHMOND_mismatch.csv")
+    outputfile = os.path.join(TESTDIR, "Test_RICHMOND_mismatch_Bilinterpol.csv")
     portraitorlandscape='landscape'   # portrait or landscape
     bififactor = 1.0
     
@@ -152,8 +158,8 @@ def test_bilininterpol():
 
 def test_pvmismatch():
     import pandas as pd
-    inputfile = "bifacialvf/tests/Test_RICHMOND_mismatch.csv"
-    outputfile = "bifacialvf/tests/Test_RICHMOND_mismatch_PVMismatch.csv"
+    inputfile = os.path.join(TESTDIR, "Test_RICHMOND_mismatch.csv")
+    outputfile = os.path.join(TESTDIR, "Test_RICHMOND_mismatch_PVMismatch.csv")
     portraitorlandscape='landscape'   # portrait or landscape
     bififactor = 1.0
     numcells = 72

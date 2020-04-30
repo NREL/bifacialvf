@@ -21,7 +21,7 @@ def test_readInputTMY():
     read in 724010TYA.csv and USA_VA_Richmond.Intl.AP.724010_TMY.epw
     6/22 GHI is 909, sunup, sunrise at 7:00 and 18:00 on 12/31
     '''
-    (myTMY3, meta) = bifacialvf.bifacialvf.readInputTMY(os.path.join(DATADIR,"724010TYA.csv"))
+    (myTMY3, meta) = bifacialvf.bifacialvf.readInputTMY(os.path.join(DATADIR,"724010TYA.CSV"))
     assert myTMY3.loc['1985-06-22 12:0:0'].GHI.to_numpy() == 909
     assert np.allclose(myTMY3[myTMY3.index.isin(['1978-12-31 7:0:0-5:00','1978-12-31 18:0:0-5:00'])].GHI.to_numpy(), np.array([0,0]) )
 
@@ -37,7 +37,7 @@ def test_endtoend():
     #TODO:  consolidate and improve this
     
     # IO Files
-    TMYtoread=os.path.join(DATADIR,"724010TYA.csv")   # VA Richmond 724010TYA.csv
+    TMYtoread=os.path.join(DATADIR,"724010TYA.CSV")   # VA Richmond 724010TYA.csv
     writefiletitle=os.path.join(DATADIR,"_RICHMOND_1.0.csv")
     
     # Variables

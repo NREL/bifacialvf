@@ -288,7 +288,7 @@ def simulate(myTMY3, meta, writefiletitle=None, tilt=0, sazm=180,
                 outputtitles+=['sazm']
                 outputtitles+=['height']
                 outputtitles+=['D']
-                           
+
             sw.writerow(outputtitles)
             
             ## Loop through file.  TODO: replace this with for loop.
@@ -443,7 +443,7 @@ if __name__ == "__main__":
     sensorsy = 6                # sensorsy(# hor rows in panel)   <--> THIS ASSUMES LANDSCAPE ORIENTATION 
     PVfrontSurface = "glass"    # PVfrontSurface(glass or ARglass)
     PVbackSurface = "glass"     # PVbackSurface(glass or ARglass)
-    
+
      # Calculate PV Output Through Various Methods    
     calculateBilInterpol = True   # Only works with landscape at the moment.
     calculatePVMismatch = True

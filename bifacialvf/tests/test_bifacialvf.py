@@ -83,6 +83,7 @@ def test_endtoend():
 def test_1axis_endtoend():
     '''
     end to end test, first 24 hours of VA Richmond .EPW file
+    this one uses ARGlass and a single row.
     
     '''
     #TODO:  consolidate and improve this
@@ -97,11 +98,11 @@ def test_1axis_endtoend():
     albedo = 0.2               # ground albedo
     clearance_height = 1
     pitch = 2.86                # 0.35 GCR. row to row spacing in normalized panel lengths. 
-    rowType = "interior"        # RowType(first interior last single)
+    rowType = "single"        # RowType(first interior last single)
     transFactor = 0.013         # TransmissionFactor(open area fraction)
     sensorsy = 6                # sensorsy(# hor rows in panel)   <--> THIS ASSUMES LANDSCAPE ORIENTATION 
-    PVfrontSurface = "glass"    # PVfrontSurface(glass or ARglass)
-    PVbackSurface = "glass"     # PVbackSurface(glass or ARglass)
+    PVfrontSurface = "ARglass"    # PVfrontSurface(glass or ARglass)
+    PVbackSurface = "ARglass"     # PVbackSurface(glass or ARglass)
     
     # Tracking instructions
     tracking=True
@@ -116,7 +117,7 @@ def test_1axis_endtoend():
     myTMY3, meta = bifacialvf.bifacialvf.readInputTMY(TMYtoread)
     #deltastyle = 'TMY3'
     myTMY3_2 = myTMY3.iloc[0:24].copy()
-    # Simulate just the first 24 hours of the Richmond data file
+    # Simulate just the first 24 hours of the Richmond data file. SINGLE
     bifacialvf.simulate(myTMY3_2, meta, writefiletitle=writefiletitle, 
              tilt=tilt, sazm=sazm, pitch=pitch, clearance_height=clearance_height, 
              rowType=rowType, transFactor=transFactor, sensorsy=sensorsy, 

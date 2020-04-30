@@ -86,7 +86,7 @@ def simulate(myTMY3, meta, writefiletitle=None, tilt=0, sazm=180,
              calculatePVMismatch=False, cellsnum= 72, 
              portraitorlandscape='landscape', bififactor = 1.0,
              calculateBilInterpol=False, BilInterpolParams=None,
-             deltastyle='SAM'):
+             deltastyle='TMY3'):
 
         '''
       

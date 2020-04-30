@@ -41,7 +41,7 @@ def setupforBilinearInterpolation(BilInterpolParams=None):
 
         mat_contents = sio.loadmat(os.path.join(currentdir,'BF_BifacialIrradiances','BilinearInterpParams','IVArrayYingli.mat'))
         IVArray=mat_contents['IVArray']        
-        mat_contents = sio.loadmat(os.path.join(currentdir,'BF_BifacialIrradiances','BilinearInterpParams','newBilinearParamsYingLi.mat'))
+        mat_contents = sio.loadmat(os.path.join(currentdir,'BF_BifacialIrradiances','BilinearInterpParams','newBilinearParamsYingli.mat'))
         beta_voc_all=mat_contents['beta_voc_all']        
         m_all=mat_contents['m_all']
         bee_all=mat_contents['bee_all']

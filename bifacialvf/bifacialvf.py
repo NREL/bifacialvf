@@ -55,18 +55,23 @@ def readInputTMY(TMYtoread):
     dataframe, meta
         
     '''
+    import pandas as pd
+    
     if TMYtoread is None: # if no file passed in, the readtmy3 graphical file picker will open.
-        (myTMY3,meta)=pvlib.iotools.read_tmy3(TMYtoread)        
+        (myTMY3,meta)=pvlib.iotools.read_tmy3(TMYtoread)  # , coerce_year=2001     
     elif TMYtoread.lower().endswith('.csv') :  
-        (myTMY3,meta)=pvlib.iotools.read_tmy3(TMYtoread)        
+        (myTMY3,meta)=pvlib.iotools.read_tmy3(TMYtoread)  # , coerce_year=2001      
     elif TMYtoread.lower().endswith('.epw') : 
-        (myTMY3,meta) = pvlib.iotools.read_epw(TMYtoread)
+        (myTMY3,meta) = pvlib.iotools.read_epw(TMYtoread) # requires pvlib > 0.7.0 #, coerce_year=2001
         # rename different field parameters to match DNI, DHI, DryBulb, Wspd
-        myTMY3.rename(columns={'Direct normal radiation in Wh/m2':'DNI',
-                               'Diffuse horizontal radiation in Wh/m2':'DHI',
-                               'Dry bulb temperature in C':'DryBulb',
-                               'Wind speed in m/s':'Wspd',
-                               'Alb (unitless)': 'Alb'}, inplace=True)
+        #pvlib uses -1hr offset that needs to be un-done. Why did they do this?
+        myTMY3.index = myTMY3.index+pd.Timedelta(hours=1) 
+        myTMY3.rename(columns={'dni':'DNI', 'ghi':'GHI',
+                               'dhi':'DHI',
+                               'temp_air':'DryBulb',
+                               'wind_speed':'Wspd',
+                               'albedo': 'Alb'}, inplace=True)
+  
     else:
         raise Exception('Incorrect extension for TMYtoread. Either .csv (TMY3) .epw or None')
         
@@ -156,7 +161,10 @@ def simulate(myTMY3, meta, writefiletitle=None, tilt=0, sazm=180,
 
         noRows, noCols = myTMY3.shape
         lat = meta['latitude']; lng = meta['longitude']; tz = meta['TZ']
-        name = meta['Name']
+        try:
+            name = meta['Name'] #TMY3
+        except KeyError:  
+            name = meta['city'] #EPW
         
         ## infer the data frequency in minutes
         dataInterval = (myTMY3.index[1]-myTMY3.index[0]).total_seconds()/60
@@ -208,7 +216,7 @@ def simulate(myTMY3, meta, writefiletitle=None, tilt=0, sazm=180,
         ## Distance between rows for no shading on Dec 21 at 9 am
         print( " ")
         print( "********* ")
-        print( "Running Simulation for TMY3: ", meta['Name'])
+        print( "Running Simulation for TMY3: ")
         print( "Location:  ", name)
         print( "Lat: ", lat, " Long: ", lng, " Tz ", tz)
         print( "Parameters: tilt: ", tilt, "  Sazm: ", sazm, "   ", 
@@ -452,7 +460,7 @@ if __name__ == "__main__":
     myTMY3, meta = readInputTMY(TMYtoread)
     deltastyle = 'TMY3'
     # Function
-    simulate(TMYtoread, meta, writefiletitle=writefiletitle, 
+    simulate(myTMY3, meta, writefiletitle=writefiletitle, 
              tilt=tilt, sazm=sazm, pitch=pitch, clearance_height=clearance_height, 
              rowType=rowType, transFactor=transFactor, sensorsy=sensorsy, 
              PVfrontSurface=PVfrontSurface, PVbackSurface=PVbackSurface, 

@@ -32,7 +32,7 @@ def test_endtoend():
     
     # IO Files
     TMYtoread="bifacialvf/data/724010TYA.csv"   # VA Richmond 724010TYA.csv
-    writefiletitle="bifacialvf/tests/Test_RICHMOND_1.0.csv"
+    writefiletitle="bifacialvf/tests/_RICHMOND_1.0.csv"
     
     # Variables
     tilt = 10                   # PV tilt (deg)
@@ -89,7 +89,7 @@ def test_1axis_endtoend():
     
     # IO Files
     TMYtoread="bifacialvf/data/USA_VA_Richmond.Intl.AP.724010_TMY.epw"   # VA Richmond EPW
-    writefiletitle="bifacialvf/tests/Test_RICHMOND_1axis.csv"
+    writefiletitle="bifacialvf/tests/_RICHMOND_1axis.csv"
     
     # Variables
     tilt = 0                   # PV tilt (deg)
@@ -110,11 +110,7 @@ def test_1axis_endtoend():
     
     deltastyle = 'TMY3'
     # Calculate PV Output Through Various Methods    
-    #calculateBilInterpol = True   # Only works with landscape at the moment.
-    #calculatePVMismatch = True
-    #portraitorlandscape='landscape'   # portrait or landscape
-    #cellsnum = 72
-    #bififactor = 1.0
+
 
     # read input
     myTMY3, meta = bifacialvf.bifacialvf.readInputTMY(TMYtoread)
@@ -137,6 +133,36 @@ def test_1axis_endtoend():
     data['GTIBackavg'] = data[['No_1_RowBackGTI', 'No_2_RowBackGTI','No_3_RowBackGTI','No_4_RowBackGTI','No_5_RowBackGTI','No_6_RowBackGTI']].mean(axis=1)
     assert np.allclose(data['GTIFrontavg'].array, TRACKED_ENDTOEND_GTIFRONT)
     assert np.allclose(data['GTIBackavg'].array, TRACKED_ENDTOEND_GTIBACK)
+
+def test_bilininterpol():
+    import pandas as pd
+    inputfile = "bifacialvf/tests/Test_RICHMOND_mismatch.csv"
+    outputfile = "bifacialvf/tests/Test_RICHMOND_mismatch_Bilinterpol.csv"
+    portraitorlandscape='landscape'   # portrait or landscape
+    bififactor = 1.0
+    
+    bifacialvf.bifacialvf.analyseVFResultsBilInterpol(filename=inputfile, portraitorlandscape=portraitorlandscape, bififactor=bififactor)
+    results = pd.read_csv(outputfile, skiprows=2)
+    assert results['BilInterpol FRONT + BACK (Averaged) PmaxIdeal [W]'].sum() == \
+        pytest.approx(247.595, abs = 0.001)
+    assert results['BilInterpol FRONT + BACK (Detailed) PmaxUnmatched [W]'].sum() == \
+        pytest.approx(247.165, abs = 0.001)
+
+
+def test_pvmismatch():
+    import pandas as pd
+    inputfile = "bifacialvf/tests/Test_RICHMOND_mismatch.csv"
+    outputfile = "bifacialvf/tests/Test_RICHMOND_mismatch_PVMismatch.csv"
+    portraitorlandscape='landscape'   # portrait or landscape
+    bififactor = 1.0
+    numcells = 72
+
+    bifacialvf.bifacialvf.analyseVFResultsPVMismatch(filename=inputfile, portraitorlandscape=portraitorlandscape, bififactor=bififactor, numcells=numcells)
+    results = pd.read_csv(outputfile, skiprows=2)
+    assert results['PVMismatch FRONT + BACK (Averaged) PmaxIdeal [W]'].sum() == \
+        pytest.approx(195.309, abs = 0.001)
+    assert results['PVMismatch FRONT + BACK (Detailed) PmaxUnmatched [W]'].sum() == \
+        pytest.approx(194.879, abs = 0.001)    
     
 
 '''  FROM test_vf with nice test fixtures n stuff

@@ -189,9 +189,9 @@ def simulate(myTMY3, meta, writefiletitle=None, tilt=0, sazm=180,
                 myTMY3['trackingdata_surface_tilt'] = trackingdata['surface_tilt']         
                 myTMY3['trackingdata_surface_azimuth'] = trackingdata['surface_azimuth']      
             
-            [C, D] = trackingBFvaluescalculator(myTMY3['trackingdata_surface_tilt'], hub_height, pitch)
-            myTMY3['C'] = C
-            myTMY3['D'] = D
+            [myTMY3['C'], myTMY3['D']] = trackingBFvaluescalculator(myTMY3['trackingdata_surface_tilt'], hub_height, pitch)
+            #myTMY3['C'] = C
+            #myTMY3['D'] = D
                 
         # Check what Albedo to se:
         if albedo == None:

@@ -211,8 +211,8 @@ def simulate(myTMY3, meta, writefiletitle=None, tilt=0, sazm=180,
                 print("Albedo value passed, but also present in TMY3 file. ",
                       "Using albedo value passed. To use the ones in TMY3 file",
                       "re-run simulation with albedo=None\n")
-                useTMYalbedo=False
-                
+            useTMYalbedo=False
+
         ## Distance between rows for no shading on Dec 21 at 9 am
         print( " ")
         print( "********* ")

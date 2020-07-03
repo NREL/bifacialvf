@@ -77,6 +77,19 @@ def readInputTMY(TMYtoread):
         
     return myTMY3, meta
 
+def fixintervalTMY(myTMY3, meta):
+    '''
+    If data is passed in TMY3 format but has a interval smaller than 1 HR, this 
+    function fixes the timestamps from the already imported TMY3 data with 
+    readInputTMY. It assume there is a column labeld 'Time (HH:MM)' in myTMY3
+    '''
+    
+    myTMY3, meta = bifacialvf.bifacialvf.readInputTMY(TMYtoread)
+    myTMY3['Datetime'] = pd.to_datetime(myTMY3['Date (MM/DD/YYYY)'] + ' ' + myTMY3['Time (HH:MM)'])
+    myTMY3 = myTMY3.set_index('Datetime').tz_localize(int(meta['TZ'] * 3600))
+
+    return myTMY3, meta
+
 
 def simulate(myTMY3, meta, writefiletitle=None, tilt=0, sazm=180, 
              clearance_height=None, hub_height = None, 

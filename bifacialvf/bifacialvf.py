@@ -83,8 +83,8 @@ def fixintervalTMY(myTMY3, meta):
     function fixes the timestamps from the already imported TMY3 data with 
     readInputTMY. It assume there is a column labeld 'Time (HH:MM)' in myTMY3
     '''
+    import pandas as pd
     
-    myTMY3, meta = bifacialvf.bifacialvf.readInputTMY(TMYtoread)
     myTMY3['Datetime'] = pd.to_datetime(myTMY3['Date (MM/DD/YYYY)'] + ' ' + myTMY3['Time (HH:MM)'])
     myTMY3 = myTMY3.set_index('Datetime').tz_localize(int(meta['TZ'] * 3600))
 

@@ -710,8 +710,10 @@ def sunrisecorrectedsunposition(myTMY3, metdata, deltastyle = 'exact'):
     if deltastyle == 'exact':
         print("Calculating Sun position with no delta, for exact timestamp in input Weather File")
         solpos = pvlib.irradiance.solarposition.get_solarposition(datetimetz,lat, lng, elev)
-        sunup = None
-        return solpos
+        solpos['Sun position time'] = solpos.index
+        solpos.index = datetimetz  #this has the original time data in it
+        sunup= pvlib.irradiance.solarposition.sun_rise_set_transit_spa(datetimetz, lat, lng) 
+        return solpos, sunup
     else: 
         if interval== pd.Timedelta('1h'):
             if deltastyle == 'TMY3':
@@ -754,5 +756,4 @@ def sunrisecorrectedsunposition(myTMY3, metdata, deltastyle = 'exact'):
         solpos = pvlib.irradiance.solarposition.get_solarposition(sunup['corrected_timestamp'],lat,lng,elev)   
         solpos['Sun position time'] = solpos.index
         solpos.index = datetimetz  #this has the original time data in it
-
         return solpos, sunup

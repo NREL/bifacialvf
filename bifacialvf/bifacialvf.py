@@ -99,7 +99,7 @@ def simulate(myTMY3, meta, writefiletitle=None, tilt=0, sazm=180,
              calculatePVMismatch=False, cellsnum= 72, 
              portraitorlandscape='landscape', bififactor = 1.0,
              calculateBilInterpol=False, BilInterpolParams=None,
-             deltastyle='TMY3'):
+             deltastyle='TMY3', agriPV=False):
 
         '''
       
@@ -203,8 +203,6 @@ def simulate(myTMY3, meta, writefiletitle=None, tilt=0, sazm=180,
                 myTMY3['trackingdata_surface_azimuth'] = trackingdata['surface_azimuth']      
             
             [myTMY3['C'], myTMY3['D']] = trackingBFvaluescalculator(myTMY3['trackingdata_surface_tilt'], hub_height, pitch)
-            #myTMY3['C'] = C
-            #myTMY3['D'] = D
                 
         # Check what Albedo to se:
         if albedo == None:
@@ -302,6 +300,9 @@ def simulate(myTMY3, meta, writefiletitle=None, tilt=0, sazm=180,
                 outputtitles+=['height']
                 outputtitles+=['D']
 
+            if agriPV:
+                print("Saving Ground Irradiance Values for AgriPV Analysis. ")
+                outputitles+=['Ground Irradiance Values']
             sw.writerow(outputtitles)
             
             ## Loop through file.  TODO: replace this with for loop.
@@ -422,6 +423,9 @@ def simulate(myTMY3, meta, writefiletitle=None, tilt=0, sazm=180,
                         outputvalues.append(C)
                         outputvalues.append(D)
 
+                    if agriPV:
+                        outputvalues.append(rearGroundGHI)
+                        
                     sw.writerow(outputvalues)
     
         	# End of daylight if loop 

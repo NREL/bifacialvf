@@ -302,7 +302,7 @@ def simulate(myTMY3, meta, writefiletitle=None, tilt=0, sazm=180,
 
             if agriPV:
                 print("Saving Ground Irradiance Values for AgriPV Analysis. ")
-                outputitles+=['Ground Irradiance Values']
+                outputtitles+=['Ground Irradiance Values']
             sw.writerow(outputtitles)
             
             ## Loop through file.  TODO: replace this with for loop.

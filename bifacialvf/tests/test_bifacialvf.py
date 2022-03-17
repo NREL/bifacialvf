@@ -11,8 +11,13 @@ from bifacialvf.tests import (
     FIXED_ENDTOEND_GTIFRONT, FIXED_ENDTOEND_GTIBACK,
     TRACKED_ENDTOEND_GTIFRONT, TRACKED_ENDTOEND_GTIBACK)
 
+FIXED_ENDTOEND_GTIFRONT = [8.4, 55.2, 71.1, 108.8, 124.7, 139.3,
+111.9, 115.2, 58.6, 19.5]
+
 TESTDIR = os.path.dirname(__file__)  # this folder
 DATADIR = os.path.abspath(os.path.join(TESTDIR,'..','data'))
+MARION_C_File = os.path.join(TESTDIR,'724010TYA_BillMarion_C_Results.csv')
+
 print(TESTDIR)
 print(DATADIR)
 #os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', 'templates'))
@@ -79,13 +84,21 @@ def test_endtoend():
     #Load the results from the resultfile
     from bifacialvf import loadVFresults
     (data, metadata) = loadVFresults(writefiletitle)
-    #print data.keys()
-    # calculate average front and back global tilted irradiance across the module chord
     data['GTIFrontavg'] = data[['No_1_RowFrontGTI', 'No_2_RowFrontGTI','No_3_RowFrontGTI','No_4_RowFrontGTI','No_5_RowFrontGTI','No_6_RowFrontGTI']].mean(axis=1)
     data['GTIBackavg'] = data[['No_1_RowBackGTI', 'No_2_RowBackGTI','No_3_RowBackGTI','No_4_RowBackGTI','No_5_RowBackGTI','No_6_RowBackGTI']].mean(axis=1)
-    assert np.allclose(data['GTIFrontavg'].array, FIXED_ENDTOEND_GTIFRONT)
-    assert np.allclose(data['GTIBackavg'].array, FIXED_ENDTOEND_GTIBACK)
-   
+
+    # Lad comparison data    
+    (data_Marion, metadata2) = loadVFresults(MARION_C_File)
+    # calculate average front and back global tilted irradiance across the module chord
+    data_Marion['GTIFrontavg'] = data_Marion[['No_1_RowFrontGTI', 'No_2_RowFrontGTI','No_3_RowFrontGTI','No_4_RowFrontGTI','No_5_RowFrontGTI','No_6_RowFrontGTI']].mean(axis=1)
+    data_Marion['GTIBackavg'] = data_Marion[['No_1_RowBackGTI', 'No_2_RowBackGTI','No_3_RowBackGTI','No_4_RowBackGTI','No_5_RowBackGTI','No_6_RowBackGTI']].mean(axis=1)
+
+    assert np.allclose(list(round(data['GTIFrontavg'][1:4],1)), list(round(data_Marion['GTIFrontavg'][1:4],1)))
+    assert np.allclose(list(round(data['GTIFrontavg'][1:4],1)), FIXED_ENDTOEND_GTIFRONT[1:4])
+    assert np.allclose(list(round(data['GTIBackavg'][1:4],1)), list(round(data_Marion['GTIBackavg'][1:4],1)))
+    assert np.allclose(list(round(data['GTIbackBroadBand'][1:10],1)), list(round(data_Marion['GTIbackBroadBand'][1:10],1)))    
+
+
 def test_1axis_endtoend():
     '''
     end to end test, first 24 hours of VA Richmond .EPW file

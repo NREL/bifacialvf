@@ -3,6 +3,13 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# bifacialvf tests
+tests/OUTPUTS/
+
+# bifacialvf temp folder
+bifacialvf/TEMP/
+
+
 # C extensions
 *.so
 

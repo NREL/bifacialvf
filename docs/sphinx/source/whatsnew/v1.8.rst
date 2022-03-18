@@ -1,17 +1,17 @@
 .. _whatsnew_0108:
 
-v1.8 (24 / 04 / 2020)
+v1.8 (18 / 03 / 2022)
 =====================
 
-Important bug fix on Sunset hour position calculation.
-Sphinx documentation.
-SUnposition now calculated from PVLib.
-Sunposition can now be calculated at the timestamp, or with a delta of time before or after the timestamp.
-Input can be TMY, EPW, or a dataframe with the right column headings. See documentation for the needed headings.
-Albedo gets read from a column for every timepoint provided.
-Bilinear Interpolation 
-Input to main bifacialvf function to run mismatch analysis
-PVMismatch routines
-Biliniear Interpolation routines
-Deprecated "D" (spacing from module edge to next row module edge) deprecated
-
+* ``agriPV`` as input, so that .csv output has the Ground irradiance at every timestep. The ground irradiance is given in 100 segments between start of the module and start of the module in the next row. 
+* Capability to run Mismatch Analysis along with the bifacial calculations: can use PVMismatch (set input calculatePVMismatch to True) or Bilinear Interpolation (set input calculateBilInterpol to True)
+* Input can be TMY, EPW, or a dataframe with the right column headings. See documentation for the needed headings.
+* New Sphinx documentation.
+* New logo!
+* Sunposition now calculated from PVLib.
+* Sunposition can now be calculated at the timestamp, or with a delta of time before or after the timestamp. Sunrise and Susnet positions are also calculated and the sunposition for that hour is corrected (i.e. if it's right labeled data, and sun rises at 7:40, sunposition is calculated at 7:50 not at 7:30)
+* Albedo gets read from a column for every timepoint provided.
+* Deprecated "D" (spacing from module edge to next row module edge) deprecated
+* Important bug fix on Sunset hour position calculation.
+* Some Changes throughout to take advantage of arrays, like moving all tracking calculations outside of the main loop.
+* Changed how results are printed for tracking scenarios; before when sazm switched from 90 to 270, the Sensor position changed (so S1 became Slast), same for ground. Now the positoins are internally inverted so the output is consistent for spatil location.

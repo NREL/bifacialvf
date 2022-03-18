@@ -1182,17 +1182,20 @@ def getSkyConfigurationFactors(rowType, beta, C, D):
 
         for i in range(0,100):        
             x += delta
-            #  <--rtr=x1+D--><--rtr=x1+D--><--rtr=x1+D-->
-            # |\            |\            |\            |\ 
-            # | \ `         | \           | \          /| \
-            # h  \   `      h  \          h  \       /  h  \
-            # |   \     `   |   \         |   \    /    |   \
-            # |_x1_\____D__`|_x1_\____D___|_x1_\_/_D____|_x1_\_
-            # |               `   <------x-----/|
-            # C                  `           /
-            # |              angA   `      /  angB
-            # *------------------------`-/---------------------
-            #                          x
+            # all dimensions are relative to module height
+            # in other words, consider a module height of 1 arb. unit
+            #
+            #   <--rtr=x1+D--><--rtr=x1+D--><--rtr=x1+D-->
+            #  :\\     row   :\\     row   :\\     row   :\\
+            #  : \\`    0    : \\     1    : \\     2   /: \\
+            #  h  \\  `      h  \\         h  \\      /  h  \\
+            #  :   \\    `   :   \\        :   \\   /    :   \\ pi-beta
+            #  :.x1.\\...D..`:.x1.\\...D...:.x1.\\/...D..:.x1.\\...
+            #  :               `   <------x-----/|
+            #  C                  `           /
+            #  :              angA   `      /  angB
+            #  +------------------------`-/---------------------
+            #                            x
             # use ATAN2: 4-quadrant tangent instead of ATAN
             # check 2 rows away
             angA = math.atan2(h + C, (2.0 * rtr + x1 - x))

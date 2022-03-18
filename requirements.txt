@@ -6,7 +6,7 @@ numpy==1.21.0
 pvlib==0.7.0
 pandas==0.25.2
 pvmismatch==4.1
-py==1.8.0
+py==1.10.0
 pyparsing==2.4.7
 pytest==5.4.1
 pytest-cov==2.8.1

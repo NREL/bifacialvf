@@ -3,7 +3,7 @@
 # Bifacial PV View Factor model
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 [![Build Status](https://travis-ci.org/NREL/bifacialvf.svg?branch=main)](https://travis-ci.org/NREL/bifacialvf)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3860350.svg)](https://doi.org/10.5281/zenodo.3860350)
+[![DOI](https://zenodo.org/badge/114160149.svg)](https://zenodo.org/badge/latestdoi/114160149)
 
 keywords: python, configuration factor model, electrical model mismatch for bifacial modules.
 
@@ -48,7 +48,9 @@ If you use bifacial_radiance in a published work, please cite:
 
     Marion, B., MacAlpine, S., Deline, C., Asgharzadeh, A., Toor, F., Riley, D., … Hansen, C. (2017). A Practical Irradiance Model for Bifacial PV Modules: Preprint. In 44th IEEE Photovoltaic Specialists Conference. Washington, DC. https://www.nrel.gov/docs/fy17osti/67847.pdf. NREL/CP-5J00-67847
 
-Please also cite the DOI corresponding to the specific version of bifacial_radiance that you used. bifacial_radiance DOIs are listed at [Zenodo.org](https://zenodo.org/search?page=1&size=20&q=conceptrecid:3860349&all_versions&sort=-version)
+Please also cite the DOI corresponding to the specific version of bifacialVF that you used. bifacialvf DOIs are listed at [Zenodo.org](https://zenodo.org/search?page=1&size=20&q=conceptrecid:6369162&all_versions&sort=-version). 
+
+    Silvana Ovaitt, Chris Deline, Mark Mikofski, & Nick DiOrio. (2022). NREL/bifacialvf: v0.1.8 Release (v0.1.8). Zenodo. https://doi.org/10.5281/zenodo.6369162
 
 Bilinear Interpolation based on the publications:
 

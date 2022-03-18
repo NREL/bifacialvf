@@ -33,7 +33,7 @@ jobs:
         pip install coveralls wheel
 
     - name: Test with pytest ${{ matrix.env }}
-      uses: GabrielBB/xvfb-action@v1  # GUI testing requires xvfb
+      #uses: GabrielBB/xvfb-action@v1  # GUI testing requires xvfb
       with:
         run: |
           pytest --cov=bifacialvf

@@ -96,8 +96,15 @@ setup(
     # $ pip install -e .[dev,test]
     
     extras_require={
-        #'dev': ['check-manifest'],
-        #'test': ['coverage'],
+        'all': [
+            'ipython',
+            'jupyter',
+            'sphinx >= 1.8.0',
+            'sphinx-autoapi>=1.1.0',
+            'sphinx-rtd-theme>=0.4.3',
+            'pytest',
+            'pytest-cov',
+            ],
     },
     
     # If there are data files included in your packages that need to be

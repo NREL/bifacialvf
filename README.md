@@ -3,6 +3,7 @@
 # Bifacial PV View Factor model
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 [![Build Status](https://travis-ci.org/NREL/bifacialvf.svg?branch=main)](https://travis-ci.org/NREL/bifacialvf)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3860350.svg)](https://doi.org/10.5281/zenodo.3860350)
 
 keywords: python, configuration factor model, electrical model mismatch for bifacial modules.
 
@@ -54,15 +55,8 @@ Bilinear Interpolation based on the publications:
 
     Marion, B., Rummel, S., & Anderberg, A. (2004). Current--voltage curve translation by bilinear interpolation. Progress in Photovoltaics: Research and Applications, 12(8), 593–607.
 
-bifacialvf
-Original code by Bill Marion
-Python translation by Silvana Ayala
-Updates by Chris Deline
-
-Original bilinear interpolation code by Sara MacAlpine
-Python translation & Updates by Silvana Ayala
-
-PVMismatch add-on
-Original code by PVMismatch
+bifacialvf: Original code by Bill Marion, Python translation by Silvana Ayala, Updates by Chris Deline & team
+Original bilinear interpolation code by Sara MacAlpine, Python translation & Updates by Silvana Ayala
+PVMismatch add-on: PVmismatch code from [PVMismatch](https://github.com/SUNPower/PVMismatch), by Sunpower
 
 

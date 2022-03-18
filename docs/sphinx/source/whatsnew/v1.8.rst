@@ -15,3 +15,12 @@ v1.8 (18 / 03 / 2022)
 * Important bug fix on Sunset hour position calculation.
 * Some Changes throughout to take advantage of arrays, like moving all tracking calculations outside of the main loop.
 * Changed how results are printed for tracking scenarios; before when sazm switched from 90 to 270, the Sensor position changed (so S1 became Slast), same for ground. Now the positoins are internally inverted so the output is consistent for spatil location.
+* Updated requirements
+* Updated TUTORIALS
+
+Contributors
+~~~~~~~~~~~~
+* Silvana Ovaitt (:ghuser:`shirubana`)
+* Chris Deline (:ghuser:`cdeline`)
+* Mark Mikofski (:ghuser:`mikofski`)
+* Nick DiOrio (:ghuser:`nickdiorio`)

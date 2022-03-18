@@ -1,7 +1,9 @@
-[![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
-[![Build Status](https://travis-ci.org/NREL/bifacialvf.svg?branch=master)](https://travis-ci.org/NREL/bifacialvf)
+![logo](docs/images_wiki/bifacialVF.png)
 
 # bifacialvf_mismatch - Bifacial PV View Factor model with Mismatch routines
+[![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
+[![Build Status](https://travis-ci.org/NREL/bifacialvf.svg?branch=main)](https://travis-ci.org/NREL/bifacialvf)
+
 python, configuration factor model, electrical model mismatch for bifacial modules.
 
 Original bilinear interpolation code by Sara MacAlpine
@@ -50,8 +52,8 @@ This software is written for Python 2 or 3. NREL recommends [Anaconda Python](ht
 ### Install development mode from GitHub
 For those interested in contributing to bifacialvf:
 
-1. Clone the bifacialvf repository: `$ git clone https://github.com/NREL/bifacialvf.git bifacialvf-master`
-2. Navigate to the repository directory where `setup.py` is located: `$ cd bifacialvf-master`
+1. Clone the bifacialvf repository: `$ git clone https://github.com/NREL/bifacialvf.git bifacialvf-main`
+2. Navigate to the repository directory where `setup.py` is located: `$ cd bifacialvf-main`
 3. Install via pip in development mode: `$ pip install -e .`
 
 ## Usage

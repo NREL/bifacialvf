@@ -14,6 +14,8 @@ from setuptools import setup, find_packages
 from codecs import open
 from os import path
 
+import versioneer
+
 here = path.abspath(path.dirname(__file__))
 
 # Get the long description from the README file
@@ -26,7 +28,10 @@ setup(
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version='0.1.7',
+    #version='0.1.8',
+    version=versioneer.get_version(),
+    cmdclass=versioneer.get_cmdclass(),
+
 
     description='Bifacial PV system evaluation using view factor method',
     long_description=long_description,
@@ -58,8 +63,9 @@ setup(
 
         # Specify the Python versions you support here. In particular, ensure
         # that you indicate whether you support Python 2, Python 3 or both.
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
 
     ],
 
@@ -79,8 +85,9 @@ setup(
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
     install_requires=['numpy',
-                      'pvlib >= 0.5.0',
-                      'pvmismatch'
+                      'pvlib > 0.6.1',
+                      'pvmismatch',
+                      'tqdm >= 4.32.1'		
                       ],
 
     # List additional groups of dependencies here (e.g. development
@@ -89,8 +96,15 @@ setup(
     # $ pip install -e .[dev,test]
     
     extras_require={
-        #'dev': ['check-manifest'],
-        #'test': ['coverage'],
+        'all': [
+            'ipython',
+            'jupyter',
+            'sphinx >= 1.8.0',
+            'sphinx-autoapi>=1.1.0',
+            'sphinx-rtd-theme>=0.4.3',
+            'pytest',
+            'pytest-cov',
+            ],
     },
     
     # If there are data files included in your packages that need to be

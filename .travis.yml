@@ -21,7 +21,7 @@ script:
 - pytest
 
 # Deploy to pypi on the python 3.6 build with upgraded dependencies when 
-# a new version is tagged on github from the master branch. Example from Rdtools
+# a new version is tagged on github from the main branch. Example from Rdtools
 deploy:
   provider: pypi
   user: cdeline

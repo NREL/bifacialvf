@@ -3,7 +3,7 @@
 <head><meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>(dev) dataFrame debug</title><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
+<title>3 - Intermediate Example - Fixed Tilt MISMATCH Calculation</title><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
 
 
 
@@ -13968,27 +13968,58 @@ a.anchor-link {
     </script>
     <!-- End of mathjax configuration --></head>
 <body class="jp-Notebook" data-jp-theme-light="true" data-jp-theme-name="JupyterLab Light">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
+
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<h1 id="1---Introductory-Example:-Fixed-Tilt-simple-setup">1 - Introductory Example: Fixed-Tilt simple setup<a class="anchor-link" href="#1---Introductory-Example:-Fixed-Tilt-simple-setup">&#182;</a></h1><p>This jupyter journal will walk us through the creation of the most basic fixed-tilt simulation possible with bifacialvf.
+We will simulate a 1-up landscape system over a white rooftop.</p>
+<p>Steps include:</p>
+<ol>
+    <li> <a href='#step1'> Create a folder for your simulation, and Load bifacialvf </a></li> 
+    <li> <a href='#step2'> Download Weather File and Read </a></li> 
+    <li> <a href='#step3'> Set all your Parameters </a></li> 
+    <li> <a href='#step4'> Run simulation </a></li> 
+    <li> <a href='#step5'> Read Results </a></li> 
+    <li> <a href='#step6'> Plot Results </a></li> 
+</ol>
+</div>
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<p><a id='step1'></a></p>
+
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
 <div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[1]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">C</span><span class="o">=</span><span class="mf">0.2</span>
-<span class="n">D</span><span class="o">=</span><span class="mf">1.5</span>
-<span class="n">rowType</span> <span class="o">=</span> <span class="s1">&#39;interior&#39;</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">bifacialvf</span>
 
-<span class="p">[</span><span class="n">rearSkyConfigFactors2</span><span class="p">,</span> <span class="n">frontSkyConfigFactors2</span><span class="p">]</span> <span class="o">=</span> <span class="n">getSkyConfigurationFactors</span><span class="p">(</span><span class="n">rowType</span><span class="p">,</span> <span class="n">tilt</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">D</span><span class="p">)</span>       <span class="c1">## Sky configuration factors are the same for all times, only based on geometry and row type</span>
+<span class="c1"># IO Files</span>
+<span class="n">testfolder</span> <span class="o">=</span> <span class="n">Path</span><span class="p">()</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="s1">&#39;bifacialvf&#39;</span> <span class="o">/</span> <span class="s1">&#39;TEMP&#39;</span> <span class="o">/</span> <span class="s1">&#39;Tutorial_03&#39;</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">testfolder</span><span class="p">):</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">testfolder</span><span class="p">)</span>
+</pre></div>
 
-<span class="c1"># In[3]:</span>
+     </div>
+</div>
+</div>
+</div>
 
-<span class="n">beta</span> <span class="o">=</span> <span class="n">myTMY3</span><span class="p">[</span><span class="s1">&#39;trackingdata_surface_tilt&#39;</span><span class="p">]</span>
-<span class="n">C</span> <span class="o">=</span> <span class="n">myTMY3</span><span class="p">[</span><span class="s1">&#39;C&#39;</span><span class="p">]</span>
-<span class="n">D</span> <span class="o">=</span> <span class="n">myTMY3</span><span class="p">[</span><span class="s1">&#39;D&#39;</span><span class="p">]</span>
-
-<span class="c1"># In[4]:</span>
-<span class="p">[</span><span class="n">rearSkyConfigFactors2</span><span class="p">,</span> <span class="n">frontSkyConfigFactors2</span><span class="p">]</span> <span class="o">=</span> <span class="n">getSkyConfigurationFactors</span><span class="p">(</span><span class="n">rowType</span><span class="p">,</span> <span class="n">myTMY3</span><span class="p">[</span><span class="s1">&#39;trackingdata_surface_tilt&#39;</span><span class="p">],</span> 
-                                                                              <span class="n">myTMY3</span><span class="p">[</span><span class="s1">&#39;C&#39;</span><span class="p">],</span> <span class="n">myTMY3</span><span class="p">[</span><span class="s1">&#39;D&#39;</span><span class="p">])</span>       <span class="c1">## Sky configuration factors are the same for all times, only based on geometry and row type</span>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[2]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+     <div class="CodeMirror cm-s-jupyter">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Download and Read input</span>
+<span class="n">TMYtoread</span><span class="o">=</span><span class="n">bifacialvf</span><span class="o">.</span><span class="n">getEPW</span><span class="p">(</span><span class="n">lat</span><span class="o">=</span><span class="mf">37.5407</span><span class="p">,</span><span class="n">lon</span><span class="o">=-</span><span class="mf">77.4360</span><span class="p">,</span> <span class="n">path</span> <span class="o">=</span> <span class="n">testfolder</span><span class="p">)</span>
+<span class="n">myTMY3</span><span class="p">,</span> <span class="n">meta</span> <span class="o">=</span> <span class="n">bifacialvf</span><span class="o">.</span><span class="n">readInputTMY</span><span class="p">(</span><span class="n">TMYtoread</span><span class="p">)</span>
+<span class="n">deltastyle</span> <span class="o">=</span> <span class="s1">&#39;TMY3&#39;</span>  <span class="c1"># </span>
 </pre></div>
 
      </div>
@@ -14007,18 +14038,11 @@ a.anchor-link {
     <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 
 
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr">
-<pre>
-<span class="ansi-red-intense-fg ansi-bold">---------------------------------------------------------------------------</span>
-<span class="ansi-red-intense-fg ansi-bold">NameError</span>                                 Traceback (most recent call last)
-<span class="ansi-green-intense-fg ansi-bold">~\AppData\Local\Temp\1/ipykernel_7780/1917928093.py</span> in <span class="ansi-cyan-fg">&lt;module&gt;</span>
-<span class="ansi-green-fg">      3</span> rowType <span class="ansi-yellow-intense-fg ansi-bold">=</span> <span class="ansi-blue-intense-fg ansi-bold">&#39;interior&#39;</span>
-<span class="ansi-green-fg">      4</span> 
-<span class="ansi-green-intense-fg ansi-bold">----&gt; 5</span><span class="ansi-yellow-intense-fg ansi-bold"> </span><span class="ansi-yellow-intense-fg ansi-bold">[</span>rearSkyConfigFactors2<span class="ansi-yellow-intense-fg ansi-bold">,</span> frontSkyConfigFactors2<span class="ansi-yellow-intense-fg ansi-bold">]</span> <span class="ansi-yellow-intense-fg ansi-bold">=</span> getSkyConfigurationFactors<span class="ansi-yellow-intense-fg ansi-bold">(</span>rowType<span class="ansi-yellow-intense-fg ansi-bold">,</span> tilt<span class="ansi-yellow-intense-fg ansi-bold">,</span> C<span class="ansi-yellow-intense-fg ansi-bold">,</span> D<span class="ansi-yellow-intense-fg ansi-bold">)</span>       <span class="ansi-red-intense-fg ansi-bold">## Sky configuration factors are the same for all times, only based on geometry and row type</span>
-<span class="ansi-green-fg">      6</span> 
-<span class="ansi-green-fg">      7</span> <span class="ansi-red-intense-fg ansi-bold"># In[3]:</span>
-
-<span class="ansi-red-intense-fg ansi-bold">NameError</span>: name &#39;getSkyConfigurationFactors&#39; is not defined</pre>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
+<pre>path = C:\Users\sayala\Documents\GitHub\bifacialvf\bifacialvf\TEMP\Tutorial_03
+Getting weather file: USA_VA_Richmond.724010_TMY2.epw
+ ... OK!
+</pre>
 </div>
 </div>
 
@@ -14026,18 +14050,216 @@ a.anchor-link {
 
 </div>
 
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[3]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span> 
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Variables</span>
+<span class="n">tilt</span> <span class="o">=</span> <span class="mi">10</span>                   <span class="c1"># PV tilt (deg)</span>
+<span class="n">sazm</span> <span class="o">=</span> <span class="mi">180</span>                  <span class="c1"># PV Azimuth(deg) or tracker axis direction</span>
+<span class="n">albedo</span> <span class="o">=</span> <span class="mf">0.62</span>               <span class="c1"># ground albedo</span>
+<span class="n">clearance_height</span><span class="o">=</span><span class="mf">0.4</span>
+<span class="n">pitch</span> <span class="o">=</span> <span class="mf">1.5</span>                   <span class="c1"># row to row spacing in normalized panel lengths. </span>
+<span class="n">rowType</span> <span class="o">=</span> <span class="s2">&quot;interior&quot;</span>        <span class="c1"># RowType(first interior last single)</span>
+<span class="n">transFactor</span> <span class="o">=</span> <span class="mf">0.013</span>         <span class="c1"># TransmissionFactor(open area fraction)</span>
+<span class="n">sensorsy</span> <span class="o">=</span> <span class="mi">6</span>                <span class="c1"># sensorsy(# hor rows in panel)   &lt;--&gt; THIS ASSUMES LANDSCAPE ORIENTATION </span>
+<span class="n">PVfrontSurface</span> <span class="o">=</span> <span class="s2">&quot;glass&quot;</span>    <span class="c1"># PVfrontSurface(glass or ARglass)</span>
+<span class="n">PVbackSurface</span> <span class="o">=</span> <span class="s2">&quot;glass&quot;</span>     <span class="c1"># PVbackSurface(glass or ARglass)</span>
+
+<span class="c1"># Calculate PV Output Through Various Methods    </span>
+<span class="c1"># This variables are advanced and explored in other tutorials.</span>
+<span class="n">calculateBilInterpol</span> <span class="o">=</span> <span class="kc">True</span>         <span class="c1"># Only works with landscape at the moment.</span>
+<span class="n">calculatePVMismatch</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="n">portraitorlandscape</span><span class="o">=</span><span class="s1">&#39;landscape&#39;</span>   <span class="c1"># portrait or landscape</span>
+<span class="n">cellsnum</span> <span class="o">=</span> <span class="mi">72</span>
+<span class="n">bififactor</span> <span class="o">=</span> <span class="mf">1.0</span>
+<span class="n">agriPV</span> <span class="o">=</span> <span class="kc">False</span>                       <span class="c1"># Returns ground irradiance values</span>
+
+<span class="c1"># Tracking instructions</span>
+<span class="n">tracking</span><span class="o">=</span><span class="kc">False</span>
+<span class="n">backtrack</span><span class="o">=</span><span class="kc">False</span>
+<span class="n">limit_angle</span> <span class="o">=</span> <span class="mi">60</span>
+
+<span class="n">writefiletitle</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">testfolder</span><span class="p">,</span> <span class="s1">&#39;Tutorial3_Results.csv&#39;</span><span class="p">)</span>
+<span class="n">myTMY3</span> <span class="o">=</span> <span class="n">myTMY3</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">24</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>  <span class="c1"># Simulate just the first 24 hours of the data file for speed on this example</span>
+<span class="n">bifacialvf</span><span class="o">.</span><span class="n">simulate</span><span class="p">(</span><span class="n">myTMY3</span><span class="p">,</span> <span class="n">meta</span><span class="p">,</span> <span class="n">writefiletitle</span><span class="o">=</span><span class="n">writefiletitle</span><span class="p">,</span> 
+         <span class="n">tilt</span><span class="o">=</span><span class="n">tilt</span><span class="p">,</span> <span class="n">sazm</span><span class="o">=</span><span class="n">sazm</span><span class="p">,</span> <span class="n">pitch</span><span class="o">=</span><span class="n">pitch</span><span class="p">,</span> <span class="n">clearance_height</span><span class="o">=</span><span class="n">clearance_height</span><span class="p">,</span> 
+         <span class="n">rowType</span><span class="o">=</span><span class="n">rowType</span><span class="p">,</span> <span class="n">transFactor</span><span class="o">=</span><span class="n">transFactor</span><span class="p">,</span> <span class="n">sensorsy</span><span class="o">=</span><span class="n">sensorsy</span><span class="p">,</span> 
+         <span class="n">PVfrontSurface</span><span class="o">=</span><span class="n">PVfrontSurface</span><span class="p">,</span> <span class="n">PVbackSurface</span><span class="o">=</span><span class="n">PVbackSurface</span><span class="p">,</span> 
+         <span class="n">albedo</span><span class="o">=</span><span class="n">albedo</span><span class="p">,</span> <span class="n">tracking</span><span class="o">=</span><span class="n">tracking</span><span class="p">,</span> <span class="n">backtrack</span><span class="o">=</span><span class="n">backtrack</span><span class="p">,</span> 
+         <span class="n">limit_angle</span><span class="o">=</span><span class="n">limit_angle</span><span class="p">,</span> <span class="n">deltastyle</span><span class="o">=</span><span class="n">deltastyle</span><span class="p">,</span>
+        <span class="n">calculateBilInterpol</span><span class="o">=</span><span class="n">calculateBilInterpol</span><span class="p">,</span> <span class="n">calculatePVMismatch</span><span class="o">=</span><span class="n">calculatePVMismatch</span><span class="p">,</span>
+        <span class="n">cellsnum</span> <span class="o">=</span> <span class="n">cellsnum</span><span class="p">,</span> <span class="n">bififactor</span><span class="o">=</span><span class="n">bififactor</span><span class="p">,</span> <span class="n">agriPV</span><span class="o">=</span><span class="n">agriPV</span><span class="p">)</span>
 </pre></div>
 
      </div>
 </div>
 </div>
+</div>
+
+<div class="jp-Cell-outputWrapper">
+
+
+<div class="jp-OutputArea jp-Cell-outputArea">
+
+<div class="jp-OutputArea-child">
+
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+
+
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
+<pre>Calculating Sun position with a delta of -30 mins. i.e. 12 is 11:30 sunpos
+Albedo value passed, but also present in TMY3 file.  Using albedo value passed. To use the ones in TMY3 file re-run simulation with albedo=None
+
+ 
+********* 
+Running Simulation for TMY3: 
+Location:   RICHMOND
+Lat:  37.5  Long:  -77.33  Tz  -5.0
+Parameters: tilt:  10   Sazm:  180     Clearance_Height :  0.4   Pitch:  1.5   Row type:  interior   Albedo:  0.62
+Saving into C:\Users\sayala\Documents\GitHub\bifacialvf\bifacialvf\TEMP\Tutorial_03\Tutorial3_Results.csv
+ 
+ 
+Distance between rows for no shading on Dec 21 at 9 am solar time =  0.4510244972733475
+Actual distance between rows =  0.515192246987792
+ 
+</pre>
+</div>
+</div>
+
+<div class="jp-OutputArea-child">
+
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+
+
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr">
+<pre>100%|█████████████████████████████████████████████████████████████████████████████████| 24/24 [00:00&lt;00:00, 407.26it/s]</pre>
+</div>
+</div>
+
+<div class="jp-OutputArea-child">
+
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+
+
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
+<pre>Warning: Bilinear Interpolation supports only Landscape mode for this release. 
+Warning: BilInterpolParams dictionary is None OR is wrongly defined. Using default values for Bilintear Interpolation routine
+Starting Bilinear Interpolation Analysis
+</pre>
+</div>
+</div>
+
+<div class="jp-OutputArea-child">
+
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+
+
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr">
+<pre>
+</pre>
+</div>
+</div>
+
+<div class="jp-OutputArea-child">
+
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+
+
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
+<pre>Finished. Time elapsed for calculating Bilinear Interpolation Output (s): 0%
+The DC Power Mismatch loss for the year is of: 1.316%
+The detailed irradiance power is: 348.2 W
+The average irradinace power is: 352.9 W
+starting
+Time elapsed for calculating PVMismatch Output  0.3130042552947998
+ending
+The DC Power Mismatch loss for the year is of: 1.202%
+The detailed irradiance power is: 284.4 W
+The average irradinace power is: 287.8 W
+Finished
+</pre>
+</div>
+</div>
+
+</div>
+
+</div>
+
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<h1 id="5.-Load-the-results-from-the-resultfile">5. Load the results from the resultfile<a class="anchor-link" href="#5.-Load-the-results-from-the-resultfile">&#182;</a></h1>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[4]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+     <div class="CodeMirror cm-s-jupyter">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">bifacialvf</span> <span class="kn">import</span> <span class="n">loadVFresults</span>
+<span class="n">mismatchResultstitle</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">testfolder</span><span class="p">,</span> <span class="s1">&#39;Tutorial3_Results_PVMismatch.csv&#39;</span><span class="p">)</span>
+<span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">metadata</span><span class="p">)</span> <span class="o">=</span> <span class="n">loadVFresults</span><span class="p">(</span><span class="n">mismatchResultstitle</span><span class="p">)</span>
+</pre></div>
+
+     </div>
+</div>
+</div>
+</div>
+
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[5]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+     <div class="CodeMirror cm-s-jupyter">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">data</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+</pre></div>
+
+     </div>
+</div>
+</div>
+</div>
+
+<div class="jp-Cell-outputWrapper">
+
+
+<div class="jp-OutputArea jp-Cell-outputArea">
+
+<div class="jp-OutputArea-child">
+
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[5]:</div>
+
+
+
+
+<div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain">
+<pre>Index([&#39;date&#39;, &#39;DNI&#39;, &#39;DHI&#39;, &#39;albedo&#39;, &#39;decHRs&#39;, &#39;ghi&#39;, &#39;inc&#39;, &#39;zen&#39;, &#39;azm&#39;,
+       &#39;pvFrontSH&#39;, &#39;aveFrontGroundGHI&#39;, &#39;GTIfrontBroadBand&#39;, &#39;pvBackSH&#39;,
+       &#39;aveBackGroundGHI&#39;, &#39;GTIbackBroadBand&#39;, &#39;maxShadow&#39;, &#39;Tamb&#39;, &#39;VWind&#39;,
+       &#39;No_1_RowFrontGTI&#39;, &#39;No_2_RowFrontGTI&#39;, &#39;No_3_RowFrontGTI&#39;,
+       &#39;No_4_RowFrontGTI&#39;, &#39;No_5_RowFrontGTI&#39;, &#39;No_6_RowFrontGTI&#39;,
+       &#39;No_1_RowBackGTI&#39;, &#39;No_2_RowBackGTI&#39;, &#39;No_3_RowBackGTI&#39;,
+       &#39;No_4_RowBackGTI&#39;, &#39;No_5_RowBackGTI&#39;, &#39;No_6_RowBackGTI&#39;,
+       &#39;PVMismatch FRONT + BACK (Averaged) PmaxIdeal [W]&#39;,
+       &#39;PVMismatch FRONT + BACK (Detailed) PmaxUnmatched [W]&#39;,
+       &#39;PVMismatch FRONT ONLY (Averaged) PmaxIdeal [W]&#39;,
+       &#39;PVMismatch FRONT ONLY (Detailed) PmaxUnmatched [W]&#39;],
+      dtype=&#39;object&#39;)</pre>
+</div>
+
+</div>
+
+</div>
+
 </div>
 
 </div>

@@ -536,7 +536,27 @@ def simulate(myTMY3, meta, writefiletitle=None, tilt=0, sazm=180,
                                   gtiAllpc, maxShadow, Tamb, VWind]
                     frontGTIrow=[]
                     backGTIrow=[]
-                    for k in range(0, sensorsy):
+                    
+                    # INVERTING Sensor measurements for tracking when tracker
+                    # facing the west side.
+                    # TODO: Modify so it works with axis_azm different of 0 
+                    #        (sazm = 90 or 270 only)
+                    if tracking == True:                                   
+                        if sazm == 270.0:
+                            rangestart = sensorsy-1
+                            rangeend = -1
+                            steprange = -1
+                            rearGroundGHI.reverse()
+                        else:
+                            rangestart = 0
+                            rangeend = sensorsy
+                            steprange = 1
+                    else:
+                            rangestart = 0
+                            rangeend = sensorsy
+                            steprange = 1
+                            
+                    for k in range(rangestart, rangeend, steprange):
                         frontGTIrow.append(frontGTI[k])
                         backGTIrow.append(backGTI[k])      
                     outputvalues+=frontGTIrow

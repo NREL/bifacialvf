@@ -51,6 +51,7 @@ If you use bifacial_radiance in a published work, please cite:
 Please also cite the DOI corresponding to the specific version of bifacial_radiance that you used. bifacial_radiance DOIs are listed at [Zenodo.org](https://zenodo.org/search?page=1&size=20&q=conceptrecid:3860349&all_versions&sort=-version)
 
 Bilinear Interpolation based on the publications:
+
     De Soto, W., Klein, S. A., & Beckman, W. A. (2006). Improvement and validation of a model for photovoltaic array performance. Solar Energy, 80(1), 78–88. https://doi.org/10.1016/j.solener.2005.06.010
 
     Marion, B., Rummel, S., & Anderberg, A. (2004). Current--voltage curve translation by bilinear interpolation. Progress in Photovoltaics: Research and Applications, 12(8), 593–607.

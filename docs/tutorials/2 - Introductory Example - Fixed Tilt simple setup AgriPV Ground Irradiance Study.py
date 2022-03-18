@@ -35,7 +35,7 @@ plt.rcParams['figure.figsize'] = (12, 5)
 # In[3]:
 
 
-writefiletitle = os.path.join(testfolder, 'Results_Tutorial2_unflipped.csv')
+writefiletitle = os.path.join(testfolder, 'Results_Tutorial2.csv')
 
 # Variables
 lat = 39.75555              # Golden CO, Coords.
@@ -82,7 +82,7 @@ from bifacialvf import loadVFresults
 (data, metadata) = loadVFresults(writefiletitle)
 
 
-# In[ ]:
+# In[4]:
 
 
 from bifacialvf import loadVFresults
@@ -92,14 +92,14 @@ from bifacialvf import loadVFresults
 # # 5. Analyze the results from the resultfile
 # 
 
-# In[ ]:
+# In[5]:
 
 
 import pandas as pd
 import matplotlib.pyplot as plt
 
 
-# In[ ]:
+# In[6]:
 
 
 data.set_index(pd.to_datetime(data['date']), inplace=True, drop=True)
@@ -107,7 +107,7 @@ data.index = data.index.map(lambda t: t.replace(year=2021))   # Chagning to be t
 groundIrrads = data['Ground Irradiance Values'].str.strip('[]').str.split(' ', expand=True).astype(float)
 
 
-# In[ ]:
+# In[7]:
 
 
 df = groundIrrads.groupby([pd.Grouper(freq='M')]).sum().T
@@ -117,7 +117,7 @@ df.rename(columns={ df.columns[0]: "Jan", df.columns[1]: "Feb",df.columns[2]: "M
                    df.columns[8]: "Sept",df.columns[9]: "Oct",df.columns[10]: "Nov",df.columns[11]: "Dec"    }, inplace = True)
 
 
-# In[ ]:
+# In[8]:
 
 
 fig = (df/1000).plot()
@@ -125,13 +125,13 @@ fig.set_xlabel('Position between start of row and next row [%]')
 fig.set_ylabel('Cumulative Insolation for the month [kWh/m2]')
 
 
-# In[ ]:
+# In[9]:
 
 
 monthlyGHI = pd.DataFrame(data['ghi'].groupby([pd.Grouper(freq='M')]).sum())
 
 
-# In[ ]:
+# In[10]:
 
 
 monthlyGHI['Month'] = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'June', 'July', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec']
@@ -139,7 +139,7 @@ monthlyGHI.set_index(monthlyGHI['Month'], inplace=True)
 monthlyGHI = monthlyGHI.drop(columns='Month')
 
 
-# In[ ]:
+# In[11]:
 
 
 df_norm = df.T
@@ -147,7 +147,7 @@ df_norm = df_norm.div(monthlyGHI['ghi'], axis=0)
 df_norm = df_norm.T
 
 
-# In[ ]:
+# In[12]:
 
 
 fig = (df_norm).plot()

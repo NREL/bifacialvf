@@ -9,8 +9,6 @@ import numpy as np
 import scipy.io as sio
 import sys, os
 #sys.path.insert(0, 'BF_BifacialIrradiances')
-from bifacialvf.BF_BifacialIrradiances.PortraitSingleHour import PortraitSingleHour    # For calculateBilInterpol
-from bifacialvf.BF_BifacialIrradiances.LandscapeSingleHour import LandscapeSingleHour # For calculateBilInterpol
 from pvmismatch import *  # this imports everything we need
 import bifacialvf
 import os
@@ -186,7 +184,7 @@ def calculateVFBilinearInterpolation(portraitorlandscape, sensorsy, interpolA, I
             cellCenterValFront = frontGTIrow
             cellCenterValBack = backGTIrow
             
-        [PmaxIdeal, PmaxUnmatched, PmaxAvg] = LandscapeSingleHour(cellCenterValFront, cellCenterValBack, Tamb, VWind, 6, interpolA,IVArray,beta_voc_all,m_all,bee_all)
+        [PmaxIdeal, PmaxUnmatched, PmaxAvg] = bifacialvf.LandscapeSingleHour(cellCenterValFront, cellCenterValBack, Tamb, VWind, 6, interpolA,IVArray,beta_voc_all,m_all,bee_all)
 
         
     return PmaxIdeal, PmaxUnmatched
@@ -250,10 +248,10 @@ def analyseVFResultsBilInterpol(filename, portraitorlandscape='landscape', bifif
     for i in range (0,len(frontGTI)):
         cellCenterValFront=frontGTI.iloc[i]
         cellCenterValBack=backGTI.iloc[i]
-        [PmaxIdeal, PmaxUnmatched, PmaxAvg] = LandscapeSingleHour(cellCenterValFront, cellCenterValBack, data['Tamb'][i], data['VWind'][i], 6, interpolA,IVArray,beta_voc_all,m_all,bee_all)
+        [PmaxIdeal, PmaxUnmatched, PmaxAvg] = bifacialvf.LandscapeSingleHour(cellCenterValFront, cellCenterValBack, data['Tamb'][i], data['VWind'][i], 6, interpolA,IVArray,beta_voc_all,m_all,bee_all)
         PowerAveraged_all.append(PmaxIdeal)
         PowerDetailed_all.append(PmaxUnmatched)
-        [PmaxIdeal, PmaxUnmatched, PmaxAvg] = LandscapeSingleHour(cellCenterValFront, cellCenterValBack, data['Tamb'][i], data['VWind'][i], 6, interpolA,IVArray,beta_voc_all,m_all,bee_all)
+        [PmaxIdeal, PmaxUnmatched, PmaxAvg] = bifacialvf.LandscapeSingleHour(cellCenterValFront, cellCenterValBack, data['Tamb'][i], data['VWind'][i], 6, interpolA,IVArray,beta_voc_all,m_all,bee_all)
         PowerAveraged_FrontOnly_all.append(PmaxIdeal)
         PowerDetailed_FrontOnly_all.append(PmaxUnmatched)
    

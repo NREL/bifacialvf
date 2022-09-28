@@ -61,7 +61,7 @@ for mainloop in range (0, 1):
     myfall=myfolder+'/'+myf[mainloop]
     #data, meta = loadVFresults(myfall)   
     writefiletitle=myfolder+"testtest.csv"
-    print "Working on ", myf[mainloop]
+    print (f"Working on {myf[mainloop]}")
     
     with open(myfall,'r') as csvinput:
         with open(writefiletitle, 'w') as csvoutput:
@@ -131,6 +131,6 @@ for mainloop in range (0, 1):
 
         #writer.writerows(all)
         toc = time.clock()
-        print "Results Ready in ", (toc-tic)/60.0 , " minutes"
+        print (f"Results Ready in {(toc-tic)/60.0} minutes")
         
 

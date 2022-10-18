@@ -1620,6 +1620,7 @@ def getSkyConfigurationFactors2(rowType, beta, C, D, pitch):
     The horizontal distance between rows, `D`, is from the back edge of one row
     to the front edge of the next, and it is not the row-to-row spacing.
     """
+    import pandas as pd
 
     rearSkyConfigFactors = []
     frontSkyConfigFactors = []
@@ -1716,21 +1717,28 @@ def getSkyConfigurationFactors2(rowType, beta, C, D, pitch):
         df_yx = df_clear / df_D
         beta6 = df_yx.applymap(math.atan)
 
-        #SIL CONTINUE FROM HERE
-        sky1 =0; sky2 =0; sky3 =0
-        if (beta2 > beta1):
-            sky1 = 0.5 * (math.cos(beta1) - math.cos(beta2))
-        if (beta4 > beta3):
-            sky2 = 0.5 * (math.cos(beta3) - math.cos(beta4))
-        if (beta6 > beta5):
-            sky3 = 0.5 * (math.cos(beta5) - math.cos(beta6))
-        skyAll = sky1 + sky2 + sky3
+        #   sky1 = 0.5 * (math.cos(beta1) - math.cos(beta2))
+        mask = (beta2-beta1) >= 0
+        sky1 = 0.5*(np.cos(beta1[mask]) - np.cos(beta2[mask]))
 
+        #if (beta4 > beta3):
+        #    sky2 = 0.5 * (math.cos(beta3) - math.cos(beta4))
+        mask = (beta4-beta3) >= 0
+        sky2 = 0.5*(np.cos(beta3[mask]) - np.cos(beta4[mask]))
+
+        #if (beta6 > beta5):
+        #    sky3 = 0.5 * (math.cos(beta5) - math.cos(beta6))
+        mask = (beta6-beta5) >= 0
+        sky3 = 0.5*(np.cos(beta5[mask]) - np.cos(beta6[mask]))
+
+        skyAll = sky1 + sky2 + sky3
+        
         # Save as arrays of values, same for both to the rear and front
         rearSkyConfigFactors.append(skyAll)
         frontSkyConfigFactors.append(skyAll)        
     # End of if "interior"
-
+    
+    #SIL CONTINUE FROM HERE
     elif (rowType == "first"):
 
         # RearSkyConfigFactors don't have a row in front, calculation of sky3

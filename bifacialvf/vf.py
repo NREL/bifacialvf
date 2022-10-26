@@ -1099,7 +1099,7 @@ def getGroundShadeFactors(rowType, beta, C, D, elv, azm, sazm):
     # End of getGroundShadeFactors
 
 
-def getSkyConfigurationFactors(rowType, beta, C, D):
+def getSkyConfigurationFactors(rowType, beta, C, D,  testflag=False):
     """
     This method determines the sky configuration factors for points on the
     ground from the leading edge of one row of PV panels to the leading edge of
@@ -1479,7 +1479,11 @@ def getSkyConfigurationFactors(rowType, beta, C, D):
     else:
         print("ERROR: Incorrect row type not passed to function GetSkyConfigurationFactors ");
 
-    return rearSkyConfigFactors, frontSkyConfigFactors, skyall1, skyall2, skyall3;
+    if  testflag:
+        return rearSkyConfigFactors, frontSkyConfigFactors, skyall1, skyall2, skyall3;
+    
+    return rearSkyConfigFactors, frontSkyConfigFactors;
+
 # End of GetSkyConfigurationFactors
 
 

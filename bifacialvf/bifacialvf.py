@@ -1,52 +1,53 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
-        #          This program calculates irradiances on the front and back surfaces of bifacial PV modules.
-        #          Key dimensions and nomenclature:
-        #          tilt = PV module tilt angle from horizontal, in degrees
-        #          sazm = PV module surface azimuth from north, in degrees
-        #          1.0 = normalized PV module/panel slant height
-        #          C = ground clearance of PV module, in PV module/panel slant heights
-        #          D = distance between rows, from rear of module to front of module in next row, in PV module/panel slant heights
-        #          h = sin(tilt), vertical PV module dimension, in PV module/panel slant heights
-        #          x1 = cos(tilt), horizontal PV module dimension, in PV module/panel slant heights
-        #          pitch = x1 + D, row-to-row distance, from front of module to front of module in next row, in PV module/panel slant heights
-        #          sensorsy = number of horzontal results, usually corresponding to the rows of cells in a PV module/panel along the slope of the sampled axis.
-        #          PVfrontSurface = PV module front surface material type, either "glass" or "ARglass"
-        #          PVbackSurface = PV module back surfac ematerial type, either "glass" or "ARglass"
-        #        
-        #         Program flow consists of:
-        #          a. Calculate irradiance distribution on ground
-        #          b. Calculate AOI corrected irradiance on front of PV module, and irradiance reflected from front of PV module
-        #          c. Calculate irradiance on back of PV module
+#          This program calculates irradiances on the front and back surfaces of bifacial PV modules.
+#          Key dimensions and nomenclature:
+#          tilt = PV module tilt angle from horizontal, in degrees
+#          sazm = PV module surface azimuth from north, in degrees
+#          1.0 = normalized PV module/panel slant height
+#          C = ground clearance of PV module, in PV module/panel slant heights
+#          D = distance between rows, from rear of module to front of module in next row, in PV module/panel slant heights
+#          h = sin(tilt), vertical PV module dimension, in PV module/panel slant heights
+#          x1 = cos(tilt), horizontal PV module dimension, in PV module/panel slant heights
+#          pitch = x1 + D, row-to-row distance, from front of module to front of module in next row, in PV module/panel slant heights
+#          sensorsy = number of horzontal results, usually corresponding to the rows of cells in a PV module/panel along the slope of the sampled axis.
+#          PVfrontSurface = PV module front surface material type, either "glass" or "ARglass"
+#          PVbackSurface = PV module back surfac ematerial type, either "glass" or "ARglass"
+#        
+#         Program flow consists of:
+#          a. Calculate irradiance distribution on ground
+#          b. Calculate AOI corrected irradiance on front of PV module, and irradiance reflected from front of PV module
+#          c. Calculate irradiance on back of PV module
 
 # ensure python3 compatible division and printing
 from __future__ import division, print_function, absolute_import
- 
+
 import math
 import csv
 import pvlib
 import os
-#import sys
-#import pytz
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-from bifacialvf.vf import getBackSurfaceIrradiances, getFrontSurfaceIrradiances, getGroundShadeFactors
-from bifacialvf.vf import getSkyConfigurationFactors, trackingBFvaluescalculator, rowSpacing
+from bifacialvf.vf import getBackSurfaceIrradiances, getFrontSurfaceIrradiances
+from bifacialvf.vf import getGroundShadeFactors
+from bifacialvf.vf import getSkyConfigurationFactors
+from bifacial.vf import trackingBFvaluescalculator, rowSpacing
 from bifacialvf.vf import getSkyConfigurationFactors2, getGroundShadeFactors2
-from bifacialvf.sun import  perezComp,  sunIncident, sunrisecorrectedsunposition #, hrSolarPos, solarPos,
+from bifacialvf.sun import perezComp, sunIncident
+from bifacialvf.sun import sunrisecorrectedsunposition  # hrSolarPos, solarPos
 
-#from bifacialvf.readepw import readepw
+# Electrical Mismatch Calculation
+from bifacialvf.analysis import analyseVFResultsBilInterpol
+from bifacialvf.analysis import analyseVFResultsPVMismatch
+# import bifacialvf.analysis as analysis
 
-# Electrical Mismatch Calculation 
-from bifacialvf.analysis import analyseVFResultsBilInterpol, analyseVFResultsPVMismatch
-#import bifacialvf.analysis as analysis
 
 def readWeatherFile(weatherFile=None, source=None):
     '''
     ## Read Weatherfile data using pvlib.
-    
+
     Parameters
     ----------
     weatherFile : str
@@ -79,7 +80,7 @@ def readWeatherFile(weatherFile=None, source=None):
             source = 'SAM'
 
     if source == 'EPW':
-        (myTMY3, meta) = pvlib.iotools.read_epw(TMYtoread)
+        (myTMY3, meta) = pvlib.iotools.read_epw(weatherFile)
         # rename different field parameters to match dni, dhi, Tdry, Wspd
         # pvlib uses -1hr offset that needs to be un-done.
         myTMY3.index = myTMY3.index+pd.Timedelta(hours=1)
@@ -87,7 +88,8 @@ def readWeatherFile(weatherFile=None, source=None):
                                'wind_speed': 'Wspd',
                                'albedo': 'Albedo'}, inplace=True)
     elif source == 'SAM' or source == 'PSM3':
-        (myTMY3, meta) = pvlib.iotools.read_psm3(TMYtoread, map_variables=True)
+        (myTMY3, meta) = pvlib.iotools.read_psm3(weatherFile,
+                                                 map_variables=True)
     elif source == 'TMY3':
         (myTMY3, meta) = pvlib.iotools.read_tmy3(weatherFile)
     else:

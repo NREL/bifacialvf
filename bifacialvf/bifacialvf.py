@@ -92,6 +92,11 @@ def readWeatherFile(weatherFile=None, source=None):
                                                  map_variables=True)
     elif source == 'TMY3':
         (myTMY3, meta) = pvlib.iotools.read_tmy3(weatherFile)
+        myTMY3.rename(columns={'DNI': 'dni',
+                               'GHI': 'ghi',
+                               'DHI': 'dhi',
+                               'DryBulb': 'Tdry',
+                               'Alb': 'Albedo'}, inplace=True)
     else:
         raise Exception('Incorrect extension for Weatherfile to read. ')
 

@@ -33,7 +33,7 @@ from tqdm import tqdm
 from bifacialvf.vf import getBackSurfaceIrradiances, getFrontSurfaceIrradiances
 from bifacialvf.vf import getGroundShadeFactors
 from bifacialvf.vf import getSkyConfigurationFactors
-from bifacial.vf import trackingBFvaluescalculator, rowSpacing
+from bifacialvf.vf import trackingBFvaluescalculator, rowSpacing
 from bifacialvf.vf import getSkyConfigurationFactors2, getGroundShadeFactors2
 from bifacialvf.sun import perezComp, sunIncident
 from bifacialvf.sun import sunrisecorrectedsunposition  # hrSolarPos, solarPos

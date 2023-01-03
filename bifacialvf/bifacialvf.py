@@ -73,12 +73,12 @@ def readWeatherFile(weatherFile=None, source=None):
 
     import pandas as pd
 
-    # TODO: Completely deprecate/remove the redtmy3 graphical file picker
+    # TODO: Completely deprecate/remove the readtmy3 graphical file picker
     if weatherFile is None:
         print("No weather file passed. Use our graphical file picker to ",
               "select a TMY3 fie-type. This function will be deprecated next",
               " release. ")
-        (myTMY3, meta) = pvlib.iotools.read_tmy3(weatherFile)
+        (WeatherDF, meta) = pvlib.iotools.read_tmy3(weatherFile)
 
     if source is None:
         if weatherFile[-3:].lower() == 'epw':
@@ -90,19 +90,19 @@ def readWeatherFile(weatherFile=None, source=None):
             source = 'SAM'
 
     if source == 'EPW':
-        (myTMY3, meta) = pvlib.iotools.read_epw(weatherFile)
+        (WeatherDF, meta) = pvlib.iotools.read_epw(weatherFile)
         # rename different field parameters to match dni, dhi, Tdry, Wspd
         # pvlib uses -1hr offset that needs to be un-done.
-        myTMY3.index = myTMY3.index+pd.Timedelta(hours=1)
-        myTMY3.rename(columns={'temp_air': 'Tdry',
+        WeatherDF.index = WeatherDF.index+pd.Timedelta(hours=1)
+        WeatherDF.rename(columns={'temp_air': 'Tdry',
                                'wind_speed': 'Wspd',
                                'albedo': 'Albedo'}, inplace=True)
     elif source == 'SAM' or source == 'PSM3':
-        (myTMY3, meta) = pvlib.iotools.read_psm3(weatherFile,
+        (WeatherDF, meta) = pvlib.iotools.read_psm3(weatherFile,
                                                  map_variables=True)
     elif source == 'TMY3':
-        (myTMY3, meta) = pvlib.iotools.read_tmy3(weatherFile)
-        myTMY3.rename(columns={'DNI': 'dni',
+        (WeatherDF, meta) = pvlib.iotools.read_tmy3(weatherFile)
+        WeatherDF.rename(columns={'DNI': 'dni',
                                'GHI': 'ghi',
                                'DHI': 'dhi',
                                'DryBulb': 'Tdry',
@@ -110,23 +110,24 @@ def readWeatherFile(weatherFile=None, source=None):
     else:
         raise Exception('Incorrect extension for Weatherfile to read. ')
 
-    return myTMY3, meta
+    return WeatherDF, meta
 
 
-def fixintervalTMY(myTMY3, meta):
+def fixintervalTMY(WeatherDF, meta):
     '''
     If data is passed in TMY3 format but has a interval smaller than 1 HR, this
     function fixes the timestamps from the already imported TMY3 data with
-    readInputTMY. It assume there is a column labeld 'Time (HH:MM)' in myTMY3
+    readInputTMY. It assume there is column labeld 'Time (HH:MM)' in WeatherDF
     '''
 
     import pandas as pd
 
-    myTMY3['Datetime'] = pd.to_datetime(myTMY3['Date (MM/DD/YYYY)'] + ' ' +
-                                        myTMY3['Time (HH:MM)'])
-    myTMY3 = myTMY3.set_index('Datetime').tz_localize(int(meta['TZ'] * 3600))
+    WeatherDF['Datetime'] = pd.to_datetime(WeatherDF['Date (MM/DD/YYYY)'] +
+                                           ' ' + WeatherDF['Time (HH:MM)'])
+    WeatherDF = WeatherDF.set_index('Datetime').tz_localize(
+        int(meta['TZ'] * 3600))
 
-    return myTMY3, meta
+    return WeatherDF, meta
 
 
 def getEPW(lat=None, lon=None, GetAll=False, path=None):
@@ -266,7 +267,7 @@ def getEPW(lat=None, lon=None, GetAll=False, path=None):
     return epwfile
 
 
-def simulate(myTMY3, meta, writefiletitle=None, tilt=0, sazm=180,
+def simulate(WeatherDF, meta, writefiletitle=None, tilt=0, sazm=180,
              clearance_height=None, hub_height=None,
              pitch=None, rowType='interior', transFactor=0.01, sensorsy=6,
              PVfrontSurface='glass', PVbackSurface='glass', albedo=None,
@@ -274,7 +275,7 @@ def simulate(myTMY3, meta, writefiletitle=None, tilt=0, sazm=180,
              calculatePVMismatch=False, cellsnum=72,
              portraitorlandscape='landscape', bififactor=1.0,
              calculateBilInterpol=False, BilInterpolParams=None,
-             deltastyle='TMY3', agriPV=False):
+             deltastyle='SAM', agriPV=False):
     '''
     Description
     -----------
@@ -282,7 +283,7 @@ def simulate(myTMY3, meta, writefiletitle=None, tilt=0, sazm=180,
 
     Parameters
     ----------
-    myTMY3 (pd.DataFrame): A pandas DataaFrame containing for each timestep
+    WeatherDF (pd.DataFrame): A pandas DataaFrame containing for each timestep
     columns: dni, dhi, it can also have Tdry, Wspd, zenith, azimuth,
     meta (dict): A dictionary conatining keys: 'latitude', 'longitude', 'TZ',
     'Name'
@@ -351,7 +352,7 @@ def simulate(myTMY3, meta, writefiletitle=None, tilt=0, sazm=180,
     if writefiletitle is None:
         writefiletitle = "data/Output/TEST.csv"
 
-    noRows, noCols = myTMY3.shape
+    noRows, noCols = WeatherDF.shape
     lat = meta['latitude']
     lng = meta['longitude']
     tz = meta['TZ']
@@ -363,38 +364,39 @@ def simulate(myTMY3, meta, writefiletitle=None, tilt=0, sazm=180,
         name = meta['city']  # EPW
 
     # infer the data frequency in minutes
-    dataInterval = (myTMY3.index[1]-myTMY3.index[0]).total_seconds()/60
+    dataInterval = (WeatherDF.index[1]-WeatherDF.index[0]).total_seconds()/60
 
-    if not (('azimuth' in myTMY3) and ('zenith' in myTMY3) and
-            ('elevation' in myTMY3)):
-        solpos, sunup = sunrisecorrectedsunposition(myTMY3, meta,
+    if not (('azimuth' in WeatherDF) and ('zenith' in WeatherDF) and
+            ('elevation' in WeatherDF)):
+        solpos, sunup = sunrisecorrectedsunposition(WeatherDF, meta,
                                                     deltastyle=deltastyle)
-        myTMY3['zenith'] = np.radians(solpos['zenith'])
-        myTMY3['azimuth'] = np.radians(solpos['azimuth'])
-        myTMY3['elevation'] = np.radians(solpos['elevation'])
+        WeatherDF['zenith'] = np.radians(solpos['zenith'])
+        WeatherDF['azimuth'] = np.radians(solpos['azimuth'])
+        WeatherDF['elevation'] = np.radians(solpos['elevation'])
 
     if tracking is True:
-        if not (('trackingdata_surface_tilt' in myTMY3) and
-                ('trackingdata_surface_azimuth' in myTMY3)):
+        if not (('trackingdata_surface_tilt' in WeatherDF) and
+                ('trackingdata_surface_azimuth' in WeatherDF)):
             gcr = 1/pitch
             trackingdata = (
-                pvlib.tracking.singleaxis(np.degrees(myTMY3['zenith']),
-                                          np.degrees(myTMY3['azimuth']),
+                pvlib.tracking.singleaxis(np.degrees(WeatherDF['zenith']),
+                                          np.degrees(WeatherDF['azimuth']),
                                           axis_tilt, axis_azimuth,
                                           limit_angle, backtrack, gcr))
 
             trackingdata.surface_tilt.fillna(stowingangle, inplace=True)
-            myTMY3['trackingdata_surface_tilt'] = trackingdata['surface_tilt']
-            myTMY3['trackingdata_surface_azimuth'] = (
+            WeatherDF['trackingdata_surface_tilt'] = trackingdata[
+                'surface_tilt']
+            WeatherDF['trackingdata_surface_azimuth'] = (
                 trackingdata['surface_azimuth'])
 
-        [myTMY3['C'], myTMY3['D']] = trackingBFvaluescalculator(
-            myTMY3['trackingdata_surface_tilt'], hub_height, pitch)
+        [WeatherDF['C'], WeatherDF['D']] = trackingBFvaluescalculator(
+            WeatherDF['trackingdata_surface_tilt'], hub_height, pitch)
 
     # Check what Albedo to use:
     if albedo is None:
-        if 'Albedo' in myTMY3:
-            print("Using albedo from TMY3 file.")
+        if 'Albedo' in WeatherDF:
+            print("Using albedo from Weather File file.")
             print("Note that at the moment, no validation check is done",
                   "in the albedo data, so we assume it's correct and valid.\n")
             useTMYalbedo = True
@@ -404,16 +406,16 @@ def simulate(myTMY3, meta, writefiletitle=None, tilt=0, sazm=180,
             albedo = 0.2
             useTMYalbedo = False
     else:
-        if 'Albedo' in myTMY3:
-            print("Albedo value passed, but also present in TMY3 file. ",
-                  "Using albedo value passed. To use the ones in TMY3 file",
-                  "re-run simulation with albedo=None\n")
+        if 'Albedo' in WeatherDF:
+            print("Albedo value passed, but also present in Weather File.",
+                  "Using albedo value passed. To use the ones in Weather File",
+                  " re-run simulation with albedo=None\n")
         useTMYalbedo = False
 
     # Distance between rows for no shading on Dec 21 at 9 am
     print(" ")
     print("********* ")
-    print("Running Simulation for TMY3: ")
+    print("Running Simulation for Weather File: ")
     print("Location:  ", name)
     print("Lat: ", lat, " Long: ", lng, " Tz ", tz)
     print("Parameters: tilt: ", tilt, "  Sazm: ", sazm, "   ",
@@ -497,26 +499,26 @@ def simulate(myTMY3, meta, writefiletitle=None, tilt=0, sazm=180,
         # Loop through file.
         rl = 0  # TODO: this is not needed I think?
         for rl in tqdm(range(noRows)):
-            myTimestamp = myTMY3.index[rl]
+            myTimestamp = WeatherDF.index[rl]
             hour = myTimestamp.hour
             minute = myTimestamp.minute
-            dni = myTMY3.dni[rl]
-            dhi = myTMY3.dhi[rl]
-            if 'Tdry' in myTMY3:
-                Tamb = myTMY3.Tdry[rl]
+            dni = WeatherDF.dni[rl]
+            dhi = WeatherDF.dhi[rl]
+            if 'Tdry' in WeatherDF:
+                Tamb = WeatherDF.Tdry[rl]
             else:
                 Tamb = 0
-            if 'Wspd' in myTMY3:
-                VWind = myTMY3.Wspd[rl]
+            if 'Wspd' in WeatherDF:
+                VWind = WeatherDF.Wspd[rl]
             else:
                 VWind = 0
 
             if useTMYalbedo:
-                albedo = myTMY3.Albedo[rl]
+                albedo = WeatherDF.Albedo[rl]
 
-            zen = myTMY3['zenith'][rl]
-            azm = myTMY3['azimuth'][rl]
-            elv = myTMY3['elevation'][rl]
+            zen = WeatherDF['zenith'][rl]
+            azm = WeatherDF['azimuth'][rl]
+            elv = WeatherDF['elevation'][rl]
 
             if (zen < 0.5 * math.pi):    # If daylight hours
                 # a. CALCULATE THE IRRADIANCE DISTRIBUTION ON THE GROUND
@@ -538,10 +540,10 @@ def simulate(myTMY3, meta, writefiletitle=None, tilt=0, sazm=180,
 
                 # TRACKING ROUTINE CALULATING GETSKYCONFIGURATION FACTORS
                 if tracking is True:
-                    tilt = myTMY3['trackingdata_surface_tilt'][rl]
-                    sazm = myTMY3['trackingdata_surface_azimuth'][rl]
-                    C = myTMY3['C'][rl]
-                    D = myTMY3['D'][rl]
+                    tilt = WeatherDF['trackingdata_surface_tilt'][rl]
+                    sazm = WeatherDF['trackingdata_surface_azimuth'][rl]
+                    C = WeatherDF['C'][rl]
+                    D = WeatherDF['D'][rl]
 
                     # Sky configuration factors are the same for all times,
                     # only based on geometry and row type
@@ -671,7 +673,7 @@ def simulate(myTMY3, meta, writefiletitle=None, tilt=0, sazm=180,
 
         # End of daylight if loop
 
-    # End of myTMY3 rows of data
+    # End of WeatherDF rows of data
 
     if calculateBilInterpol is True:
         analyseVFResultsBilInterpol(filename=writefiletitle,
@@ -698,7 +700,7 @@ def simulate2(WeatherDF, meta, writefiletitle=None, tilt=0, sazm=180,
               calculatePVMismatch=False, cellsnum=72,
               portraitorlandscape='landscape', bififactor=1.0,
               calculateBilInterpol=False, BilInterpolParams=None,
-              deltastyle='TMY3', agriPV=False):
+              deltastyle='SAM', agriPV=False):
     '''
     Description
     -----------
@@ -796,28 +798,26 @@ def simulate2(WeatherDF, meta, writefiletitle=None, tilt=0, sazm=180,
     except KeyError:
         name = meta['city']  # EPW
 
-    # TODO: Remove myTM3 and replace with WeatherDF
-    myTMY3 = WeatherDF
     # infer the data frequency in minutes
-    dataInterval = (myTMY3.index[1]-myTMY3.index[0]).total_seconds()/60
+    dataInterval = (WeatherDF.index[1]-WeatherDF.index[0]).total_seconds()/60
 
-    if not (('azimuth' in myTMY3) and ('zenith' in myTMY3) and
-            ('elevation' in myTMY3)):
-        solpos, sunup = sunrisecorrectedsunposition(myTMY3, meta,
+    if not (('azimuth' in WeatherDF) and ('zenith' in WeatherDF) and
+            ('elevation' in WeatherDF)):
+        solpos, sunup = sunrisecorrectedsunposition(WeatherDF, meta,
                                                     deltastyle=deltastyle)
-        myTMY3['zenith'] = np.radians(solpos['zenith'])
-        myTMY3['azimuth'] = np.radians(solpos['azimuth'])
-        myTMY3['elevation'] = np.radians(solpos['elevation'])
+        WeatherDF['zenith'] = np.radians(solpos['zenith'])
+        WeatherDF['azimuth'] = np.radians(solpos['azimuth'])
+        WeatherDF['elevation'] = np.radians(solpos['elevation'])
 
     if tracking is True:
 
-        # If Tracker's tilt and surface azimuth are not in TMY3,
+        # If Tracker's tilt and surface azimuth are not in Weather File,
         # it calculates them.
         if not (('tilt' in WeatherDF) and ('sazm' in WeatherDF)):
             gcr = 1/pitch
             trackingdata = (
-                pvlib.tracking.singleaxis(np.degrees(myTMY3['zenith']),
-                                          np.degrees(myTMY3['azimuth']),
+                pvlib.tracking.singleaxis(np.degrees(WeatherDF['zenith']),
+                                          np.degrees(WeatherDF['azimuth']),
                                           axis_tilt, axis_azimuth,
                                           limit_angle, backtrack, gcr))
 
@@ -836,7 +836,7 @@ def simulate2(WeatherDF, meta, writefiletitle=None, tilt=0, sazm=180,
     # Check what Albedo to se:
     if albedo is None:
         if 'Albedo' in WeatherDF:
-            print("Using albedo from TMY3 file.")
+            print("Using albedo from Weather File file.")
             print("Note that at the moment, no validation check is done",
                   "in the albedo data, so we assume it's correct and valid.\n")
             useTMYalbedo = True
@@ -856,7 +856,7 @@ def simulate2(WeatherDF, meta, writefiletitle=None, tilt=0, sazm=180,
     # Distance between rows for no shading on Dec 21 at 9 am
     print(" ")
     print("********* ")
-    print("Running Simulation for TMY3: ")
+    print("Running Simulation for Weather File: ")
     print("Location:  ", name)
     print("Lat: ", lat, " Long: ", lng, " Tz ", tz)
     print("Parameters: tilt: ", tilt, "  Sazm: ", sazm, "   ",

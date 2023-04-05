@@ -410,6 +410,115 @@ def getBackSurfaceIrradiances(rowType, maxShadow, PVbackSurface, beta, sazm,
     # End of GetBackSurfaceIrradiances
 
 
+def divideAndAlignAlbedos(albedo, n_divisions, isOneAxisTracking,
+                          horizontalLength, rowToRow, surface_rotation):
+    '''
+    #(const std::vector<double>& albedo /*-*/, size_t n_divisions /*-*/,
+    # bool isOneAxisTracking /*-*/,
+    #double horizontalLength /*m*/, double rowToRow /*m*/, double
+    # surface_rotation /*rad*/)
+    # Sil Note: size_t = 100 divisions..
+
+    Subdivide spatial albedos and if 1-axis tracking change reference from the
+    row midline to the front
+    '''
+
+    if (n_divisions % len(albedo)) == 0:
+        print("Functionality only works for even divisions, exiting.")
+        return
+
+    # Upsample vector to n_divisions
+    # Sil Note: THIS IS WRONG.
+    albedo_aligned = []
+    # C++: for (size_t i = 0; i < albedo.size(); i++) {
+    #           for (size_t j = 0; j < n_divisions / albedo.size(); j++) {
+    #               albedo_aligned.push_back(albedo.at(i));
+    for i in range(0, len(albedo)):
+        for j in range(0, n_divisions / len(albedo)):
+            albedo_aligned.append(albedo[i])
+
+    if isOneAxisTracking:
+        # Flip the albedo array if tracking after solar noon (because the 
+        # tilt range = [0, 90] degrees, therefore the tilt convention flips
+        # at solar noon)
+        if surface_rotation > 0: 
+            np.reverse(albedo_aligned.begin(), albedo_aligned.end())
+            #C++: reverse(albedo_aligned.begin(), albedo_aligned.end());
+        
+        # Rotate the albedo vector so the first index is at (or overlapping) the front of the row instead of at center
+        L_division = rowToRow / n_divisions  # length of a single albedo division
+        n = 0.5 * horizontalLength / L_division  # fractional number of albedo 
+                    # segments between front of row and center of row
+        size_t leading_segments = n_divisions - np.ceil(n) # whole albedo 
+                    # segments between center of row and front of row behind
+        rotate(albedo_aligned.begin(), albedo_aligned.begin() + 
+               leading_segments, albedo_aligned.end())  # move the leading 
+                    # segments to the back of the vector
+
+        // 'Shift' the actual ground albedo locations to front of row by weighting-averaging adjacent divisions
+        double frac_div_extending = std::ceil(n) - n;                   // fraction of now first albedo division extending beyond front of row
+        double albedo_front_orig = albedo_aligned.front();
+        for (size_t i = 0; i < n_divisions - 1; i++) {                  // do last segment separately
+            albedo_aligned.at(i) = albedo_aligned.at(i) * (1 - frac_div_extending) + albedo_aligned.at(i + 1) * frac_div_extending;
+        }
+        albedo_aligned.back() = albedo_aligned.back() * (1 - frac_div_extending) + albedo_front_orig * frac_div_extending;
+    }
+
+    return albedo_aligned;
+}
+
+def condenseAndAlignGroundIrrad(ground_irr, size_t, n_divisions, isOneAxisTraking, horizontalLength, rowToRow, surface_rotation)
+#std::vector<double> condenseAndAlignGroundIrrad(const std::vector<double>& ground_irr /*W/m2*/, size_t n_divisions /*-*/, bool isOneAxisTracking /*-*/,
+#                                            double horizontalLength /*m*/, double rowToRow /*m*/, double surface_rotation /*rad*/) {
+    ''' 
+    Condense spatial ground irradiances and if 1-axis tracking change reference from the row front to the midline
+    '''
+    
+    if (len(ground_irr) % n_divisions) == 0:
+        print("Functionality only works for even divisions, exiting.")
+        return
+    
+    ground_aligned = ground_irr
+
+    if (isOneAxisTracking) 
+        #// Rotate the ground irradiance vector so the first index is at (or overlapping) the center of the row instead of at the midline
+        double L_division = rowToRow / ground_aligned.size();          # // length of a single ground division
+        double n = 0.5 * horizontalLength / L_division;                # // fractional number of ground segments between front of row and center of row
+        size_t leading_segments = std::floor(n);                       # // whole ground segments between front of row and center of row
+        rotate(ground_aligned.begin(), ground_aligned.begin() + leading_segments, ground_aligned.end())#   // move the leading segments to the back of the vector
+
+        // 'Shift' the actual ground irradiance locations to center of row by weighting-averaging adjacent divisions
+        double frac_div_extending = n - std::floor(n);                  // fraction of now first ground division extending beyond center of row
+        double ground_front_orig = ground_aligned.front();
+        for (size_t i = 0; i < ground_aligned.size() - 1; i++) {        // do last segment separately
+            ground_aligned.at(i) = ground_aligned.at(i) * (1 - frac_div_extending) + ground_aligned.at(i + 1) * frac_div_extending;
+        }
+        ground_aligned.back() = ground_aligned.back() * (1 - frac_div_extending) + ground_front_orig * frac_div_extending;
+
+        // Flip the ground irradiance if tracking after solar noon (because the tilt range = [0, 90] degrees, therefore the tilt convention flips at solar noon)
+        if (surface_rotation > 0.) {
+            std::reverse(ground_aligned.begin(), ground_aligned.end());
+        }
+    }
+
+    // Downsample vector to n_divisions
+    std::vector<double> ground_condensed;
+    size_t num_to_avg = ground_aligned.size() / n_divisions;
+    size_t i = 0;
+    double sum = 0.;
+    while (i < ground_aligned.size()) {
+        sum += ground_aligned.at(i);
+        if ((i + 1) % num_to_avg == 0) {
+            ground_condensed.push_back(sum / num_to_avg);     // add average to output
+            sum = 0.;
+        }
+        i++;
+    }
+
+    return ground_condensed
+
+
+                                                
 def getFrontSurfaceIrradiances(rowType, maxShadow, PVfrontSurface, beta, sazm,
                                dni, dhi, C, D, albedo, zen, azm, cellRows,
                                pvFrontSH, frontGroundGHI):      

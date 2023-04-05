@@ -355,13 +355,19 @@ def simulate(WeatherDF, meta, writefiletitle=None, tilt=0, sazm=180,
     noRows, noCols = WeatherDF.shape
     lat = meta['latitude']
     lng = meta['longitude']
-    tz = meta['TZ']
+    if 'TZ' in meta:
+        tz = meta['TZ']
+    if 'Time Zone' in meta:
+        tz = meta['Time Zone']
+        meta['TZ'] = tz
 
     # TODO: Make this part of weatherfile reading/input needs
-    try:
-        name = meta['Name']  # TMY3
-    except KeyError:
-        name = meta['city']  # EPW
+    if 'City' in meta:
+        name = meta['City']
+    if 'Name' in meta:
+        name = meta['Name']
+    if 'city' in meta:
+        name = meta['city']
 
     # infer the data frequency in minutes
     dataInterval = (WeatherDF.index[1]-WeatherDF.index[0]).total_seconds()/60
@@ -790,13 +796,19 @@ def simulate2(WeatherDF, meta, writefiletitle=None, tilt=0, sazm=180,
     noRows, noCols = WeatherDF.shape
     lat = meta['latitude']
     lng = meta['longitude']
-    tz = meta['TZ']
+    if 'TZ' in meta:
+        tz = meta['TZ']
+    if 'Time Zone' in meta:
+        tz = meta['Time Zone']
+        meta['TZ'] = tz
 
     # TODO: Make this part of weatherfile reading/input needs
-    try:
-        name = meta['Name']  # TMY3
-    except KeyError:
-        name = meta['city']  # EPW
+    if 'City' in meta:
+        name = meta['City']
+    if 'Name' in meta:
+        name = meta['Name']
+    if 'city' in meta:
+        name = meta['city']
 
     # infer the data frequency in minutes
     dataInterval = (WeatherDF.index[1]-WeatherDF.index[0]).total_seconds()/60

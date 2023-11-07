@@ -1,6 +1,6 @@
 ![logo](docs/images_wiki/bifacialVF.png)
 
-# bifacialvf_mismatch - Bifacial PV View Factor model with Mismatch routines
+# bifacialvf - Bifacial PV View Factor model with Mismatch routines
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 [![Build Status](https://travis-ci.org/NREL/bifacialvf.svg?branch=main)](https://travis-ci.org/NREL/bifacialvf)
 

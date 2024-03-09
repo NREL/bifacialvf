@@ -440,11 +440,11 @@ def simulate(myTMY3, meta, writefiletitle=None, tilt=0, sazm=180,
                 myTimestamp=myTMY3.index[rl]
                 hour = myTimestamp.hour
                 minute = myTimestamp.minute
-                dni = myTMY3.DNI[rl]#get_value(rl,5,"False")
-                dhi = myTMY3.DHI[rl]#get_value(rl,8,"False")
-                if 'DryBulb' in myTMY3: Tamb=myTMY3.DryBulb[rl]
+                dni = myTMY3.DNI.iloc[rl]#get_value(rl,5,"False")
+                dhi = myTMY3.DHI.iloc[rl]#get_value(rl,8,"False")
+                if 'DryBulb' in myTMY3: Tamb=myTMY3.DryBulb.iloc[rl]
                 else: Tamb=0	            
-                if 'Wspd' in myTMY3: VWind = myTMY3.Wspd[rl]	           
+                if 'Wspd' in myTMY3: VWind = myTMY3.Wspd.iloc[rl]	           
                 else: VWind=0
                 
 
@@ -452,9 +452,9 @@ def simulate(myTMY3, meta, writefiletitle=None, tilt=0, sazm=180,
                 if useTMYalbedo:
                     albedo = myTMY3.Alb[rl]
                                                               
-                zen = myTMY3['zenith'][rl]
-                azm = myTMY3['azimuth'][rl]
-                elv = myTMY3['elevation'][rl]
+                zen = myTMY3['zenith'].iloc[rl]
+                azm = myTMY3['azimuth'].iloc[rl]
+                elv = myTMY3['elevation'].iloc[rl]
     
                 if (zen < 0.5 * math.pi):    # If daylight hours
                 
@@ -470,10 +470,10 @@ def simulate(myTMY3, meta, writefiletitle=None, tilt=0, sazm=180,
                     
                     # TRACKING ROUTINE CALULATING GETSKYCONFIGURATION FACTORS
                     if tracking == True:                                   
-                        tilt = myTMY3['trackingdata_surface_tilt'][rl]
-                        sazm = myTMY3['trackingdata_surface_azimuth'][rl]
-                        C = myTMY3['C'][rl]                        
-                        D = myTMY3['D'][rl]
+                        tilt = myTMY3['trackingdata_surface_tilt'].iloc[rl]
+                        sazm = myTMY3['trackingdata_surface_azimuth'].iloc[rl]
+                        C = myTMY3['C'].iloc[rl]                        
+                        D = myTMY3['D'].iloc[rl]
                         
                         [rearSkyConfigFactors, frontSkyConfigFactors] = getSkyConfigurationFactors(rowType, tilt, C, D)       ## Sky configuration factors are the same for all times, only based on geometry and row type
 

@@ -14,8 +14,6 @@ from setuptools import setup, find_packages
 from codecs import open
 from os import path
 
-import versioneer
-
 here = path.abspath(path.dirname(__file__))
 
 # Get the long description from the README file
@@ -29,8 +27,7 @@ setup(
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
     #version='0.1.8',
-    version=versioneer.get_version(),
-    cmdclass=versioneer.get_cmdclass(),
+    use_scm_version=True,
 
 
     description='Bifacial PV system evaluation using view factor method',
@@ -106,7 +103,7 @@ setup(
             'pytest-cov',
             ],
     },
-    
+    setup_requires=['setuptools_scm'],
     # If there are data files included in your packages that need to be
     # installed, specify them here.  If using Python 2.6 or less, then these
     # have to be included in MANIFEST.in as well.

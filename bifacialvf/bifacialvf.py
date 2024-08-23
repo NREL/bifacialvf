@@ -56,24 +56,30 @@ def readInputTMY(TMYtoread):
         
     '''
     import pandas as pd
+    def _tmy_reader(TMYtoread):
+        try:
+            (myTMY3,meta)=pvlib.iotools.read_tmy3(TMYtoread, map_variables=True)
+        except TypeError:
+            (myTMY3,meta)=pvlib.iotools.read_tmy3(TMYtoread)
+        return(myTMY3,meta)
     
     if TMYtoread is None: # if no file passed in, the readtmy3 graphical file picker will open.
-        (myTMY3,meta)=pvlib.iotools.read_tmy3(TMYtoread)  # , coerce_year=2001     
+        (myTMY3,meta)=_tmy_reader(TMYtoread)  # , coerce_year=2001     
     elif TMYtoread.lower().endswith('.csv') :  
-        (myTMY3,meta)=pvlib.iotools.read_tmy3(TMYtoread)  # , coerce_year=2001      
+        (myTMY3,meta)=_tmy_reader(TMYtoread)  # , coerce_year=2001      
     elif TMYtoread.lower().endswith('.epw') : 
         (myTMY3,meta) = pvlib.iotools.read_epw(TMYtoread) # requires pvlib > 0.7.0 #, coerce_year=2001
         # rename different field parameters to match DNI, DHI, DryBulb, Wspd
         #pvlib uses -1hr offset that needs to be un-done. Why did they do this?
-        myTMY3.index = myTMY3.index+pd.Timedelta(hours=1) 
-        myTMY3.rename(columns={'dni':'DNI', 'ghi':'GHI',
-                               'dhi':'DHI',
-                               'temp_air':'DryBulb',
-                               'wind_speed':'Wspd',
-                               'albedo': 'Alb'}, inplace=True)
-  
+        myTMY3.index = myTMY3.index+pd.Timedelta(hours=1)   
     else:
         raise Exception('Incorrect extension for TMYtoread. Either .csv (TMY3) .epw or None')
+    
+    myTMY3.rename(columns={'dni':'DNI', 'ghi':'GHI',
+                           'dhi':'DHI',
+                           'temp_air':'DryBulb',
+                           'wind_speed':'Wspd',
+                           'albedo': 'Alb'}, inplace=True)
         
     return myTMY3, meta
 
@@ -93,7 +99,7 @@ def fixintervalTMY(myTMY3, meta):
 def getEPW(lat=None, lon=None, GetAll=False, path = None):
     """
     Subroutine to download nearest epw files to latitude and longitude provided,
-    into the directory \EPWs\
+    into the directory EPWs
     based on github/aahoo.
     
     .. warning::
@@ -324,7 +330,7 @@ def simulate(myTMY3, meta, writefiletitle=None, tilt=0, sazm=180,
                                                          axis_tilt, axis_azimuth, 
                                                          limit_angle, backtrack, gcr)
                 
-                trackingdata.surface_tilt.fillna(stowingangle, inplace=True)
+                trackingdata['surface_tilt'] = trackingdata.surface_tilt.fillna(stowingangle)
                 myTMY3['trackingdata_surface_tilt'] = trackingdata['surface_tilt']         
                 myTMY3['trackingdata_surface_azimuth'] = trackingdata['surface_azimuth']      
             

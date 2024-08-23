@@ -723,10 +723,10 @@ def sunrisecorrectedsunposition(myTMY3, metdata, deltastyle = 'exact'):
                 sunup['minutedelta']= int(interval.seconds/2/60) # default sun angle 30 minutes before timestamp
                 # vector update of minutedelta at sunrise
                 sunrisemask = sunup.index.hour-1==sunup['sunrise'].dt.hour
-                sunup['minutedelta'].mask(sunrisemask,np.floor((60-(sunup['sunrise'].dt.minute))/2),inplace=True)
+                sunup['minutedelta'] = sunup['minutedelta'].mask(sunrisemask,np.floor((60-(sunup['sunrise'].dt.minute))/2))
                 # vector update of minutedelta at sunset
                 sunsetmask = sunup.index.hour-1==sunup['sunset'].dt.hour
-                sunup['minutedelta'].mask(sunsetmask,np.floor(((sunup['sunset'].dt.minute)/2-60)),inplace=True)
+                sunup['minutedelta'] = sunup['minutedelta'].mask(sunsetmask,np.floor(((sunup['sunset'].dt.minute)/2-60)))
                 # save corrected timestamp
                 sunup['corrected_timestamp'] = sunup.index-pd.to_timedelta(sunup['minutedelta'], unit='m')
         
@@ -737,10 +737,11 @@ def sunrisecorrectedsunposition(myTMY3, metdata, deltastyle = 'exact'):
                 sunup['minutedelta']= int(interval.seconds/2/60) # default sun angle 30 minutes after timestamp
                 # vector update of minutedelta at sunrise
                 sunrisemask = sunup.index.hour==sunup['sunrise'].dt.hour
-                sunup['minutedelta'].mask(sunrisemask,np.floor((60-(sunup['sunrise'].dt.minute))/2+(sunup['sunrise'].dt.minute)),inplace=True)
+                sunup['minutedelta'] = sunup['minutedelta'].mask(sunrisemask,
+                    np.floor((60-(sunup['sunrise'].dt.minute))/2+(sunup['sunrise'].dt.minute)))
                 # vector update of minutedelta at sunset
                 sunsetmask = sunup.index.hour==sunup['sunset'].dt.hour
-                sunup['minutedelta'].mask(sunsetmask,np.floor((sunup['sunset'].dt.minute)/2),inplace=True)
+                sunup['minutedelta'] = sunup['minutedelta'].mask(sunsetmask,np.floor((sunup['sunset'].dt.minute)/2))
                 # save corrected timestamp
                 sunup['corrected_timestamp'] = sunup.index+pd.to_timedelta(sunup['minutedelta'], unit='m')
             

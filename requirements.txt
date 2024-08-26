@@ -1,7 +1,7 @@
 cycler==0.11.0
 kiwisolver==1.4.4
 matplotlib == 3.5.1
-numpy==1.24.2
+numpy==1.22
 pvlib==0.9.4
 pandas==0.25.2
 pvmismatch==4.1

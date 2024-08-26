@@ -1,15 +1,15 @@
 cycler==0.11.0
 kiwisolver==1.4.4
-matplotlib == 3.5.1
-numpy==1.22
+matplotlib==3.7.5
+numpy==1.24.2
 pvlib==0.9.4
-pandas==0.25.2
+pandas==2.0.3
 pvmismatch==4.1
 py==1.11.0
 pyparsing==3.0.9
 pytest==7.2.2
 pytest-cov==4.0.0
-python-dateutil==2.9.0
+python-dateutil==2.9.0.post0
 pytz==2023.3.post1
 six==1.16.0
 tqdm==4.66.3

@@ -5,6 +5,7 @@ to run coverage test, py.test --cov-report term-missing --cov=bifacialvf
 """
 import pytest
 import numpy as np
+import pandas as pd
 import os
 import bifacialvf
 from bifacialvf.tests import (
@@ -27,13 +28,13 @@ def test_readInputTMY():
     6/22 GHI is 909, sunup, sunrise at 7:00 and 18:00 on 12/31
     '''
     (myTMY3, meta) = bifacialvf.bifacialvf.readInputTMY(os.path.join(DATADIR,"724010TYA.CSV"))
-    assert myTMY3.loc['1985-06-22 12:0:0'].GHI.to_numpy() == 909
-    assert np.allclose(myTMY3[myTMY3.index.isin(['1978-12-31 7:0:0-5:00','1978-12-31 18:0:0-5:00'])].GHI.to_numpy(), np.array([0,0]) )
-
+    assert int(myTMY3.loc['1985-06-22 12:0:0'].GHI) == 909
+    assert np.allclose(myTMY3.loc[pd.to_datetime(['1978-12-31 7:0:0-5:00','1978-12-31 18:0:0-5:00']),'GHI'].values, np.array([0,0]))
+    
     (myEPW, metaEPW) = bifacialvf.bifacialvf.readInputTMY(os.path.join(DATADIR,"USA_VA_Richmond.Intl.AP.724010_TMY.epw"))
-    assert myEPW.loc['1963-06-22 12:0:0'].GHI.to_numpy() == 858
-    assert np.allclose(myTMY3[myEPW.index.isin(['1959-12-31 7:0:0-5:00','1959-12-31 18:0:0-5:00'])].GHI.to_numpy(), np.array([0,0]) )
-   
+    assert int(myEPW.loc['1963-06-22 12:0:0'].GHI) == 858
+    assert np.allclose(myTMY3.loc[pd.to_datetime(['1978-12-31 7:0:0-5:00','1978-12-31 18:0:0-5:00']),'GHI'].values, np.array([0,0]))
+    
 def test_endtoend():
     '''
     end to end test, first 24 hours of VA Richmond
